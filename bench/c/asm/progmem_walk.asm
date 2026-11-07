@@ -11,7 +11,7 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  aa                    xor	r6, r6
  d7 01                 sys	debug_break
- f0 06 1a 0e           ldi16	r2, 0xe1a
+ f0 06 1d 0e           ldi16	r2, 0xe1d
  f0 03 00              ldi8	r3, 0x0
  06                    mov	r5, r6
 <L0>:
@@ -38,7 +38,7 @@ Disassembly of section .text:
  f2 39                 sub	r1, r1
  f1 01                 mov	r0, r1
  06                    mov	r5, r6
- f0 06 1a 0e           ldi16	r2, 0xe1a
+ f0 06 1d 0e           ldi16	r2, 0xe1d
  f0 03 00              ldi8	r3, 0x0
 <L2>:
  f2 24                 add	r5, r0

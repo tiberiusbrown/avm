@@ -63,7 +63,7 @@ Disassembly of section .text:
  f0 6a 86              ld32	q2, [r3]
  f0 06 14 01           ldi16	r2, 0x114
  f0 6a c4              ld32	q3, [r2]
- e1 43 0c              call16	__avm_muldi3
+ e1 46 0c              call16	__avm_muldi3
  d6 08                 adjsp	0x8
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
@@ -80,7 +80,7 @@ Disassembly of section .text:
  f0 6a 86              ld32	q2, [r3]
  f0 06 1c 01           ldi16	r2, 0x11c
  f0 6a c4              ld32	q3, [r2]
- e1 16 0c              call16	__avm_muldi3
+ e1 19 0c              call16	__avm_muldi3
  d6 08                 adjsp	0x8
  f4 78                 stsp16	[sp+0xe], r4
  f0 3d 10              stsp16	[sp+0x10], r5
@@ -97,7 +97,7 @@ Disassembly of section .text:
  f0 6a 88              ld32	q2, [r4]
  f0 06 24 01           ldi16	r2, 0x124
  f0 6a c4              ld32	q3, [r2]
- e1 eb 0b              call16	__avm_muldi3
+ e1 ee 0b              call16	__avm_muldi3
  d6 08                 adjsp	0x8
  f4 58                 stsp16	[sp+0x6], r4
  f4 61                 stsp16	[sp+0x8], r5
@@ -140,7 +140,7 @@ Disassembly of section .text:
  f0 6a 88              ld32	q2, [r4]
  c6 0c 01              ldi16	r6, 0x10c
  f0 6a cc              ld32	q3, [r6]
- e1 7f 0b              call16	__avm_muldi3
+ e1 82 0b              call16	__avm_muldi3
  d6 08                 adjsp	0x8
  f2 66                 mov32	q1, q2
  f4 10                 ldsp16	r4, [sp+0x4]

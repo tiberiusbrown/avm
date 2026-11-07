@@ -13,11 +13,11 @@ Disassembly of section .text:
  f0 3d 12              stsp16	[sp+0x12], r5
  d7 01                 sys	debug_break
  f0 06 02 01           ldi16	r2, 0x102
- c6 ab 0f              ldi16	r6, 0xfab
+ c6 ae 0f              ldi16	r6, 0xfae
  c3 00                 ldi8	r7, 0x0
  f4 5a                 stsp16	[sp+0x6], r6
  f4 63                 stsp16	[sp+0x8], r7
- c6 ae 0f              ldi16	r6, 0xfae
+ c6 b1 0f              ldi16	r6, 0xfb1
  c3 00                 ldi8	r7, 0x0
  f1 05                 mov	r0, r5
  f4 42                 stsp16	[sp+0x0], r6

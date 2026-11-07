@@ -77,7 +77,7 @@ Disassembly of section .text:
  f4 21                 ldsp16	r5, [sp+0x8]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f4 13                 ldsp16	r7, [sp+0x4]
- e1 02 0c              call16	__avm_ashldi3
+ e1 05 0c              call16	__avm_ashldi3
  d6 02                 adjsp	0x2
  f0 3c 12              stsp16	[sp+0x12], r4
  f0 3d 14              stsp16	[sp+0x14], r5
@@ -90,7 +90,7 @@ Disassembly of section .text:
  f4 21                 ldsp16	r5, [sp+0x8]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f4 13                 ldsp16	r7, [sp+0x4]
- e1 c8 0c              call16	__avm_lshrdi3
+ e1 cb 0c              call16	__avm_lshrdi3
  d6 02                 adjsp	0x2
  f4 60                 stsp16	[sp+0x8], r4
  f4 69                 stsp16	[sp+0xa], r5
@@ -123,7 +123,7 @@ Disassembly of section .text:
  f4 21                 ldsp16	r5, [sp+0x8]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f4 13                 ldsp16	r7, [sp+0x4]
- e1 84 0d              call16	__avm_ashrdi3
+ e1 87 0d              call16	__avm_ashrdi3
  d6 02                 adjsp	0x2
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5

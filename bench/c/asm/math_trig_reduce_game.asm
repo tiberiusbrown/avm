@@ -20,7 +20,7 @@ Disassembly of section .text:
  11                    add	r4, r5
  f0 6a 88              ld32	q2, [r4]
  f0 16 02              leasp	r6, 0x2
- e1 e4 0a              call16	__ieee754_rem_pio2f
+ e1 e7 0a              call16	__ieee754_rem_pio2f
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 69                 mov32	q2, q1
@@ -146,7 +146,7 @@ Disassembly of section .text:
  15                    add	r5, r5
  01                    mov	r4, r5
  06                    mov	r5, r6
- f0 06 06 1b           ldi16	r2, 0x1b06
+ f0 06 09 1b           ldi16	r2, 0x1b09
  f0 03 00              ldi8	r3, 0x0
  f7 66                 add32	q1, q2
  f0 68 c4              ldp32	q3, [q1+]
@@ -232,7 +232,7 @@ Disassembly of section .text:
  c1 0a                 ldi8	r5, 0xa
  f3 11                 mulu8.w	r4, r5
  a5                    xor	r5, r5
- f0 04 78 2a           ldi16	r0, 0x2a78
+ f0 04 7b 2a           ldi16	r0, 0x2a7b
  f0 01 00              ldi8	r1, 0x0
  f7 62                 add32	q0, q2
  c0 7f                 ldi8	r4, 0x7f
@@ -559,10 +559,10 @@ Disassembly of section .text:
  c1 0a                 ldi8	r5, 0xa
  f3 11                 mulu8.w	r4, r5
  a5                    xor	r5, r5
- c6 7c 2a              ldi16	r6, 0x2a7c
+ c6 7f 2a              ldi16	r6, 0x2a7f
  c3 00                 ldi8	r7, 0x0
  f7 6e                 add32	q3, q2
- f0 04 78 2a           ldi16	r0, 0x2a78
+ f0 04 7b 2a           ldi16	r0, 0x2a7b
  f0 01 00              ldi8	r1, 0x0
  f7 62                 add32	q0, q2
  f0 64 80              ldp32	q2, [q0]

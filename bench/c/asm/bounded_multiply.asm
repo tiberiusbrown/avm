@@ -23,7 +23,7 @@ Disassembly of section .text:
  f4 b4                 dec16	r4
  f2 0c                 add	r1, r4
  c9 fe                 addi.s8	r5, -0x2
- e1 4c 0b              call16	__avm_umulhisi3
+ e1 4f 0b              call16	__avm_umulhisi3
  f7 82                 lsr32.1	q2
  f2 21                 add	r4, r1
  d4 02                 jmp8	0x2 <L3>

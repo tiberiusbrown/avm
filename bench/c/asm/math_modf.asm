@@ -11,7 +11,7 @@ Disassembly of section .text:
  d6 fc                 adjsp	-0x4
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
- f0 06 a7 0e           ldi16	r2, 0xea7
+ f0 06 aa 0e           ldi16	r2, 0xeaa
  f0 03 00              ldi8	r3, 0x0
  f0 05 00 01           ldi16	r1, 0x100
 <L0>:
@@ -24,7 +24,7 @@ Disassembly of section .text:
  f7 69                 add32	q2, q1
  f0 64 88              ldp32	q2, [q2]
  f0 16 00              leasp	r6, 0x0
- e1 cb 0a              call16	modff
+ e1 ce 0a              call16	modff
  f0 6b 82              st32	[r1], q2
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 09                 ldsp16	r5, [sp+0x2]

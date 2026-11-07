@@ -16,15 +16,15 @@ Disassembly of section .text:
  21                    sub	r4, r5
  f0 3c 10              stsp16	[sp+0x10], r4
  c6 02 01              ldi16	r6, 0x102
- f0 04 ca 0e           ldi16	r0, 0xeca
+ f0 04 cd 0e           ldi16	r0, 0xecd
  f0 01 00              ldi8	r1, 0x0
  f0 38 0c              stsp16	[sp+0xc], r0
  f0 39 0e              stsp16	[sp+0xe], r1
- f0 04 cd 0e           ldi16	r0, 0xecd
+ f0 04 d0 0e           ldi16	r0, 0xed0
  f0 01 00              ldi8	r1, 0x0
  f0 38 08              stsp16	[sp+0x8], r0
  f0 39 0a              stsp16	[sp+0xa], r1
- f0 04 d1 0e           ldi16	r0, 0xed1
+ f0 04 d4 0e           ldi16	r0, 0xed4
  f0 01 00              ldi8	r1, 0x0
  f0 38 04              stsp16	[sp+0x4], r0
  f0 39 06              stsp16	[sp+0x6], r1

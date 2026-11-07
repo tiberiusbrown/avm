@@ -22,7 +22,7 @@ Disassembly of section .text:
  c7 04 01              ldi16	r7, 0x104
  1b                    add	r6, r7
  f0 6a cc              ld32	q3, [r6]
- e1 cd 0a              call16	hypotf
+ e1 d0 0a              call16	hypotf
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0

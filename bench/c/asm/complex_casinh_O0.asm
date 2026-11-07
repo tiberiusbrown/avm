@@ -42,7 +42,7 @@ Disassembly of section .text:
  f1 50                 stsp8	[sp+0x8], r4
  f0 14 18              leasp	r4, 0x18
  f0 15 08              leasp	r5, 0x8
- e1 54 0f              call16	casinhf
+ e1 57 0f              call16	casinhf
  f0 34 18              ldsp16	r4, [sp+0x18]
  f0 35 1a              ldsp16	r5, [sp+0x1a]
  f0 30 1c              ldsp16	r0, [sp+0x1c]

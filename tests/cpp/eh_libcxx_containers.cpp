@@ -3,6 +3,7 @@
 #include <forward_list>
 #include <list>
 #include <map>
+#include <memory>
 #include <new>
 #include <queue>
 #include <set>
@@ -30,10 +31,15 @@ int expect_allocation_failure(Container& container, Operation operation)
 }
 
 template<class Container, class Operation>
-int test_container(Operation operation)
+__attribute__((noinline)) int test_container(Operation operation)
 {
-    Container container;
-    return expect_allocation_failure(container, operation);
+    // Each instantiation runs once. Keep its holder off the allocation/throw
+    // stack path, but retain construction and destruction around the test.
+    alignas(Container) static unsigned char storage[sizeof(Container)];
+    auto* container = std::construct_at(reinterpret_cast<Container*>(storage));
+    const int result = expect_allocation_failure(*container, operation);
+    std::destroy_at(container);
+    return result;
 }
 
 int sequence_containers()
@@ -75,6 +81,35 @@ int adaptors()
         [](auto& c) { c.push(1); }) == 0 ? 0 : 3;
 }
 
+struct move_value {
+    int value;
+    explicit move_value(int v) noexcept : value(v) {}
+    move_value(const move_value&) = delete;
+    move_value(move_value&& other) noexcept : value(other.value) { other.value = -1; }
+};
+
+__attribute__((noinline)) int duplicate_key()
+{
+    using container_type = std::unordered_map<int, move_value>;
+    alignas(container_type) static unsigned char storage[sizeof(container_type)];
+    auto* container = std::construct_at(reinterpret_cast<container_type*>(storage));
+    container->try_emplace(7, 17);
+    move_value candidate(23);
+    int result = 0;
+    fail_next_allocation = true;
+    try {
+        auto inserted = container->try_emplace(7, std::move(candidate));
+        if(inserted.second || inserted.first->second.value != 17 ||
+           candidate.value != 23 || !fail_next_allocation)
+            result = 1;
+    } catch(...) {
+        result = 2;
+    }
+    fail_next_allocation = false;
+    std::destroy_at(container);
+    return result;
+}
+
 }
 
 void* operator new(std::size_t size)
@@ -104,5 +139,7 @@ extern "C" int avm_test_main()
         return 1;
     if(associative_containers() != 0)
         return 2;
+    if(duplicate_key() != 0)
+        return 4;
     return adaptors() == 0 ? 0 : 3;
 }

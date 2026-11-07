@@ -11,12 +11,12 @@ Disassembly of section .text:
  d6 fc                 adjsp	-0x4
  f0 04 0a 01           ldi16	r0, 0x10a
  f1 20                 mov	r4, r0
- c6 e5 0e              ldi16	r6, 0xee5
+ c6 e8 0e              ldi16	r6, 0xee8
  c3 00                 ldi8	r7, 0x0
  c1 40                 ldi8	r5, 0x40
  d7 10                 sys	memcpy_p
  d7 01                 sys	debug_break
- c6 25 0e              ldi16	r6, 0xe25
+ c6 28 0e              ldi16	r6, 0xe28
  c3 00                 ldi8	r7, 0x0
  f0 55 06 01           ldm16	r5, [0x106]
  f1 20                 mov	r4, r0
@@ -30,13 +30,13 @@ Disassembly of section .text:
  f1 20                 mov	r4, r0
  d7 13                 sys	memcmp_p
  f4 40                 stsp16	[sp+0x0], r4
- c6 65 0e              ldi16	r6, 0xe65
+ c6 68 0e              ldi16	r6, 0xe68
  c3 00                 ldi8	r7, 0x0
  f0 54 02 01           ldm16	r4, [0x102]
  f1 20                 mov	r4, r0
  d7 13                 sys	memcmp_p
  f1 1c                 mov	r3, r4
- c6 a5 0e              ldi16	r6, 0xea5
+ c6 a8 0e              ldi16	r6, 0xea8
  c3 00                 ldi8	r7, 0x0
  f0 54 02 01           ldm16	r4, [0x102]
  f1 20                 mov	r4, r0

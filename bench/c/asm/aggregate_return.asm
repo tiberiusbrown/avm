@@ -75,7 +75,7 @@ Disassembly of section .text:
  f1 04                 mov	r0, r4
  ed 50 24              ld16	r2, [r0+4]
  f1 22                 mov	r4, r2
- e1 df 0a              call16	__avm_umulhisi3
+ e1 e2 0a              call16	__avm_umulhisi3
  f0 6a c0              ld32	q3, [r0]
  f7 6e                 add32	q3, q2
  f2 11                 add	r2, r1

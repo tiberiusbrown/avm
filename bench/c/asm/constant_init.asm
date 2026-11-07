@@ -32,7 +32,7 @@ Disassembly of section .text:
 
 <populate>:
  c4 02 01              ldi16	r4, 0x102
- c6 dc 0d              ldi16	r6, 0xddc
+ c6 df 0d              ldi16	r6, 0xddf
  c3 00                 ldi8	r7, 0x0
  c1 40                 ldi8	r5, 0x40
  d7 10                 sys	memcpy_p

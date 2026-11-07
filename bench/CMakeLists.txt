@@ -172,7 +172,6 @@ foreach(AVM_BENCH_CXX_SOURCE IN LISTS AVM_BENCH_CXX_SOURCES)
         OUTPUT "${AVM_BENCH_OBJECT}"
         SOURCE "${AVM_BENCH_CXX_SOURCE}"
         LANGUAGE CXX
-        INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
         DEPENDS avm_sysroot
     )
     avm_add_image(

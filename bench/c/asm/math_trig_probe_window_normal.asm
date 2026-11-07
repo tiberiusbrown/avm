@@ -26,7 +26,7 @@ Disassembly of section .text:
  aa                    xor	r6, r6
  f4 4a                 stsp16	[sp+0x2], r6
  f0 16 02              leasp	r6, 0x2
- e1 df 0a              call16	__kernel_rem_pio2f
+ e1 e2 0a              call16	__kernel_rem_pio2f
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 69                 mov32	q2, q1
@@ -78,7 +78,7 @@ Disassembly of section .text:
  c1 0a                 ldi8	r5, 0xa
  f3 11                 mulu8.w	r4, r5
  a5                    xor	r5, r5
- f0 04 d3 13           ldi16	r0, 0x13d3
+ f0 04 d6 13           ldi16	r0, 0x13d6
  f0 01 00              ldi8	r1, 0x0
  f7 62                 add32	q0, q2
  c0 7f                 ldi8	r4, 0x7f
@@ -405,10 +405,10 @@ Disassembly of section .text:
  c1 0a                 ldi8	r5, 0xa
  f3 11                 mulu8.w	r4, r5
  a5                    xor	r5, r5
- c6 d7 13              ldi16	r6, 0x13d7
+ c6 da 13              ldi16	r6, 0x13da
  c3 00                 ldi8	r7, 0x0
  f7 6e                 add32	q3, q2
- f0 04 d3 13           ldi16	r0, 0x13d3
+ f0 04 d6 13           ldi16	r0, 0x13d6
  f0 01 00              ldi8	r1, 0x0
  f7 62                 add32	q0, q2
  f0 64 80              ldp32	q2, [q0]

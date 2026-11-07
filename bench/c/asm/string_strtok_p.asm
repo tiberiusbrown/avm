@@ -12,11 +12,11 @@ Disassembly of section .text:
  a5                    xor	r5, r5
  d7 01                 sys	debug_break
  f0 06 02 01           ldi16	r2, 0x102
- c6 69 0f              ldi16	r6, 0xf69
+ c6 6c 0f              ldi16	r6, 0xf6c
  c3 00                 ldi8	r7, 0x0
  f4 52                 stsp16	[sp+0x4], r6
  f4 5b                 stsp16	[sp+0x6], r7
- c6 6c 0f              ldi16	r6, 0xf6c
+ c6 6f 0f              ldi16	r6, 0xf6f
  c3 00                 ldi8	r7, 0x0
  f1 05                 mov	r0, r5
  f4 42                 stsp16	[sp+0x0], r6

@@ -817,13 +817,28 @@ AVEH5_INLINE uint8_t cross_base(uint8_t mode, const struct avm_eh_exception *hea
  * in bits 31:16. A null walk's match carries no adjustment, because its value stays null. */
 AVEH5_INLINE uint32_t walk_hierarchy(uint8_t mode, uint32_t catch_type,
                                        const struct avm_eh_exception *header) {
-    uint8_t next[AVM_RTTI_MAX_DEPTH];
-    uint8_t depth = 0;
-    uint8_t matches = 0;
-    uint8_t match_public = 0;
-    uint32_t match_anchor = 0;
-    uint16_t match_position = 0;
-    uint16_t edges = 0;
+    /* Only one metadata walk can be active: the helpers below do not invoke
+     * guest callbacks, and a walk finishes before a cleanup or handler runs.
+     * Reuse this scratch across object/pointer/null walks and nested throws;
+     * each new walk initializes its own state before inspecting descriptors.
+     * Keeping traversal state here avoids spilling it across every flash read.
+     * Descriptor identities remain 24 bits. */
+    static struct {
+        uint8_t next[AVM_RTTI_MAX_DEPTH];
+        uint8_t depth;
+        uint8_t matches;
+        uint8_t match_public;
+        unsigned _BitInt(24) match_anchor;
+        uint16_t match_position;
+        uint16_t edges;
+    } scratch;
+
+    scratch.depth = 0;
+    scratch.matches = 0;
+    scratch.match_public = 0;
+    scratch.match_anchor = 0;
+    scratch.match_position = 0;
+    scratch.edges = 0;
 
     /* The root is the thrown class, or the pointee of a thrown pointer. Its subobjects start
      * at the object, at the pointer's value, or, for a null pointer, at no address at all. */
@@ -832,7 +847,7 @@ AVEH5_INLINE uint32_t walk_hierarchy(uint8_t mode, uint32_t catch_type,
                                               : (mode == AVM_WALK_POINTER ? read_ram_u16(object_of(header)) : 0);
     if (!is_class_kind(rtti_kind(root)))
         return AVM_RTTI_NO_MATCH;
-    next[0] = 0;
+    scratch.next[0] = 0;
     for (;;) {
         /* Replays the path to the top node. Each edge on the path was checked when the walk
          * pushed it, and the replay resolves the same identities from the same reads. */
@@ -840,11 +855,11 @@ AVEH5_INLINE uint32_t walk_hierarchy(uint8_t mode, uint32_t catch_type,
         uint32_t anchor = mode == AVM_WALK_NULL ? root : 0;
         uint16_t position = mode == AVM_WALK_NULL ? 0 : origin;
         uint8_t public_path = 1;
-        for (uint8_t level = 0; level < depth; level++) {
+        for (uint8_t level = 0; level < scratch.depth; level++) {
             int32_t edge;
             uint8_t flags;
             enum avm_rtti_kind parent = rtti_kind(descriptor);
-            uint32_t base_type = read_base_edge(descriptor, parent, next[level] - 1, &edge, &flags);
+            uint32_t base_type = read_base_edge(descriptor, parent, scratch.next[level] - 1, &edge, &flags);
             if (cross_base(mode, header, base_type, edge, flags, &anchor, &position) !=
                 AVM_RTTI_OFFSET_OK)
                 return AVM_RTTI_INVALID;
@@ -863,19 +878,19 @@ AVEH5_INLINE uint32_t walk_hierarchy(uint8_t mode, uint32_t catch_type,
                 descriptor > AVEH5_ADDRESS_LIMIT - (AVM_RTTI_VMI_HEADER + times7(count)))
                 return AVM_RTTI_INVALID;
         }
-        if (next[depth] >= count) {
-            if (depth == 0)
+        if (scratch.next[scratch.depth] >= count) {
+            if (scratch.depth == 0)
                 break;
-            depth--;
+            scratch.depth--;
             continue;
         }
 
         int32_t edge;
         uint8_t flags;
-        uint32_t base_type = read_base_edge(descriptor, kind, next[depth]++, &edge, &flags);
+        uint32_t base_type = read_base_edge(descriptor, kind, scratch.next[scratch.depth]++, &edge, &flags);
         if (flags & AVM_RTTI_BASE_RESERVED)
             return AVM_RTTI_INVALID;
-        if (++edges > AVM_RTTI_MAX_EDGES || depth + 1 >= AVM_RTTI_MAX_DEPTH)
+        if (++scratch.edges > AVM_RTTI_MAX_EDGES || scratch.depth + 1 >= AVM_RTTI_MAX_DEPTH)
             return AVM_RTTI_LIMIT;
 
         if (cross_base(mode, header, base_type, edge, flags, &anchor, &position) !=
@@ -890,26 +905,26 @@ AVEH5_INLINE uint32_t walk_hierarchy(uint8_t mode, uint32_t catch_type,
             /* The first match records its identity. A later path to the same identity is the
              * same subobject, and it can only make the match accessible. A different identity
              * is a second subobject. */
-            if (matches == 0) {
-                matches = 1;
-                match_anchor = anchor;
-                match_position = position;
-                match_public = child_public;
-            } else if (anchor != match_anchor || position != match_position) {
-                matches = 2;
+            if (scratch.matches == 0) {
+                scratch.matches = 1;
+                scratch.match_anchor = anchor;
+                scratch.match_position = position;
+                scratch.match_public = child_public;
+            } else if (anchor != scratch.match_anchor || position != scratch.match_position) {
+                scratch.matches = 2;
             } else {
-                match_public |= child_public;
+                scratch.match_public |= child_public;
             }
         }
-        depth++;
-        next[depth] = 0;
+        scratch.depth++;
+        scratch.next[scratch.depth] = 0;
     }
 
-    if (matches != 1 || !match_public)
+    if (scratch.matches != 1 || !scratch.match_public)
         return AVM_RTTI_NO_MATCH;
     if (mode == AVM_WALK_NULL)
         return AVM_RTTI_MATCH;
-    uint16_t adjustment = match_position - origin;
+    uint16_t adjustment = scratch.match_position - origin;
     return ((uint32_t)adjustment << 16) | AVM_RTTI_MATCH;
 }
 

@@ -5,17 +5,17 @@ Disassembly of section .text:
 
 <avm_test_main>:
  d7 01                 sys	debug_break
- c4 28 0e              ldi16	r4, 0xe28
+ c4 2b 0e              ldi16	r4, 0xe2b
  c1 00                 ldi8	r5, 0x0
  c2 40                 ldi8	r6, 0x40
  d5 22                 call8	sum_byte_pairs
  f0 5c 00 01           stm16	[0x100], r4
- c4 29 0e              ldi16	r4, 0xe29
+ c4 2c 0e              ldi16	r4, 0xe2c
  c1 00                 ldi8	r5, 0x0
  c2 3f                 ldi8	r6, 0x3f
  d5 15                 call8	sum_byte_pairs
  f0 5c 02 01           stm16	[0x102], r4
- c4 2a 0e              ldi16	r4, 0xe2a
+ c4 2d 0e              ldi16	r4, 0xe2d
  c1 00                 ldi8	r5, 0x0
  c2 41                 ldi8	r6, 0x41
  d5 08                 call8	sum_byte_pairs

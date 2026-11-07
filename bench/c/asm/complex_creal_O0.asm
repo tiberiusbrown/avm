@@ -39,7 +39,7 @@ Disassembly of section .text:
  f3 40                 ldsp8u	r4, [sp+0x0]
  f1 50                 stsp8	[sp+0x8], r4
  f0 14 08              leasp	r4, 0x8
- e1 bc 0a              call16	crealf
+ e1 bf 0a              call16	crealf
  c6 00 01              ldi16	r6, 0x100
  f0 6b 8c              st32	[r6], q2
  d7 01                 sys	debug_break

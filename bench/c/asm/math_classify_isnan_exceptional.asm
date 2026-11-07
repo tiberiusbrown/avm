@@ -11,7 +11,7 @@ Disassembly of section .text:
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
  f0 01 0f              ldi8	r1, 0xf
- f0 06 e6 0d           ldi16	r2, 0xde6
+ f0 06 e9 0d           ldi16	r2, 0xde9
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f1 20                 mov	r4, r0

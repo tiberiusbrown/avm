@@ -119,6 +119,7 @@ function(avm_add_object)
         ${language_options}
         ${include_options}
         ${ARG_COMPILE_OPTIONS}
+        -MD -MF "${ARG_OUTPUT}.d" -MQ "${ARG_OUTPUT}"
         ${compile_action} "${ARG_SOURCE}"
         -o "${ARG_OUTPUT}"
     )
@@ -154,6 +155,7 @@ function(avm_add_object)
             "${ARG_SOURCE}"
             ${ARG_DEPENDS}
             ${extra_dependencies}
+        DEPFILE "${ARG_OUTPUT}.d"
         COMMENT "Compiling AVM ${ARG_LANGUAGE} object ${ARG_OUTPUT}"
         VERBATIM
     )

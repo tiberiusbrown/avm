@@ -7,7 +7,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d7 01                 sys	debug_break
- f0 04 7e 0e           ldi16	r0, 0xe7e
+ f0 04 81 0e           ldi16	r0, 0xe81
  f0 01 00              ldi8	r1, 0x0
  c2 80                 ldi8	r6, 0x80
  f2 68                 mov32	q2, q0
@@ -17,7 +17,7 @@ Disassembly of section .text:
  f2 68                 mov32	q2, q0
  d5 17                 call8	sum_bytes
  f0 5c 02 01           stm16	[0x102], r4
- c4 7f 0e              ldi16	r4, 0xe7f
+ c4 82 0e              ldi16	r4, 0xe82
  c1 00                 ldi8	r5, 0x0
  c2 7f                 ldi8	r6, 0x7f
  d5 0a                 call8	sum_bytes

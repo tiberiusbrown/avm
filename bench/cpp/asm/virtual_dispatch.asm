@@ -10,13 +10,13 @@ Disassembly of section .text:
  d6 ee                 adjsp	-0x12
  c0 25                 ldi8	r4, 0x25
  f4 60                 stsp16	[sp+0x8], r4
- c4 28 0e              ldi16	r4, 0xe28
+ c4 2b 0e              ldi16	r4, 0xe2b
  c1 00                 ldi8	r5, 0x0
  f4 54                 stsp16	[sp+0x5], r4
  f1 4d                 stsp8	[sp+0x7], r5
  c4 aa 55              ldi16	r4, 0x55aa
  f4 4c                 stsp16	[sp+0x3], r4
- c4 31 0e              ldi16	r4, 0xe31
+ c4 34 0e              ldi16	r4, 0xe34
  c1 00                 ldi8	r5, 0x0
  f4 40                 stsp16	[sp+0x0], r4
  f1 39                 stsp8	[sp+0x2], r5

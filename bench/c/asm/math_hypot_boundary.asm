@@ -25,7 +25,7 @@ Disassembly of section .text:
  f2 22                 add	r4, r2
  f0 6a 88              ld32	q2, [r4]
  f0 6a cc              ld32	q3, [r6]
- e1 c5 0a              call16	hypotf
+ e1 c8 0a              call16	hypotf
  f0 6b 82              st32	[r1], q2
  f0 09 04              addi.s8	r1, 0x4
  f4 a8                 inc16	r0

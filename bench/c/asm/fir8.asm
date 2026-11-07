@@ -23,7 +23,7 @@ Disassembly of section .text:
  f6 2e                 tst16	r6
  d1 f1                 brne8	-0xf <L0>
  c4 02 01              ldi16	r4, 0x102
- c6 11 0f              ldi16	r6, 0xf11
+ c6 14 0f              ldi16	r6, 0xf14
  c3 00                 ldi8	r7, 0x0
  c1 10                 ldi8	r5, 0x10
  d7 10                 sys	memcpy_p

@@ -56,12 +56,12 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Containers, strings, and memory management
 
-- [ ] **Container allocation stack limits:** Keep standard-allocator allocation and failure paths for dynamically allocating containers and deque-backed adaptors within AVM's 256-byte stack. libc++ `<deque>` growth and `<map>` insertion exceed it at O0; `<unordered_map>` growth reaches 443 bytes at O0 and 270 bytes at Oz. Container allocation-failure fixtures reach 516 bytes at O0, 299 bytes at Os, and 287 bytes at Oz.
-- [ ] **Hosted allocation and exception paths at O0:** Keep allocation/error paths for hosted `<any>`, `<memory>`, `<functional>`, `<memory_resource>`, `<variant>`, and `<expected>` within AVM's 256-byte stack. The `std::function` allocation path reaches 281 bytes and the `std::make_shared` allocation path reaches 303 bytes.
+- [ ] **Container allocation stack limits:** Keep standard-allocator allocation and failure paths for dynamically allocating containers and deque-backed adaptors within AVM's 256-byte stack. libc++ `<deque>` growth and `<map>` insertion exceed it at O0; `<unordered_map>` growth reaches 398 bytes at O0, and the container allocation-failure fixture reaches 437 bytes at O0.
+- [ ] **Hosted allocation and exception paths at O0:** Keep allocation/error paths for hosted `<any>`, `<memory>`, `<functional>`, `<memory_resource>`, `<variant>`, and `<expected>` within AVM's 256-byte stack. With automatic payloads and ownership holders, the `std::function` allocation path reaches 257 bytes and the `std::make_shared` allocation path reaches 279 bytes.
 
 ### Algorithms, ranges, numerics, and random facilities
 
-- [ ] **Algorithms and iterators:** Provide hosted iterator/range adaptors and `<execution>` policy overloads, including sorting paths whose libc++ radix-sort and O0 ranges-sort bitset-partition stack use exceeds AVM's 256-byte limit.
+- [ ] **Algorithms and iterators:** Provide hosted iterator/range adaptors and `<execution>` policy overloads, including sorting paths whose libc++ radix-sort stack use exceeds AVM's 256-byte limit.
 - [ ] **Numerical utilities:** Provide `<random_device>` with an entropy source, libc++'s standard 32-bit random-engine aliases on the 16-bit-`int` target, and `<valarray>` operations within the AVM stack limit.
 ### I/O, formatting, locale, and filesystems
 

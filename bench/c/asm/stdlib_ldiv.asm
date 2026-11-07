@@ -82,7 +82,7 @@ Disassembly of section .text:
  f4 3e                 ldsp16	r6, [sp+0xf]
  f0 37 11              ldsp16	r7, [sp+0x11]
  f2 69                 mov32	q2, q1
- e1 8a 0c              call16	__avm_divmodsi4
+ e1 8d 0c              call16	__avm_divmodsi4
  d6 02                 adjsp	0x2
  f0 6b 80              st32	[r0], q2
  f1 20                 mov	r4, r0

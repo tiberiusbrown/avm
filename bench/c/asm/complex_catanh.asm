@@ -20,7 +20,7 @@ Disassembly of section .text:
  f4 69                 stsp16	[sp+0xa], r5
  f0 14 10              leasp	r4, 0x10
  f0 15 00              leasp	r5, 0x0
- e1 ce 0a              call16	catanhf
+ e1 d1 0a              call16	catanhf
  c4 00 01              ldi16	r4, 0x100
  f0 36 10              ldsp16	r6, [sp+0x10]
  f0 37 12              ldsp16	r7, [sp+0x12]

@@ -469,14 +469,14 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
             # its data and ordinary code below 64 KiB, as the other high-address
             # fixtures do. Explicit section starts replace the AVM default layout,
             # which would define __avm_heap_start after .data, so the heap start is
-            # given here. The 16 bytes of .data end at 0x110.
+            # computed from the final data section, including runtime state.
             list(APPEND AVM_EH_IMAGE_LINK_OPTIONS
                 "--image-base=0x100"
                 "--section-start=.data=0x100"
                 "--section-start=.text=0x200"
                 "--section-start=.rodata=0x10000"
                 "--section-start=.high_far_text=0x11000"
-                "--defsym=__avm_heap_start=0x110")
+                "--defsym=__avm_heap_start=ADDR(.data)+SIZEOF(.data)")
         endif()
         avm_add_image(
             OBJECTS ${AVM_EH_IMAGE_OBJECTS}
@@ -562,7 +562,7 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_RTTI_CXX_TEST_SOURCES)
             # The vtables must lie above 0xFFFF, so .rodata starts at 0x10000. The
             # descriptors must stay in the flash window, so .avm.rtti follows the
             # flash image at 0x500, and the code follows the descriptors. The
-            # program's data ends at 0x110, which the heap start follows.
+            # heap starts after the final data section, including runtime state.
             list(APPEND AVM_RTTI_LINK_OPTIONS
                 "--image-base=0x100"
                 "--section-start=.data=0x100"
@@ -570,7 +570,7 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_RTTI_CXX_TEST_SOURCES)
                 "--section-start=.avm.rtti=0x0580"
                 "--section-start=.text=0x0A00"
                 "--section-start=.rodata=0x10000"
-                "--defsym=__avm_heap_start=0x110")
+                "--defsym=__avm_heap_start=ADDR(.data)+SIZEOF(.data)")
         endif()
         avm_add_image(
             OBJECTS ${AVM_RTTI_IMAGE_OBJECTS}

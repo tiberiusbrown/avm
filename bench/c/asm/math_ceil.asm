@@ -13,7 +13,7 @@ Disassembly of section .text:
  c5 08 01              ldi16	r5, 0x108
  c4 00 80              ldi16	r4, 0x8000
  f4 40                 stsp16	[sp+0x0], r4
- f0 06 1d 0e           ldi16	r2, 0xe1d
+ f0 06 20 0e           ldi16	r2, 0xe20
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  0b                    mov	r6, r7
@@ -44,7 +44,7 @@ Disassembly of section .text:
  f1 22                 mov	r4, r2
  f2 23                 add	r4, r3
  f0 6a 88              ld32	q2, [r4]
- e1 d1 0a              call16	ceilf
+ e1 d4 0a              call16	ceilf
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0

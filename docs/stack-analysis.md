@@ -298,10 +298,13 @@ Their fixed frames are 18 and 22 bytes, respectively. Decoding SP increases
 `unwind_frame` from 28 to 32 bytes, but this path stays below the measured
 maximum; the matcher path determines the four-byte peak reduction.
 
-The hierarchy matchers keep their eight path indices on the stack. The object,
-pointer and null-pointer matchers have fixed frames of 70, 66 and 64 bytes.
-Their transient traversal state consumes no static RAM, and the exception
-header does not grow.
+The hierarchy matchers share 18 bytes of static scratch for their eight path
+indices, traversal counters, and accumulated match identity. The descriptor
+identity occupies three bytes. The object, pointer and null-pointer matchers
+have fixed frames of 46, 36 and 38 bytes. The exception header does not grow.
+Only one walk can be active: descriptor and memory helpers invoke no guest
+callbacks, and matching completes before any cleanup or handler executes.
+Each invocation resets its state, including when matching a rethrown exception.
 
 AVM supports `__attribute__((preserve_none))` with the C argument and return
 layout, including 24-bit code pointers. Only SP and the frame-pointer register
@@ -313,10 +316,9 @@ C argument layout; the shims and landing-context installer never return.
 
 Further reductions require broader work:
 
-- Move more transient lookup or hierarchy-walk state into RAM scratch space.
-  The object matcher still has a 70-byte fixed frame, including saved registers.
-  Further savings would consume more RAM and need explicit ownership across
-  cleanup, nested catches and rethrows.
+- Reduce register pressure in the remaining hierarchy replay and virtual-base
+  work. The object matcher still has a 46-byte fixed frame, including saved
+  registers. Further scratch storage would trade more static RAM for stack.
 - Reduce the remaining metadata-reader register pressure or change the packed
   unwind format. Function lookup and the site-validation chain both reach
   40 bytes, so reducing either path alone soon exposes the other. Predecoded

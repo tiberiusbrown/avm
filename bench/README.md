@@ -1,5 +1,14 @@
 # AVM benchmarks
 
+`ranges_sort.cpp` measures 24 sorts of 64 integers with ascending, reverse,
+duplicate-heavy, and equal inputs. Its descending comparator exercises generic
+dispatch rather than the separately instantiated ascending pointer sort. The
+interval includes input generation and checksum accumulation. At O2, the AVM
+nonrecursive heapsort uses 8,725,649 cycles and 33 guest stack bytes, compared
+with 15,488,881 cycles and 208 guest stack bytes for the prior generic bitset
+introsort on the same workload. Native stack use falls from 8 to 6 extra bytes.
+The disassembly is retained under `cpp/asm/ranges_sort.asm`.
+
 `stdlib_strtof` and `stdlib_strtod` each make 16 passes over eight inputs,
 covering decimal/hexadecimal text, subnormal underflow, overflow, infinity,
 NaN, and no conversion. Volatile function pointers retain the runtime calls;

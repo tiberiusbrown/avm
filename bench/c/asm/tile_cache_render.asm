@@ -55,7 +55,7 @@ Disassembly of section .text:
  b0                    push16	r0
  f0 51 02 01           ldm16	r1, [0x102]
  f0 56 00 01           ldm16	r6, [0x100]
- c4 a5 0e              ldi16	r4, 0xea5
+ c4 a8 0e              ldi16	r4, 0xea8
  c1 00                 ldi8	r5, 0x0
  d7 22                 sys	set_sprite
  f0 0d c1              cmpi.s8	r1, -0x3f

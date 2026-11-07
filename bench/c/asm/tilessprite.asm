@@ -10,7 +10,7 @@ Disassembly of section .text:
  f0 55 02 01           ldm16	r5, [0x102]
  f0 54 00 01           ldm16	r4, [0x100]
  af                    xor	r7, r7
- f0 06 d0 0f           ldi16	r2, 0xfd0
+ f0 06 d3 0f           ldi16	r2, 0xfd3
  f0 03 00              ldi8	r3, 0x0
  aa                    xor	r6, r6
  d7 1e                 sys	draw_sprite_overwrite

@@ -18,7 +18,7 @@ Disassembly of section .text:
  c5 00 01              ldi16	r5, 0x100
  11                    add	r4, r5
  f0 6a 88              ld32	q2, [r4]
- e1 cd 0a              call16	atanf
+ e1 d0 0a              call16	atanf
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0

@@ -23,7 +23,7 @@ Disassembly of section .text:
  f0 48 31 01           stm8	[0x131], r0
  f0 05 52 01           ldi16	r1, 0x152
  f1 21                 mov	r4, r1
- c6 48 0e              ldi16	r6, 0xe48
+ c6 4b 0e              ldi16	r6, 0xe4b
  c3 00                 ldi8	r7, 0x0
  c1 21                 ldi8	r5, 0x21
  d7 10                 sys	memcpy_p

@@ -5,7 +5,7 @@ Disassembly of section .text:
 
 <avm_test_main>:
  d7 01                 sys	debug_break
- c4 e9 10              ldi16	r4, 0x10e9
+ c4 ec 10              ldi16	r4, 0x10ec
  c1 00                 ldi8	r5, 0x0
  d7 31                 sys	set_text_font
  c6 00 0b              ldi16	r6, 0xb00

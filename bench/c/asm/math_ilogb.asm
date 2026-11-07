@@ -11,7 +11,7 @@ Disassembly of section .text:
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
  f0 01 0f              ldi8	r1, 0xf
- f0 06 59 0e           ldi16	r2, 0xe59
+ f0 06 5c 0e           ldi16	r2, 0xe5c
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f1 20                 mov	r4, r0
@@ -21,7 +21,7 @@ Disassembly of section .text:
  a5                    xor	r5, r5
  f7 69                 add32	q2, q1
  f0 64 88              ldp32	q2, [q2]
- e1 c3 0a              call16	ilogbf
+ e1 c6 0a              call16	ilogbf
  f0 5c 00 01           stm16	[0x100], r4
  f4 a8                 inc16	r0
  f0 0c 20              cmpi.s8	r0, 0x20

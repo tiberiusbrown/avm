@@ -3,6 +3,7 @@
      2299860   aggregate_byte_packing_hoisted.cpp
      1088903   lambda_capture.cpp
       563445   member_pointers.cpp
+     8725649   ranges_sort.cpp
       643282   scoped_lifetime.cpp
      1865076   template_specialization.cpp
       706659   virtual_dispatch.cpp

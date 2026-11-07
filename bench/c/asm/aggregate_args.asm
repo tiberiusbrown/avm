@@ -11,7 +11,7 @@ Disassembly of section .text:
  d6 fc                 adjsp	-0x4
  f0 04 04 01           ldi16	r0, 0x104
  f1 20                 mov	r4, r0
- c6 55 0e              ldi16	r6, 0xe55
+ c6 58 0e              ldi16	r6, 0xe58
  c3 00                 ldi8	r7, 0x0
  c1 80                 ldi8	r5, 0x80
  d7 10                 sys	memcpy_p
@@ -73,7 +73,7 @@ Disassembly of section .text:
  f0 6a 82              ld32	q2, [r1]
  ed d2 24              ld16	r6, [r1+4]
  af                    xor	r7, r7
- e1 20 0b              call16	__avm_mulsi3
+ e1 23 0b              call16	__avm_mulsi3
  d4 03                 jmp8	0x3 <L1>
 <L0>:
  f1 22                 mov	r4, r2

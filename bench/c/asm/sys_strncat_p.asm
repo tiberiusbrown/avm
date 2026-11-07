@@ -8,13 +8,13 @@ Disassembly of section .text:
  b0                    push16	r0
  d6 fe                 adjsp	-0x2
  d7 01                 sys	debug_break
- f0 04 21 0e           ldi16	r0, 0xe21
+ f0 04 24 0e           ldi16	r0, 0xe24
  f0 01 00              ldi8	r1, 0x0
  c4 04 01              ldi16	r4, 0x104
  f0 55 74 01           ldm16	r5, [0x174]
  f2 6a                 mov32	q3, q0
  d7 17                 sys	strncat_p
- c6 25 0e              ldi16	r6, 0xe25
+ c6 28 0e              ldi16	r6, 0xe28
  c3 00                 ldi8	r7, 0x0
  c4 78 01              ldi16	r4, 0x178
  f0 55 00 01           ldm16	r5, [0x100]
@@ -28,7 +28,7 @@ Disassembly of section .text:
  f0 55 00 01           ldm16	r5, [0x100]
  f4 01                 ldsp16	r5, [sp+0x0]
  d7 17                 sys	strncat_p
- c6 26 0e              ldi16	r6, 0xe26
+ c6 29 0e              ldi16	r6, 0xe29
  c3 00                 ldi8	r7, 0x0
  c4 2c 01              ldi16	r4, 0x12c
  f0 55 02 01           ldm16	r5, [0x102]

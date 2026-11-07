@@ -365,7 +365,7 @@ Disassembly of section .text:
  07                    mov	r5, r7
  f4 3a                 ldsp16	r6, [sp+0xe]
  f0 37 10              ldsp16	r7, [sp+0x10]
- e1 37 10              call16	__avm_mulsi3
+ e1 3a 10              call16	__avm_mulsi3
  f1 2a                 mov	r6, r2
  af                    xor	r7, r7
  f7 6e                 add32	q3, q2
@@ -500,7 +500,7 @@ Disassembly of section .text:
 <L40>:
  c2 0a                 ldi8	r6, 0xa
  af                    xor	r7, r7
- e1 38 0f              call16	__avm_mulsi3
+ e1 3b 0f              call16	__avm_mulsi3
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f0 08 d0              addi.s8	r0, -0x30
@@ -594,7 +594,7 @@ Disassembly of section .text:
  cd 30                 cmpi.s8	r5, 0x30
  d0 f5                 breq8	-0xb <L0>
  f2 30                 sub	r0, r0
- f0 06 fb 18           ldi16	r2, 0x18fb
+ f0 06 fe 18           ldi16	r2, 0x18fe
  f0 03 00              ldi8	r3, 0x0
 <L2>:
  44                    ld8u	r5, [r4]
@@ -797,13 +797,13 @@ Disassembly of section .text:
  c0 01                 ldi8	r4, 0x1
  a5                    xor	r5, r5
  f2 6b                 mov32	q3, q1
- e1 7d 0c              call16	__avm_ashlsi3
+ e1 80 0c              call16	__avm_ashlsi3
  f4 68                 stsp16	[sp+0xa], r4
  f4 71                 stsp16	[sp+0xc], r5
  c0 02                 ldi8	r4, 0x2
  a5                    xor	r5, r5
  f2 6b                 mov32	q3, q1
- e1 71 0c              call16	__avm_ashlsi3
+ e1 74 0c              call16	__avm_ashlsi3
  f0 06 ff ff           ldi16	r2, 0xffff
  f0 07 ff ff           ldi16	r3, 0xffff
  f7 66                 add32	q1, q2
@@ -814,7 +814,7 @@ Disassembly of section .text:
  f0 08 e9              addi.s8	r0, -0x17
  f1 28                 mov	r6, r0
  af                    xor	r7, r7
- e1 82 0c              call16	__avm_lshrsi3
+ e1 85 0c              call16	__avm_lshrsi3
  f4 2a                 ldsp16	r6, [sp+0xa]
  f4 33                 ldsp16	r7, [sp+0xc]
  f0 69 c4              cmp32	q3, q1
@@ -830,7 +830,7 @@ Disassembly of section .text:
  af                    xor	r7, r7
  f4 18                 ldsp16	r4, [sp+0x6]
  f4 21                 ldsp16	r5, [sp+0x8]
- e1 3b 0c              call16	__avm_ashlsi3
+ e1 3e 0c              call16	__avm_ashlsi3
  d4 3f                 jmp8	0x3f <L12>
 <L9>:
  f0 69 4c              cmp32	q1, q3
@@ -881,13 +881,13 @@ Disassembly of section .text:
  c0 01                 ldi8	r4, 0x1
  a5                    xor	r5, r5
  f2 6a                 mov32	q3, q0
- e1 e3 0b              call16	__avm_ashlsi3
+ e1 e6 0b              call16	__avm_ashlsi3
  f4 68                 stsp16	[sp+0xa], r4
  f4 71                 stsp16	[sp+0xc], r5
  c0 02                 ldi8	r4, 0x2
  a5                    xor	r5, r5
  f2 6a                 mov32	q3, q0
- e1 d7 0b              call16	__avm_ashlsi3
+ e1 da 0b              call16	__avm_ashlsi3
  f0 04 ff ff           ldi16	r0, 0xffff
  f0 05 ff ff           ldi16	r1, 0xffff
  f7 62                 add32	q0, q2
@@ -897,7 +897,7 @@ Disassembly of section .text:
  f9 34                 and	r1, r5
  f1 2a                 mov	r6, r2
  af                    xor	r7, r7
- e1 eb 0b              call16	__avm_lshrsi3
+ e1 ee 0b              call16	__avm_lshrsi3
  f4 2a                 ldsp16	r6, [sp+0xa]
  f4 33                 ldsp16	r7, [sp+0xc]
  f0 69 c0              cmp32	q3, q0
@@ -987,7 +987,7 @@ Disassembly of section .text:
  fa 7f                 lsr16i	r4, 0xf
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 23 19           ldi16	r0, 0x1923
+ f0 04 26 19           ldi16	r0, 0x1926
  f0 01 00              ldi8	r1, 0x0
  d4 21                 jmp8	0x21 <L6>
 <L3>:

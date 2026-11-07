@@ -212,7 +212,7 @@ Disassembly of section .text:
  f1 28                 mov	r6, r0
  f2 29                 add	r6, r1
  f0 6a cc              ld32	q3, [r6]
- e1 aa 0b              call16	__avm_udivmodsi4
+ e1 ad 0b              call16	__avm_udivmodsi4
  d6 02                 adjsp	0x2
  f7 66                 add32	q1, q2
  f4 10                 ldsp16	r4, [sp+0x4]

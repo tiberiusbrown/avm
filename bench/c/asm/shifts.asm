@@ -203,12 +203,12 @@ Disassembly of section .text:
  f4 20                 ldsp16	r4, [sp+0x8]
  f4 29                 ldsp16	r5, [sp+0xa]
  f2 6b                 mov32	q3, q1
- e1 e6 0a              call16	__avm_ashlsi3
+ e1 e9 0a              call16	__avm_ashlsi3
  f7 62                 add32	q0, q2
  f4 20                 ldsp16	r4, [sp+0x8]
  f4 29                 ldsp16	r5, [sp+0xa]
  f2 6b                 mov32	q3, q1
- e1 07 0b              call16	__avm_lshrsi3
+ e1 0a 0b              call16	__avm_lshrsi3
  f4 12                 ldsp16	r6, [sp+0x4]
  f9 12                 xor	r0, r4
  f9 36                 xor	r1, r5

@@ -20,12 +20,12 @@ Disassembly of section .text:
  10                    add	r4, r4
  10                    add	r4, r4
  a5                    xor	r5, r5
- c6 9f 0e              ldi16	r6, 0xe9f
+ c6 a2 0e              ldi16	r6, 0xea2
  c3 00                 ldi8	r7, 0x0
  f7 6b                 add32	q2, q3
  f0 64 88              ldp32	q2, [q2]
  f2 6a                 mov32	q3, q0
- e1 c2 0a              call16	fmaxmagf
+ e1 c5 0a              call16	fmaxmagf
  f0 6b 86              st32	[r3], q2
  f4 aa                 inc16	r2
  f0 0e 20              cmpi.s8	r2, 0x20

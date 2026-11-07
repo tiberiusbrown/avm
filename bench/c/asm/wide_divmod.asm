@@ -148,7 +148,7 @@ Disassembly of section .text:
  f0 6a 44              ld32	q1, [r2]
  f0 3a 00              stsp16	[sp+0x0], r2
  f0 3b 02              stsp16	[sp+0x2], r3
- e1 1b 0c              call16	__avm_udivmoddi4
+ e1 1e 0c              call16	__avm_udivmoddi4
  d6 0a                 adjsp	0xa
  f4 58                 stsp16	[sp+0x6], r4
  f4 61                 stsp16	[sp+0x8], r5
@@ -202,7 +202,7 @@ Disassembly of section .text:
  f4 39                 ldsp16	r5, [sp+0xe]
  f0 36 14              ldsp16	r6, [sp+0x14]
  f0 37 16              ldsp16	r7, [sp+0x16]
- e1 16 0d              call16	__avm_divmoddi4
+ e1 19 0d              call16	__avm_divmoddi4
  d6 0a                 adjsp	0xa
  f9 c2                 xor	r6, r0
  f9 e6                 xor	r7, r1

@@ -8,7 +8,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b0                    push16	r0
  d7 01                 sys	debug_break
- c6 1e 0e              ldi16	r6, 0xe1e
+ c6 21 0e              ldi16	r6, 0xe21
  c3 00                 ldi8	r7, 0x0
  c4 06 01              ldi16	r4, 0x106
  f0 55 07 01           ldm16	r5, [0x107]
@@ -16,20 +16,20 @@ Disassembly of section .text:
  c4 09 01              ldi16	r4, 0x109
  f0 55 00 01           ldm16	r5, [0x100]
  d7 16                 sys	strncpy_p
- f0 06 3f 0e           ldi16	r2, 0xe3f
+ f0 06 42 0e           ldi16	r2, 0xe42
  f0 03 00              ldi8	r3, 0x0
  c4 0d 01              ldi16	r4, 0x10d
  f0 55 02 01           ldm16	r5, [0x102]
  f2 6b                 mov32	q3, q1
  d7 16                 sys	strncpy_p
- c6 43 0e              ldi16	r6, 0xe43
+ c6 46 0e              ldi16	r6, 0xe46
  c3 00                 ldi8	r7, 0x0
  c4 15 01              ldi16	r4, 0x115
  f0 50 02 01           ldm16	r0, [0x102]
  d7 16                 sys	strncpy_p
  c4 1d 01              ldi16	r4, 0x11d
  f0 56 02 01           ldm16	r6, [0x102]
- c6 1e 0e              ldi16	r6, 0xe1e
+ c6 21 0e              ldi16	r6, 0xe21
  c3 00                 ldi8	r7, 0x0
  d7 16                 sys	strncpy_p
  c4 25 01              ldi16	r4, 0x125

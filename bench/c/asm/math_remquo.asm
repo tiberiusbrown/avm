@@ -24,12 +24,12 @@ Disassembly of section .text:
  10                    add	r4, r4
  10                    add	r4, r4
  a5                    xor	r5, r5
- c6 47 0f              ldi16	r6, 0xf47
+ c6 4a 0f              ldi16	r6, 0xf4a
  c3 00                 ldi8	r7, 0x0
  f7 6b                 add32	q2, q3
  f0 64 88              ldp32	q2, [q2]
  f2 6a                 mov32	q3, q0
- e1 cc 0a              call16	remquof
+ e1 cf 0a              call16	remquof
  d6 02                 adjsp	0x2
  f0 6b 86              st32	[r3], q2
  f4 00                 ldsp16	r4, [sp+0x0]

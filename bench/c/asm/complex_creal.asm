@@ -19,7 +19,7 @@ Disassembly of section .text:
  f4 60                 stsp16	[sp+0x8], r4
  f4 69                 stsp16	[sp+0xa], r5
  f0 14 00              leasp	r4, 0x0
- e1 bc 0a              call16	crealf
+ e1 bf 0a              call16	crealf
  c6 00 01              ldi16	r6, 0x100
  f0 6b 8c              st32	[r6], q2
  d7 01                 sys	debug_break

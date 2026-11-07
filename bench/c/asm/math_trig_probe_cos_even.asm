@@ -21,7 +21,7 @@ Disassembly of section .text:
  10                    add	r4, r4
  f2 23                 add	r4, r3
  f0 6a 88              ld32	q2, [r4]
- e1 d5 0a              call16	cosf
+ e1 d8 0a              call16	cosf
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0

@@ -49,7 +49,7 @@ Disassembly of section .text:
  f1 2a                 mov	r6, r2
  f2 2b                 add	r6, r3
  f0 6a cc              ld32	q3, [r6]
- e1 d0 0a              call16	powf
+ e1 d3 0a              call16	powf
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0

@@ -27,7 +27,7 @@ Disassembly of section .text:
  c6 00 01              ldi16	r6, 0x100
  f0 6a cc              ld32	q3, [r6]
  ff 00                 fadd
- e1 e0 0a              call16	expf
+ e1 e3 0a              call16	expf
  f4 50                 stsp16	[sp+0x4], r4
  f4 59                 stsp16	[sp+0x6], r5
  f2 69                 mov32	q2, q1

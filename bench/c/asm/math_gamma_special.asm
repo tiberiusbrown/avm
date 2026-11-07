@@ -10,12 +10,12 @@ Disassembly of section .text:
  b0                    push16	r0
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
- f0 06 14 16           ldi16	r2, 0x1614
+ f0 06 17 16           ldi16	r2, 0x1617
  f0 03 00              ldi8	r3, 0x0
  f0 05 00 01           ldi16	r1, 0x100
  d4 0d                 jmp8	0xd <L2>
 <L0>:
- e1 d9 0a              call16	lgammaf
+ e1 dc 0a              call16	lgammaf
 <L1>:
  f0 6b 82              st32	[r1], q2
  f4 a8                 inc16	r0
@@ -32,7 +32,7 @@ Disassembly of section .text:
  f0 64 88              ldp32	q2, [q2]
  f0 0c 10              cmpi.s8	r0, 0x10
  d8 e1                 bruge8	-0x1f <L0>
- e1 67 0f              call16	tgammaf
+ e1 6a 0f              call16	tgammaf
  d4 df                 jmp8	-0x21 <L1>
 <L3>:
  d7 01                 sys	debug_break

@@ -15,7 +15,7 @@ Disassembly of section .text:
  d7 01                 sys	debug_break
 <L0>:
  f0 6a 84              ld32	q2, [r2]
- e1 cf 0a              call16	log10f
+ e1 d2 0a              call16	log10f
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0

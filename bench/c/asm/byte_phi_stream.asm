@@ -68,7 +68,7 @@ Disassembly of section .text:
  c3 ff                 ldi8	r7, 0xff
  a5                    xor	r5, r5
  c2 07                 ldi8	r6, 0x7
- f0 04 41 0e           ldi16	r0, 0xe41
+ f0 04 44 0e           ldi16	r0, 0xe44
  f0 01 00              ldi8	r1, 0x0
  01                    mov	r4, r5
 <L0>:

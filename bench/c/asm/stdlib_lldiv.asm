@@ -130,7 +130,7 @@ Disassembly of section .text:
  f0 35 1f              ldsp16	r5, [sp+0x1f]
  f0 36 21              ldsp16	r6, [sp+0x21]
  f0 37 23              ldsp16	r7, [sp+0x23]
- e1 7b 0b              call16	__avm_divmoddi4
+ e1 7e 0b              call16	__avm_divmoddi4
  d6 0a                 adjsp	0xa
  f1 08                 mov	r1, r0
  f0 09 0c              addi.s8	r1, 0xc

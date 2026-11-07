@@ -33,7 +33,7 @@ Disassembly of section .text:
  f0 14 20              leasp	r4, 0x20
  f0 15 08              leasp	r5, 0x8
  f0 16 00              leasp	r6, 0x0
- e1 ce 0a              call16	cpowl
+ e1 d1 0a              call16	cpowl
  c4 00 01              ldi16	r4, 0x100
  f0 36 20              ldsp16	r6, [sp+0x20]
  f0 37 22              ldsp16	r7, [sp+0x22]

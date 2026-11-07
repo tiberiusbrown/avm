@@ -22,7 +22,7 @@ Disassembly of section .text:
  10                    add	r4, r4
  f1 14                 mov	r2, r4
  f1 1f                 mov	r3, r7
- f0 04 cb 0f           ldi16	r0, 0xfcb
+ f0 04 ce 0f           ldi16	r0, 0xfce
  f0 01 00              ldi8	r1, 0x0
  f7 64                 add32	q1, q0
  f0 68 04              ldp32	q0, [q1+]
@@ -56,7 +56,7 @@ Disassembly of section .text:
  f1 2a                 mov	r6, r2
  f2 2b                 add	r6, r3
  f0 6a cc              ld32	q3, [r6]
- e1 d2 0a              call16	fmodf
+ e1 d5 0a              call16	fmodf
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0

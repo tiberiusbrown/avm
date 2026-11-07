@@ -112,7 +112,7 @@ Disassembly of section .text:
  f0 3b 06              stsp16	[sp+0x6], r3
  f0 3e 20              stsp16	[sp+0x20], r6
  f0 3f 22              stsp16	[sp+0x22], r7
- e1 56 0d              call16	__avm_umoddi3
+ e1 59 0d              call16	__avm_umoddi3
  d6 08                 adjsp	0x8
  f4 60                 stsp16	[sp+0x8], r4
  f4 69                 stsp16	[sp+0xa], r5
@@ -220,7 +220,7 @@ Disassembly of section .text:
  f4 39                 ldsp16	r5, [sp+0xe]
  f0 36 14              ldsp16	r6, [sp+0x14]
  f0 37 16              ldsp16	r7, [sp+0x16]
- e1 da 0b              call16	__avm_muldi3
+ e1 dd 0b              call16	__avm_muldi3
  d6 08                 adjsp	0x8
  f2 66                 mov32	q1, q2
  f4 72                 stsp16	[sp+0xc], r6

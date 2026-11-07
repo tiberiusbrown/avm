@@ -24,7 +24,7 @@ Disassembly of section .text:
  f0 6a 88              ld32	q2, [r4]
  f0 16 04              leasp	r6, 0x4
  f0 17 00              leasp	r7, 0x0
- e1 e1 0a              call16	sincosf
+ e1 e4 0a              call16	sincosf
  f4 02                 ldsp16	r6, [sp+0x0]
  f4 0b                 ldsp16	r7, [sp+0x2]
  f4 10                 ldsp16	r4, [sp+0x4]

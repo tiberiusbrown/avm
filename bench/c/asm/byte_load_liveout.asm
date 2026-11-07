@@ -61,7 +61,7 @@ Disassembly of section .text:
  b0                    push16	r0
  08                    mov	r6, r4
  af                    xor	r7, r7
- f0 06 65 0e           ldi16	r2, 0xe65
+ f0 06 68 0e           ldi16	r2, 0xe68
  f0 03 00              ldi8	r3, 0x0
  f7 67                 add32	q1, q3
  c6 03 01              ldi16	r6, 0x103

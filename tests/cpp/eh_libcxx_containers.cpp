@@ -19,71 +19,64 @@ namespace {
 unsigned allocations_until_failure;
 unsigned live_allocations;
 unsigned live_values;
+int case_result;
+constexpr int one = 1;
+constexpr int two = 2;
+constexpr int duplicate = 7;
+constexpr int initial_value = 17;
+constexpr int new_key = 11;
+constexpr int new_value = 23;
 
-template<class Container, class Operation>
-int expect_allocation_failure(Container& container, Operation operation)
-{
-    allocations_until_failure = 1;
-    try {
-        operation(container);
-    } catch(const std::bad_alloc&) {
-        return container.empty() ? 0 : 1;
-    } catch(...) {
-        return 2;
-    }
-    return 3;
+using int_map = std::map<int, int>;
+using int_hash_map = std::unordered_map<int, int>;
+using vector_stack = std::stack<int, std::vector<int>>;
+using vector_queue = std::queue<int, std::vector<int>>;
+
+// Keep the operation and its catch in the same small frame. Each holder is
+// constructed and destroyed around the test; no forwarding callbacks stay on
+// the allocation/throw path. Scalar arguments also need no automatic lifetime.
+#define ALLOCATION_FAILURE_AT(Name, Container, Operation, Count)                \
+__attribute__((noinline)) void Name()                                            \
+{                                                                              \
+    alignas(Container) static unsigned char storage[sizeof(Container)];          \
+    static Container* container;                                               \
+    container = std::construct_at(reinterpret_cast<Container*>(storage));        \
+    case_result = 3;                                                           \
+    allocations_until_failure = Count;                                         \
+    try {                                                                     \
+        Operation;                                                            \
+    } catch(const std::bad_alloc&) {                                           \
+        case_result = container->empty() ? 0 : 1;                              \
+    } catch(...) {                                                            \
+        case_result = 2;                                                       \
+    }                                                                         \
+    allocations_until_failure = 0;                                             \
+    std::destroy_at(container);                                                \
 }
 
-template<class Container, class Operation>
-__attribute__((noinline)) int test_container(Operation operation)
-{
-    // Each instantiation runs once. Keep its holder off the allocation/throw
-    // stack path, but retain construction and destruction around the test.
-    alignas(Container) static unsigned char storage[sizeof(Container)];
-    auto* container = std::construct_at(reinterpret_cast<Container*>(storage));
-    const int result = expect_allocation_failure(*container, operation);
-    std::destroy_at(container);
-    return result;
-}
+#define ALLOCATION_FAILURE_CASE(Name, Container, Operation) \
+    ALLOCATION_FAILURE_AT(Name, Container, Operation, 1)
 
-int sequence_containers()
-{
-    if(test_container<std::vector<int>>([](auto& c) { c.push_back(1); }) != 0)
-        return 1;
-    if(test_container<std::deque<int>>([](auto& c) { c.push_back(1); }) != 0)
-        return 2;
-    if(test_container<std::list<int>>([](auto& c) { c.push_back(1); }) != 0)
-        return 3;
-    return test_container<std::forward_list<int>>(
-        [](auto& c) { c.push_front(1); }) == 0 ? 0 : 4;
-}
-
-int associative_containers()
-{
-    if(test_container<std::map<int, int>>(
-           [](auto& c) { c.try_emplace(1, 2); }) != 0)
-        return 1;
-    if(test_container<std::set<int>>(
-           [](auto& c) { c.insert(1); }) != 0)
-        return 2;
-    if(test_container<std::unordered_map<int, int>>(
-           [](auto& c) { c.try_emplace(1, 2); }) != 0)
-        return 3;
-    return test_container<std::unordered_set<int>>(
-        [](auto& c) { c.insert(1); }) == 0 ? 0 : 4;
-}
-
-int adaptors()
-{
-    if(test_container<std::stack<int, std::vector<int>>>(
-           [](auto& c) { c.push(1); }) != 0)
-        return 1;
-    if(test_container<std::queue<int, std::vector<int>>>(
-           [](auto& c) { c.push(1); }) != 0)
-        return 2;
-    return test_container<std::priority_queue<int, std::vector<int>>>(
-        [](auto& c) { c.push(1); }) == 0 ? 0 : 3;
-}
+ALLOCATION_FAILURE_CASE(fail_vector, std::vector<int>, container->push_back(one))
+ALLOCATION_FAILURE_CASE(fail_deque, std::deque<int>, container->push_back(one))
+ALLOCATION_FAILURE_CASE(fail_deque_front, std::deque<int>, container->push_front(one))
+ALLOCATION_FAILURE_CASE(fail_list, std::list<int>, container->push_back(one))
+ALLOCATION_FAILURE_CASE(fail_forward_list, std::forward_list<int>, container->push_front(one))
+ALLOCATION_FAILURE_CASE(fail_map, int_map, container->try_emplace(one, two))
+ALLOCATION_FAILURE_CASE(fail_set, std::set<int>, container->insert(one))
+ALLOCATION_FAILURE_CASE(fail_hash_map, int_hash_map, container->try_emplace(one, two))
+ALLOCATION_FAILURE_CASE(fail_hash_set, std::unordered_set<int>, container->insert(one))
+ALLOCATION_FAILURE_CASE(fail_vector_stack, vector_stack, container->push(one))
+ALLOCATION_FAILURE_CASE(fail_vector_queue, vector_queue, container->push(one))
+ALLOCATION_FAILURE_CASE(fail_priority_queue, std::priority_queue<int>, container->push(one))
+ALLOCATION_FAILURE_CASE(fail_default_stack, std::stack<int>, container->push(one))
+ALLOCATION_FAILURE_CASE(fail_default_queue, std::queue<int>, container->push(one))
+// The map allocation succeeds, then block allocation fails. Its temporary map
+// must be reclaimed, including on the front-growth path.
+ALLOCATION_FAILURE_AT(fail_deque_block, std::deque<int>, container->push_back(one), 2)
+ALLOCATION_FAILURE_AT(fail_deque_front_block, std::deque<int>, container->push_front(one), 2)
+#undef ALLOCATION_FAILURE_CASE
+#undef ALLOCATION_FAILURE_AT
 
 struct move_value {
     int value;
@@ -98,128 +91,173 @@ struct move_value {
 };
 
 using move_map = std::unordered_map<int, move_value>;
-// Reuse the holder across the sequential duplicate-insertion cases.
-alignas(move_map) unsigned char duplicate_key_storage[sizeof(move_map)];
+using move_pair = std::pair<const int, move_value>;
+alignas(move_map) unsigned char map_storage[sizeof(move_map)];
+alignas(move_value) unsigned char candidate_storage[sizeof(move_value)];
+alignas(move_pair) unsigned char pair_storage[sizeof(move_pair)];
+move_map* values;
+move_value* candidate;
+move_pair* pair_candidate;
 
-template<class Operation>
-__attribute__((noinline)) int duplicate_key(Operation operation)
+__attribute__((noinline)) void prepare_map()
 {
-    auto* container = std::construct_at(reinterpret_cast<move_map*>(duplicate_key_storage));
-    container->try_emplace(7, 17);
-    move_value candidate(23);
-    int result = 0;
-    allocations_until_failure = 1;
-    try {
-        if(operation(*container, candidate) || candidate.value != 23 ||
-           container->size() != 1 || container->at(7).value != 17 ||
-           allocations_until_failure != 1)
-            result = 1;
-    } catch(...) {
-        result = 2;
-    }
-    allocations_until_failure = 0;
-    std::destroy_at(container);
-    return result;
+    values = std::construct_at(reinterpret_cast<move_map*>(map_storage));
+    values->try_emplace(duplicate, initial_value);
 }
 
-int duplicate_keys()
+__attribute__((noinline)) void prepare_candidates()
 {
-    if(duplicate_key([](auto& c, auto& v) {
-           return c.try_emplace(7, std::move(v)).second;
-       }) != 0)
-        return 1;
-    if(duplicate_key([](auto& c, auto& v) {
-           return c.emplace(7, std::move(v)).second;
-       }) != 0)
-        return 2;
-    if(duplicate_key([](auto& c, auto&) {
-           std::pair<const int, move_value> pair{7, move_value{29}};
-           return c.emplace(std::move(pair)).second || pair.second.value != 29;
-       }) != 0)
-        return 3;
-    return duplicate_key([](auto& c, auto& v) {
-        return c.emplace(std::piecewise_construct,
-            std::forward_as_tuple(7), std::forward_as_tuple(std::move(v))).second;
-    }) == 0 ? 0 : 4;
+    candidate = std::construct_at(reinterpret_cast<move_value*>(candidate_storage), new_value);
+    pair_candidate = std::construct_at(reinterpret_cast<move_pair*>(pair_storage), duplicate, 29);
+    allocations_until_failure = 1;
+    case_result = 0;
+}
+
+// These operations must not throw. An unexpected allocation throws through the
+// scalar-only fixture and fails the image, without adding another catch frame.
+__attribute__((noinline)) void duplicate_try_emplace()
+{
+    if(values->try_emplace(duplicate, std::move(*candidate)).second)
+        case_result = 1;
+}
+
+__attribute__((noinline)) void duplicate_two_arguments()
+{
+    if(values->emplace(duplicate, std::move(*candidate)).second)
+        case_result = 1;
+}
+
+__attribute__((noinline)) void duplicate_pair()
+{
+    if(values->emplace(std::move(*pair_candidate)).second)
+        case_result = 1;
+}
+
+__attribute__((noinline)) void duplicate_piecewise()
+{
+    if(values->emplace(std::piecewise_construct,
+            std::forward_as_tuple(duplicate),
+            std::forward_as_tuple(std::move(*candidate))).second)
+        case_result = 1;
+}
+
+__attribute__((noinline)) void finish_duplicate()
+{
+    if(candidate->value != new_value || pair_candidate->second.value != 29 ||
+       values->size() != 1 || values->at(duplicate).value != initial_value ||
+       allocations_until_failure != 1)
+        case_result = 1;
+    allocations_until_failure = 0;
+    std::destroy_at(candidate);
+    std::destroy_at(pair_candidate);
+    std::destroy_at(values);
+}
+
+using int_set = std::unordered_set<int>;
+alignas(int_set) unsigned char set_storage[sizeof(int_set)];
+int_set* set_values;
+
+__attribute__((noinline)) void prepare_set()
+{
+    set_values = std::construct_at(reinterpret_cast<int_set*>(set_storage));
+    set_values->emplace(duplicate);
+    allocations_until_failure = 1;
 }
 
 __attribute__((noinline)) int duplicate_set_key()
 {
-    std::unordered_set<int> container;
-    container.emplace(7);
-    allocations_until_failure = 1;
-    int result = 0;
-    try {
-        if(container.emplace(7).second || allocations_until_failure != 1)
-            result = 1;
-    } catch(...) {
-        result = 2;
-    }
+    case_result = set_values->emplace(duplicate).second || allocations_until_failure != 1;
     allocations_until_failure = 0;
-    return result;
+    std::destroy_at(set_values);
+    return case_result;
 }
 
-__attribute__((noinline)) int converted_key()
+alignas(int_hash_map) unsigned char converted_storage[sizeof(int_hash_map)];
+int_hash_map* converted_values;
+constexpr long converted_key = duplicate;
+
+__attribute__((noinline)) void prepare_converted()
 {
-    // A convertible key must be constructed before comparing it: extraction
-    // only bypasses construction when the argument has the exact key type.
-    std::unordered_map<int, int> container;
-    container.emplace(7, 17);
+    converted_values = std::construct_at(reinterpret_cast<int_hash_map*>(converted_storage));
+    converted_values->emplace(duplicate, initial_value);
     allocations_until_failure = 1;
+}
+
+__attribute__((noinline)) void converted_key_failure()
+{
+    // Convertible keys retain the construction path, including allocation for
+    // an eventual duplicate. Exact-key extraction must not take this branch.
+    case_result = 3;
     try {
-        container.emplace(7L, 23);
+        converted_values->emplace(converted_key, new_value);
     } catch(const std::bad_alloc&) {
-        return container.size() == 1 && container.at(7) == 17 &&
+        case_result = converted_values->size() == 1 &&
+            converted_values->at(duplicate) == initial_value &&
             allocations_until_failure == 0 ? 0 : 1;
     } catch(...) {
-        allocations_until_failure = 0;
-        return 2;
+        case_result = 2;
     }
     allocations_until_failure = 0;
-    return 3;
+    std::destroy_at(converted_values);
 }
 
-__attribute__((noinline)) int rehash_failure()
+std::size_t old_buckets;
+unsigned old_allocations;
+unsigned remaining_failures;
+
+__attribute__((noinline)) void prepare_rehash()
 {
-    using container_type = std::unordered_map<int, move_value>;
-    alignas(container_type) static unsigned char storage[sizeof(container_type)];
-    auto* container = std::construct_at(reinterpret_cast<container_type*>(storage));
-    container->try_emplace(7, 17);
-    const auto buckets = container->bucket_count();
-    const auto allocations = live_allocations;
-    container->max_load_factor(0.5f);
-    int result = 0;
-    // Allocate and construct the new node, then fail bucket allocation. Both
-    // the old buckets and the old element must survive; the new node must not.
+    old_buckets = values->bucket_count();
+    old_allocations = live_allocations;
+    remaining_failures = 2;
+    values->max_load_factor(0.5f);
+}
+
+__attribute__((noinline)) void rehash_failure()
+{
+    case_result = 0;
+    // Fail bucket allocation after allocating the node. Keep the old element
+    // and buckets, reclaim the node, then retry successfully in a later phase.
     allocations_until_failure = 2;
     try {
-        container->try_emplace(11, 23);
-        result = 1;
+        values->try_emplace(new_key, new_value);
+        case_result = 1;
     } catch(const std::bad_alloc&) {
-        if(allocations_until_failure != 0 || container->size() != 1 ||
-           container->bucket_count() != buckets || container->at(7).value != 17 ||
-           container->contains(11) || live_allocations != allocations || live_values != 1)
-            result = 2;
+        remaining_failures = allocations_until_failure;
+        case_result = 0;
     } catch(...) {
-        result = 3;
+        case_result = 3;
     }
     allocations_until_failure = 0;
-    // Also exercise successful growth after the failed attempt.
-    container->try_emplace(11, 23);
-    if(container->size() != 2 || container->at(11).value != 23 ||
-       container->bucket_count() <= buckets || live_values != 2)
-        result = 4;
-    std::destroy_at(container);
-    return result;
+}
+
+__attribute__((noinline)) void check_rehash_failure()
+{
+    if(remaining_failures != 0 || values->size() != 1 ||
+       values->bucket_count() != old_buckets || values->at(duplicate).value != initial_value ||
+       values->contains(new_key) || live_allocations != old_allocations || live_values != 1)
+        case_result = 2;
+}
+
+__attribute__((noinline)) void rehash_retry()
+{
+    values->try_emplace(new_key, new_value);
+}
+
+__attribute__((noinline)) void finish_rehash()
+{
+    if(values->size() != 2 || values->at(new_key).value != new_value ||
+       values->bucket_count() <= old_buckets || live_values != 2)
+        case_result = 4;
+    std::destroy_at(values);
 }
 
 }
 
 void* operator new(std::size_t size)
 {
-    if(allocations_until_failure != 0 && --allocations_until_failure == 0) {
+    if(allocations_until_failure != 0 && --allocations_until_failure == 0)
         throw std::bad_alloc();
-    }
     if(void* memory = std::malloc(size)) {
         ++live_allocations;
         return memory;
@@ -243,13 +281,54 @@ void operator delete(void* memory, std::size_t) noexcept
 
 extern "C" int avm_test_main()
 {
-    if(sequence_containers() != 0)
-        return 1;
-    if(associative_containers() != 0)
-        return 2;
-    if(duplicate_keys() != 0 || duplicate_set_key() != 0 || converted_key() != 0)
+#define CHECK_FAILURE(Name, Code) do { Name(); if(case_result != 0) return Code; } while(false)
+    CHECK_FAILURE(fail_vector, 1);
+    CHECK_FAILURE(fail_deque, 1);
+    CHECK_FAILURE(fail_deque_front, 1);
+    CHECK_FAILURE(fail_deque_block, 1);
+    CHECK_FAILURE(fail_deque_front_block, 1);
+    CHECK_FAILURE(fail_list, 1);
+    CHECK_FAILURE(fail_forward_list, 1);
+    CHECK_FAILURE(fail_map, 2);
+    CHECK_FAILURE(fail_set, 2);
+    CHECK_FAILURE(fail_hash_map, 2);
+    CHECK_FAILURE(fail_hash_set, 2);
+    CHECK_FAILURE(fail_vector_stack, 3);
+    CHECK_FAILURE(fail_vector_queue, 3);
+    CHECK_FAILURE(fail_priority_queue, 3);
+    CHECK_FAILURE(fail_default_stack, 3);
+    CHECK_FAILURE(fail_default_queue, 3);
+#undef CHECK_FAILURE
+
+#define CHECK_DUPLICATE(Operation) do {                                         \
+    prepare_map();                                                             \
+    prepare_candidates();                                                      \
+    Operation();                                                               \
+    finish_duplicate();                                                        \
+    if(case_result != 0) return 4;                                              \
+} while(false)
+    CHECK_DUPLICATE(duplicate_try_emplace);
+    CHECK_DUPLICATE(duplicate_two_arguments);
+    CHECK_DUPLICATE(duplicate_pair);
+    CHECK_DUPLICATE(duplicate_piecewise);
+#undef CHECK_DUPLICATE
+
+    prepare_set();
+    if(duplicate_set_key() != 0)
         return 4;
-    if(rehash_failure() != 0 || live_allocations != 0 || live_values != 0)
+    prepare_converted();
+    converted_key_failure();
+    if(case_result != 0)
+        return 4;
+    prepare_map();
+    prepare_rehash();
+    rehash_failure();
+    check_rehash_failure();
+    if(case_result != 0)
         return 5;
-    return adaptors() == 0 ? 0 : 3;
+    rehash_retry();
+    finish_rehash();
+    if(case_result != 0 || live_allocations != 0 || live_values != 0)
+        return 5;
+    return 0;
 }

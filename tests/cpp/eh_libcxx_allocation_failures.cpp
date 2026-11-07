@@ -3,6 +3,8 @@
 #include <functional>
 #include <memory>
 #include <new>
+#include <tuple>
+#include <utility>
 
 namespace {
 
@@ -71,6 +73,55 @@ int shared_allocation_failure()
     return 2;
 }
 
+unsigned live_members;
+
+struct first_member {
+    first_member() noexcept { ++live_members; }
+    ~first_member() { --live_members; }
+};
+
+struct throwing_member {
+    explicit throwing_member(int) { throw 17; }
+};
+
+__attribute__((noinline)) int pair_construction_failure()
+{
+    using value_type = std::pair<first_member, throwing_member>;
+    alignas(value_type) static unsigned char storage[sizeof(value_type)];
+    std::allocator<value_type> allocator;
+    try {
+        std::allocator_traits<decltype(allocator)>::construct(allocator,
+            reinterpret_cast<value_type*>(storage), std::piecewise_construct,
+            std::tuple<>(), std::forward_as_tuple(1));
+    } catch(int value) {
+        return value == 17 && live_members == 0 ? 0 : 1;
+    } catch(...) {
+        return 2;
+    }
+    return 3;
+}
+
+struct throwing_allocator {
+    using value_type = int;
+    template<class U, class... Args>
+    void construct(U*, Args&&...) { throw 23; }
+};
+
+__attribute__((noinline)) int allocator_hook_failure()
+{
+    throwing_allocator allocator;
+    alignas(int) static unsigned char storage[sizeof(int)];
+    try {
+        std::allocator_traits<throwing_allocator>::construct(allocator,
+            reinterpret_cast<int*>(storage), 7);
+    } catch(int value) {
+        return value == 23 ? 0 : 1;
+    } catch(...) {
+        return 2;
+    }
+    return 3;
+}
+
 }
 
 void* operator new(std::size_t size)
@@ -100,5 +151,9 @@ extern "C" int avm_test_main()
         return 1;
     if(function_assignment_failure() != 0)
         return 2;
-    return shared_allocation_failure() == 0 ? 0 : 3;
+    if(shared_allocation_failure() != 0)
+        return 3;
+    if(pair_construction_failure() != 0)
+        return 4;
+    return allocator_hook_failure() == 0 ? 0 : 5;
 }

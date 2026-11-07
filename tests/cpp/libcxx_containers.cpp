@@ -85,14 +85,33 @@ int standard_vector_test()
     std::vector<int> values;
     values.push_back(31);
     values.push_back(32);
-    return values.size() == 2 && values[0] == 31 && values[1] == 32 ? 0 : 1;
+    values.push_back(values.front());
+    return values.size() == 3 && values[0] == 31 && values[1] == 32 &&
+        values.back() == 31 ? 0 : 1;
 }
 
 int deque_test()
 {
-    std::deque<int> values;
+    using container_type = std::deque<int>;
+    alignas(container_type) static unsigned char storage[sizeof(container_type)];
+    auto& values = *std::construct_at(reinterpret_cast<container_type*>(storage));
     values.push_back(42);
-    return values.size() == 1 && values.front() == 42 ? 0 : 1;
+    const int result = values.size() == 1 && values.front() == 42 ? 0 : 1;
+    std::destroy_at(std::addressof(values));
+    return result;
+}
+
+int deque_front_test()
+{
+    using container_type = std::deque<int>;
+    alignas(container_type) static unsigned char storage[sizeof(container_type)];
+    auto& values = *std::construct_at(reinterpret_cast<container_type*>(storage));
+    values.push_front(42);
+    values.push_front(41);
+    values.push_back(43);
+    const int result = values.size() == 3 && values.front() == 41 && values.back() == 43 ? 0 : 1;
+    std::destroy_at(std::addressof(values));
+    return result;
 }
 
 int list_test()
@@ -113,18 +132,26 @@ int forward_list_test()
 
 int map_test()
 {
-    std::map<int, int> values;
+    using container_type = std::map<int, int>;
+    alignas(container_type) static unsigned char storage[sizeof(container_type)];
+    auto& values = *std::construct_at(reinterpret_cast<container_type*>(storage));
     values[1] = 71;
     values[2] = 72;
-    return values.size() == 2 && values.find(2)->second == 72 ? 0 : 1;
+    const int result = values.size() == 2 && values.find(2)->second == 72 ? 0 : 1;
+    std::destroy_at(std::addressof(values));
+    return result;
 }
 
 int set_test()
 {
-    std::set<int> values;
+    using container_type = std::set<int>;
+    alignas(container_type) static unsigned char storage[sizeof(container_type)];
+    auto& values = *std::construct_at(reinterpret_cast<container_type*>(storage));
     values.insert(81);
     values.insert(82);
-    return values.size() == 2 && values.find(82) != values.end() ? 0 : 1;
+    const int result = values.size() == 2 && values.find(82) != values.end() ? 0 : 1;
+    std::destroy_at(std::addressof(values));
+    return result;
 }
 
 __attribute__((noinline)) int unordered_map_test()
@@ -140,10 +167,14 @@ __attribute__((noinline)) int unordered_map_test()
 
 int unordered_set_test()
 {
-    std::unordered_set<int> values;
+    using container_type = std::unordered_set<int>;
+    alignas(container_type) static unsigned char storage[sizeof(container_type)];
+    auto& values = *std::construct_at(reinterpret_cast<container_type*>(storage));
     values.insert(101);
     values.insert(102);
-    return values.size() == 2 && values.find(102) != values.end() ? 0 : 1;
+    const int result = values.size() == 2 && values.find(102) != values.end() ? 0 : 1;
+    std::destroy_at(std::addressof(values));
+    return result;
 }
 
 int queue_test()
@@ -162,23 +193,27 @@ int queue_test()
 
 int priority_queue_test()
 {
-    std::priority_queue<int> values;
+    using container_type = std::priority_queue<int>;
+    alignas(container_type) static unsigned char storage[sizeof(container_type)];
+    auto& values = *std::construct_at(reinterpret_cast<container_type*>(storage));
     values.push(121);
     values.push(122);
-    return values.top() == 122 ? 0 : 1;
+    const int result = values.top() == 122 ? 0 : 1;
+    std::destroy_at(std::addressof(values));
+    return result;
 }
 
 }
 
 extern "C" int avm_test_main()
 {
-    const std::array<int, 3> fixed{1, 2, 3};
+    static constexpr std::array<int, 3> fixed{1, 2, 3};
     if(fixed.front() != 1 || fixed.back() != 3 || fixed.size() != 3)
         return 1;
     if(vector_test() != 0)
         return 2;
     if(adaptor_test() != 0 || standard_vector_test() != 0 || deque_test() != 0 ||
-       list_test() != 0 || forward_list_test() != 0 || map_test() != 0 ||
+       deque_front_test() != 0 || list_test() != 0 || forward_list_test() != 0 || map_test() != 0 ||
        set_test() != 0 || unordered_map_test() != 0 || unordered_set_test() != 0 ||
        queue_test() != 0 || priority_queue_test() != 0)
         return 3;

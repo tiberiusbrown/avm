@@ -21,14 +21,19 @@ memory API checks run in separate functions, and allocation fixtures keep
 unrelated holders off the guest stack. Payloads larger than their wrapper types
 still force out-of-line allocation.
 
-These fixtures remain blocked by the 256-byte link-time stack check in the
-listed configurations. Their coverage is retained, so a full image build still
-reports these failures; they are not replaced by optimized images or skipped.
+The container fixtures link and execute at all six optimization levels. At O0,
+the largest known static paths are 238 bytes for `libcxx_containers`, 255 bytes
+for `eh_libcxx_containers`, and 254 bytes for `libcxx_container_growth`. These
+are path analyses with incomplete whole-program bounds; measured execution
+peaks are 195, 215, and 249 bytes respectively.
 
-| Fixture | Failing configurations | libc++ headers on the failing paths |
-|---|---|---|
-| `libcxx_containers` | O0: 376 bytes | `__tree` key forwarding and node-construction helpers on the maximum path; isolated O0 hash/deque paths also exceed the limit in `__hash_table`, `deque`, and `__split_buffer` |
-| `eh_libcxx_containers` | O0: 420 bytes | `__tree`, `__utility/try_key_extraction.h`, node-construction and allocator headers |
+`libcxx_container_growth` checks custom allocator construction and destruction,
+over-allocating `allocate_at_least` counts, aliasing during vector growth,
+key-extractable and convertible-key insertion, collision-heavy rehashing, and
+allocator access to private constructors. Split-buffer checks exercise overlapping
+shifts in both directions, including AVM's three-byte function pointers. Vector
+growth also has a constant-evaluation assertion. The allocation exception fixture
+checks partial pair cleanup and propagation from a throwing allocator hook.
 
 `libcxx_algorithms` checks classic and ranges sorting at lengths 0 through 65,
 including duplicates, sorted/reverse inputs, permutation preservation, a
@@ -38,6 +43,8 @@ checks that duplicate-key `try_emplace` and key-extractable `emplace` neither
 allocate nor move their arguments, while convertible keys retain the construction
 path. It also fails bucket allocation after constructing a node, verifies node
 cleanup and preservation of existing elements and buckets, then retries growth.
+Deque allocation failures cover both ends, block failure after map allocation,
+and the default deque-backed stack and queue adaptors.
 The AVM generic sorter uses a nonrecursive heapsort; the standard comparison
 complexity and public overloads are retained.
 

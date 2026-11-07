@@ -331,34 +331,74 @@ Further reductions require broader work:
 
 ## O0 container paths
 
-AVM hash insertion selects key-aware and fallback overloads at compile time,
+AVM tree and hash insertion select key-aware and fallback overloads at compile time,
 without runtime callback objects. Extraction uses the same exact-key, pair,
 two-argument and piecewise-construction cases as libc++'s callback dispatcher.
 The key-aware overload searches before constructing a node, so duplicates do
 not allocate or move mapped arguments. A separate helper computes whether
 rehashing is needed and its requested bucket count; that helper returns before
-rehash begins. The existing rehash canonicalization remains in use. A node guard
+rehash begins. Bucket-count normalization also finishes before allocation, and
+bucket rebuilding starts after allocation returns. A node guard
 covers rehash failures, and construction still precedes any bucket changes.
 
-For `unordered_map<int, int>` at O0, the key-aware insertion frame is 58 bytes
-without exceptions and 66 bytes with exceptions. These frames contain 38/44
-bytes of local slots and 20/22 bytes of spills and saved registers respectively.
-The growth-decision helper has a 29-byte frame, which is absent from allocation and throw paths.
-Standalone probes selecting the original unordered-map checks give these
-maximum known stack paths, including return records and outgoing arguments:
+Node allocation precedes argument-forwarding construction. Standard allocators
+use direct allocation with alignment and overflow checks; custom allocator hooks
+remain in use. Proven non-throwing construction returns an owner directly, while
+potentially throwing construction retains a rollback guard. Runtime placement
+construction skips redundant `construct_at` wrappers; constant evaluation retains
+the standard construction path. Conditional `noexcept` on pair construction and
+non-throwing allocation/deallocation helpers removes synthetic terminate paths.
+Hash insertion returns the existing public map iterator directly, avoiding an
+extra aggregate conversion.
 
-| Probe | Callback dispatch with combined growth helper | Direct dispatch with separate growth calculation |
+Deque's single-block growth separates map allocation, block allocation, and map
+transfer. Reserved map slots use split-buffer operations that cannot allocate;
+pointer shifts preserve their element widths, including three-byte code pointers.
+Vector append constructs the new element before relocating the old elements,
+preserving arguments that alias the vector.
+
+Representative O0 machine frames from the fixtures are:
+
+| Function | Exceptions disabled | Exceptions enabled |
 |---|---:|---:|
-| `unordered_map_test()` | 387 bytes | 316 bytes |
-| Allocation-failure check using `try_emplace` | 427 bytes | 365 bytes |
+| Tree piecewise insertion | 69 bytes (43 locals, 26 spills) | 77 bytes (49 locals, 28 spills) |
+| Hash piecewise insertion | 67 bytes (41 locals, 26 spills) | 79 bytes (47 locals, 32 spills) |
+| Hash growth decision | 29 bytes | 29 bytes |
+| Hash bucket-count normalization | 22 bytes | 22 bytes |
+| Deque single-block back growth | 26 bytes | 34 bytes |
 
-The remaining maximum hash paths pass through `__construct_node_hash`, two
-`construct_at` wrappers, the node constructor, allocator construction, and pair
-construction. Their forwarding frames remain live together at O0. The complete
-`libcxx_containers` and expanded `eh_libcxx_containers` fixtures reach 376 and
-420 bytes respectively, with `map` insertion now determining both maxima.
-The 256-byte link check continues to reject those configurations. Other
-optimization levels link and execute; no optimization override is applied.
+The disabled-exception insertion examples use an rvalue key and empty mapped
+tuple; the enabled-exception examples use two const-reference tuples. The
+growth-decision and normalization frames are absent from the allocation/throw
+paths. Fixture holders use static raw storage with explicit construction and
+destruction, and exception operations run directly in small functions rather
+than through nested forwarding callbacks.
+
+| O0 fixture | Largest known static path | Measured execution peak |
+|---|---:|---:|
+| `libcxx_containers` | 238 bytes | 195 bytes |
+| `eh_libcxx_containers` | 255 bytes | 215 bytes |
+| `libcxx_container_growth` | 254 bytes | 249 bytes |
+
+All three fixtures link and execute at all six optimization levels without
+overrides. The first two static maxima pass through map insertion and allocation
+failure into the exception matcher. The linker reports incomplete whole-program
+bounds, so these figures describe known paths, not a proof for every execution.
+Unwind metadata validation covers all 124 positive exception images.
+
+Other container paths still exceed the limit in isolated O0 probes:
+
+| Operation | Largest known static path | Main contributing frames |
+|---|---:|---|
+| `deque<int>(4)` | 373 bytes | `__append`: 64; bulk `__add_back_capacity`: 85; split-buffer `emplace_back`: 42 |
+| Empty deque `resize(4)` | 391 bytes | Bulk append and capacity helpers |
+| Empty deque `insert(begin(), 3, 42)` | 500 bytes | `insert`: 156; nested move-backward iterator adapters |
+| `unordered_multimap<int, int>::emplace(1, 42)` | 272 bytes | Multi-key prepare: 41; retained insertion/rehash adapters |
+
+These paths remain tracked in the C++ compliance gaps. Separately, the prime
+bucket-count helper's missing 16-bit overflow check lets `rehash(SIZE_MAX)` wrap
+instead of rejecting the request; this is a semantic issue rather than a stack
+overflow.
 
 ## ELF metadata
 

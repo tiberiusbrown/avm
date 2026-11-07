@@ -13,8 +13,8 @@ typedef struct { int quot; int rem; } div_t;
 typedef struct { long quot; long rem; } ldiv_t;
 typedef struct { long long quot; long long rem; } lldiv_t;
 
-/* C++ declares these termination and registration functions noexcept. The
- * macro is empty in C, where the contract has no effect. */
+/* These allocation, termination and registration functions do not throw.
+ * The exception specification is empty in C. */
 #ifdef __cplusplus
 #define AVM_STDLIB_NOEXCEPT noexcept
 #else
@@ -38,17 +38,17 @@ char *getenv(const char *name);
  * Neither function modifies errno. */
 int system(const char *command);
 
-void *malloc(size_t size);
-void *calloc(size_t nmemb, size_t size);
-void *realloc(void *ptr, size_t size);
-void free(void *ptr);
+void *malloc(size_t size) AVM_STDLIB_NOEXCEPT;
+void *calloc(size_t nmemb, size_t size) AVM_STDLIB_NOEXCEPT;
+void *realloc(void *ptr, size_t size) AVM_STDLIB_NOEXCEPT;
+void free(void *ptr) AVM_STDLIB_NOEXCEPT;
 /* AVM's heap guarantees only byte alignment, the fundamental alignment of
  * every type here. aligned_alloc returns NULL for any other alignment. */
-void *aligned_alloc(size_t alignment, size_t size);
+void *aligned_alloc(size_t alignment, size_t size) AVM_STDLIB_NOEXCEPT;
 /* The size and alignment arguments must match the original allocation. AVM
  * allocations record their size internally, so these functions only free. */
-void free_sized(void *ptr, size_t size);
-void free_aligned_sized(void *ptr, size_t alignment, size_t size);
+void free_sized(void *ptr, size_t size) AVM_STDLIB_NOEXCEPT;
+void free_aligned_sized(void *ptr, size_t alignment, size_t size) AVM_STDLIB_NOEXCEPT;
 size_t memalignment(const void *ptr);
 int rand(void);
 void srand(unsigned int seed);

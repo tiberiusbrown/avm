@@ -4,6 +4,8 @@
 #include <avm/trap.h>
 #include <string.h>
 
+extern unsigned char __avm_static_ram_start[];
+
 static char const AVM_PROGMEM *trap_reason_label(uint8_t reason) {
     switch (reason) {
     case AVM_TRAP_REASON_STACK_OVERFLOW:
@@ -25,10 +27,11 @@ void __avm_trap_report(avm_trap_context_t const *context) {
     uint32_t pc = (uint32_t)context->pc[0] |
                   ((uint32_t)context->pc[1] << 8) |
                   ((uint32_t)context->pc[2] << 16);
-    /* The reporter owns this disposable RAM after a fatal trap. Normal programs
-     * reuse it, so the result is not a permanent reservation. */
+    /* Scratch follows the snapshot and 32-byte context in static RAM. The reporter
+     * owns this disposable RAM after a fatal trap. Normal programs reuse it,
+     * so the result is not a permanent reservation. */
     avm_trap_location_t *location =
-        (avm_trap_location_t *)(uintptr_t)0x0220;
+        (avm_trap_location_t *)((uintptr_t)__avm_static_ram_start + 0x0120);
 
     __avm_trap_lookup(pc, location);
     memset(__avm_framebuffer, 0, sizeof(__avm_framebuffer));

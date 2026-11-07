@@ -410,6 +410,12 @@ No ordinary guest RAM is reserved for this during normal execution. All static
 RAM is disposable after a fatal trap, so the reporter must not rely on
 application globals.
 
+The runtime addresses the snapshot, context, and lookup scratch relative to
+`__avm_static_ram_start`, at offsets `0`, `0x0100`, and `0x0120` respectively.
+This absolute RAM symbol is defined as `0x0100` alongside `__avm_framebuffer`;
+the references resolve to the default layout above. The
+interpreter's context address and VM stack bounds remain fixed by the ABI.
+
 `__avm_trap_report` clears the framebuffer, draws a crash screen with
 `AVM_FONT_BR5N`, updates the OLED once, and loops forever. The six-pixel rows
 are:

@@ -5,9 +5,9 @@
 .globl __avm_trap_entry
 .type __avm_trap_entry, @function
 __avm_trap_entry:
-    ; Preserve the complete original VM stack in static RAM.
+    ; Preserve the complete original VM stack at the start of static RAM.
     ; No guest stack access happens before SETSP.
-    ldi16 r4, 0x0100
+    ldi16 r4, __avm_static_ram_start
     ldi16 r5, 0x0900
     ldi16 r6, 256
     sys memcpy
@@ -16,8 +16,9 @@ __avm_trap_entry:
     ldi16 r7, 0x0a00
     setsp r7
 
-    ; The context pointer is the reporter's first argument.
-    ldi16 r4, 0x0200
+    ; The context follows the 256-byte snapshot.
+    ; Its pointer is the reporter's first argument.
+    ldi16 r4, __avm_static_ram_start + 0x0100
 
     ; Nonreturning tail transfer: no return record.
     jmp __avm_trap_report

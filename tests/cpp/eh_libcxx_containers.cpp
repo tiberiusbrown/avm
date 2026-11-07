@@ -2,6 +2,7 @@
 #include <deque>
 #include <forward_list>
 #include <list>
+#include <limits>
 #include <map>
 #include <memory>
 #include <new>
@@ -26,9 +27,11 @@ constexpr int duplicate = 7;
 constexpr int initial_value = 17;
 constexpr int new_key = 11;
 constexpr int new_value = 23;
+constexpr std::size_t two_deque_blocks = 257;
 
 using int_map = std::map<int, int>;
 using int_hash_map = std::unordered_map<int, int>;
+using int_multi_map = std::unordered_multimap<int, int>;
 using vector_stack = std::stack<int, std::vector<int>>;
 using vector_queue = std::queue<int, std::vector<int>>;
 
@@ -66,6 +69,8 @@ ALLOCATION_FAILURE_CASE(fail_map, int_map, container->try_emplace(one, two))
 ALLOCATION_FAILURE_CASE(fail_set, std::set<int>, container->insert(one))
 ALLOCATION_FAILURE_CASE(fail_hash_map, int_hash_map, container->try_emplace(one, two))
 ALLOCATION_FAILURE_CASE(fail_hash_set, std::unordered_set<int>, container->insert(one))
+ALLOCATION_FAILURE_CASE(fail_multi_node, int_multi_map, container->emplace(one, two))
+ALLOCATION_FAILURE_AT(fail_multi_buckets, int_multi_map, container->emplace(one, two), 2)
 ALLOCATION_FAILURE_CASE(fail_vector_stack, vector_stack, container->push(one))
 ALLOCATION_FAILURE_CASE(fail_vector_queue, vector_queue, container->push(one))
 ALLOCATION_FAILURE_CASE(fail_priority_queue, std::priority_queue<int>, container->push(one))
@@ -75,6 +80,9 @@ ALLOCATION_FAILURE_CASE(fail_default_queue, std::queue<int>, container->push(one
 // must be reclaimed, including on the front-growth path.
 ALLOCATION_FAILURE_AT(fail_deque_block, std::deque<int>, container->push_back(one), 2)
 ALLOCATION_FAILURE_AT(fail_deque_front_block, std::deque<int>, container->push_front(one), 2)
+ALLOCATION_FAILURE_AT(fail_deque_resize_map, std::deque<int>, container->resize(two_deque_blocks), 1)
+ALLOCATION_FAILURE_AT(fail_deque_resize_block, std::deque<int>, container->resize(two_deque_blocks), 2)
+ALLOCATION_FAILURE_AT(fail_deque_resize_partial, std::deque<int>, container->resize(two_deque_blocks), 3)
 #undef ALLOCATION_FAILURE_CASE
 #undef ALLOCATION_FAILURE_AT
 
@@ -213,6 +221,29 @@ __attribute__((noinline)) void prepare_rehash()
     values->max_load_factor(0.5f);
 }
 
+__attribute__((noinline)) void bucket_count_overflow()
+{
+    static constexpr std::size_t requests[] = {32767u, 32768u, 65521u, 65522u,
+        std::numeric_limits<std::size_t>::max()};
+    old_buckets = converted_values->bucket_count();
+    old_allocations = live_allocations;
+    case_result = 0;
+    for(std::size_t count : requests) {
+        try {
+            converted_values->rehash(count);
+            case_result = 1;
+        } catch(const std::bad_array_new_length&) {
+            if(allocations_until_failure != 1 || converted_values->size() != 1 ||
+               converted_values->bucket_count() != old_buckets || live_allocations != old_allocations)
+                case_result = 2;
+        } catch(...) {
+            case_result = 3;
+        }
+    }
+    allocations_until_failure = 0;
+    std::destroy_at(converted_values);
+}
+
 __attribute__((noinline)) void rehash_failure()
 {
     case_result = 0;
@@ -287,12 +318,17 @@ extern "C" int avm_test_main()
     CHECK_FAILURE(fail_deque_front, 1);
     CHECK_FAILURE(fail_deque_block, 1);
     CHECK_FAILURE(fail_deque_front_block, 1);
+    CHECK_FAILURE(fail_deque_resize_map, 1);
+    CHECK_FAILURE(fail_deque_resize_block, 1);
+    CHECK_FAILURE(fail_deque_resize_partial, 1);
     CHECK_FAILURE(fail_list, 1);
     CHECK_FAILURE(fail_forward_list, 1);
     CHECK_FAILURE(fail_map, 2);
     CHECK_FAILURE(fail_set, 2);
     CHECK_FAILURE(fail_hash_map, 2);
     CHECK_FAILURE(fail_hash_set, 2);
+    CHECK_FAILURE(fail_multi_node, 2);
+    CHECK_FAILURE(fail_multi_buckets, 2);
     CHECK_FAILURE(fail_vector_stack, 3);
     CHECK_FAILURE(fail_vector_queue, 3);
     CHECK_FAILURE(fail_priority_queue, 3);
@@ -318,6 +354,10 @@ extern "C" int avm_test_main()
         return 4;
     prepare_converted();
     converted_key_failure();
+    if(case_result != 0)
+        return 4;
+    prepare_converted();
+    bucket_count_overflow();
     if(case_result != 0)
         return 4;
     prepare_map();

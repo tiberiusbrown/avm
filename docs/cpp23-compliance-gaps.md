@@ -56,8 +56,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Containers, strings, and memory management
 
-- [ ] **Container allocation stack limits:** Keep remaining standard-allocator container paths within AVM's 256-byte stack. At O0, isolated `<deque>` count construction, resize, and bulk insertion probes reach 373, 391, and 500 bytes; `<unordered_map>`'s `unordered_multimap::emplace` reaches 272 bytes. The failing paths retain bulk-growth, iterator-move, and multi-key rehash forwarding frames.
-- [ ] **Hash bucket-count overflow:** Reject overflowing rehash requests on 16-bit `size_t`. libc++'s `__next_prime` lacks a 16-bit overflow bound, so `unordered_map::rehash(SIZE_MAX)` can wrap and return too few buckets.
+- [ ] **Container allocation stack limits:** Keep remaining deque insertion paths within AVM's 256-byte stack. At O0, an isolated `deque<int>::insert(begin(), 3, 42)` probe reaches 500 bytes. The failing path retains a 156-byte insertion frame and nested iterator-move adapters in `<deque>` and the algorithm headers.
 - [ ] **Hosted allocation and exception paths at O0:** Keep allocation/error paths for hosted `<any>`, `<memory>`, `<functional>`, `<memory_resource>`, `<variant>`, and `<expected>` within AVM's 256-byte stack. With automatic payloads and ownership holders, the `std::function` allocation path reaches 257 bytes and the `std::make_shared` allocation path reaches 273 bytes.
 
 ### Algorithms, ranges, numerics, and random facilities

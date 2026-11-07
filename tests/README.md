@@ -22,10 +22,10 @@ unrelated holders off the guest stack. Payloads larger than their wrapper types
 still force out-of-line allocation.
 
 The container fixtures link and execute at all six optimization levels. At O0,
-the largest known static paths are 238 bytes for `libcxx_containers`, 255 bytes
+the largest known static paths are 238 bytes for `libcxx_containers`, 256 bytes
 for `eh_libcxx_containers`, and 254 bytes for `libcxx_container_growth`. These
 are path analyses with incomplete whole-program bounds; measured execution
-peaks are 195, 215, and 249 bytes respectively.
+peaks are 197, 217, and 251 bytes respectively.
 
 `libcxx_container_growth` checks custom allocator construction and destruction,
 over-allocating `allocate_at_least` counts, aliasing during vector growth,
@@ -34,6 +34,12 @@ allocator access to private constructors. Split-buffer checks exercise overlappi
 shifts in both directions, including AVM's three-byte function pointers. Vector
 growth also has a constant-evaluation assertion. The allocation exception fixture
 checks partial pair cleanup and propagation from a throwing allocator hook.
+
+`libcxx_unordered_multi` checks multimap and multiset insertion, equivalent-key
+hints, colliding keys, local iterators, growth from zero buckets with an infinite
+load factor, and preservation of equivalent-element order through rehashing.
+`libcxx_deque_growth` checks count/fill construction, default/fill resize,
+shrinking, and resize with an aliased fill value.
 
 `libcxx_algorithms` checks classic and ranges sorting at lengths 0 through 65,
 including duplicates, sorted/reverse inputs, permutation preservation, a
@@ -44,7 +50,10 @@ allocate nor move their arguments, while convertible keys retain the constructio
 path. It also fails bucket allocation after constructing a node, verifies node
 cleanup and preservation of existing elements and buckets, then retries growth.
 Deque allocation failures cover both ends, block failure after map allocation,
-and the default deque-backed stack and queue adaptors.
+the default deque-backed stack and queue adaptors, and partial allocation of a
+two-block resize. Multi-key insertion fails node and bucket allocation separately.
+Oversized rehash requests, including `SIZE_MAX`, must throw before allocation
+and leave existing elements and buckets intact.
 The AVM generic sorter uses a nonrecursive heapsort; the standard comparison
 complexity and public overloads are retained.
 

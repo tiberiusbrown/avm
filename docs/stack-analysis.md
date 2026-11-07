@@ -355,16 +355,32 @@ Deque's single-block growth separates map allocation, block allocation, and map
 transfer. Reserved map slots use split-buffer operations that cannot allocate;
 pointer shifts preserve their element widths, including three-byte code pointers.
 Vector append constructs the new element before relocating the old elements,
-preserving arguments that alias the vector.
+preserving arguments that alias the vector. Bulk back growth also allocates the
+map, allocates all new blocks under a compact rollback guard, and then transfers
+the map in separate calls. Element construction runs after capacity growth
+returns. Resize keeps its shrinking iterator work out of the growing frame.
+
+Multi-key hash insertion separates bucket growth from equivalent-key lookup.
+Hint validation finishes before growth; a valid hint still inserts before the
+hinted equivalent element, and fallback insertion retains contiguous equivalent
+groups. The node owner covers construction, hashing, lookup, and bucket failure.
+Rehash preserves the order of existing equivalent elements.
+
+AVM rejects bucket counts above its address-difference limit before allocation.
+Normalization passes such requests directly to that check, keeping the prime
+search within its supported range. Shrink normalization also checks its minimum
+bucket requirement before prime rounding. Thus `rehash(SIZE_MAX)` throws
+`bad_array_new_length` without allocating or changing the map, and the failure
+does not retain the normalization frame on the exception path.
 
 Representative O0 machine frames from the fixtures are:
 
 | Function | Exceptions disabled | Exceptions enabled |
 |---|---:|---:|
 | Tree piecewise insertion | 69 bytes (43 locals, 26 spills) | 77 bytes (49 locals, 28 spills) |
-| Hash piecewise insertion | 67 bytes (41 locals, 26 spills) | 79 bytes (47 locals, 32 spills) |
+| Hash piecewise insertion | 69 bytes (41 locals, 28 spills) | 81 bytes (47 locals, 34 spills) |
 | Hash growth decision | 29 bytes | 29 bytes |
-| Hash bucket-count normalization | 22 bytes | 22 bytes |
+| Hash bucket-count normalization | 24 bytes | 24 bytes |
 | Deque single-block back growth | 26 bytes | 34 bytes |
 
 The disabled-exception insertion examples use an rvalue key and empty mapped
@@ -376,29 +392,30 @@ than through nested forwarding callbacks.
 
 | O0 fixture | Largest known static path | Measured execution peak |
 |---|---:|---:|
-| `libcxx_containers` | 238 bytes | 195 bytes |
-| `eh_libcxx_containers` | 255 bytes | 215 bytes |
-| `libcxx_container_growth` | 254 bytes | 249 bytes |
+| `libcxx_containers` | 238 bytes | 197 bytes |
+| `eh_libcxx_containers` | 256 bytes | 217 bytes |
+| `libcxx_container_growth` | 254 bytes | 251 bytes |
+| `libcxx_unordered_multi` | 256 bytes | 190 bytes |
+| `libcxx_deque_growth` | 235 bytes | 148 bytes |
 
-All three fixtures link and execute at all six optimization levels without
-overrides. The first two static maxima pass through map insertion and allocation
+All five fixtures link and execute at all six optimization levels without
+overrides. The first two static maxima pass through associative insertion and allocation
 failure into the exception matcher. The linker reports incomplete whole-program
 bounds, so these figures describe known paths, not a proof for every execution.
 Unwind metadata validation covers all 124 positive exception images.
 
-Other container paths still exceed the limit in isolated O0 probes:
+Isolated O0 probes measure 224 bytes for `deque<int>(4)`, 230 bytes for empty-deque
+`resize(4)`, and 235 bytes for `unordered_multimap<int, int>::emplace(1, 42)`.
+Deque insertion still exceeds the limit:
 
 | Operation | Largest known static path | Main contributing frames |
 |---|---:|---|
-| `deque<int>(4)` | 373 bytes | `__append`: 64; bulk `__add_back_capacity`: 85; split-buffer `emplace_back`: 42 |
-| Empty deque `resize(4)` | 391 bytes | Bulk append and capacity helpers |
 | Empty deque `insert(begin(), 3, 42)` | 500 bytes | `insert`: 156; nested move-backward iterator adapters |
-| `unordered_multimap<int, int>::emplace(1, 42)` | 272 bytes | Multi-key prepare: 41; retained insertion/rehash adapters |
 
-These paths remain tracked in the C++ compliance gaps. Separately, the prime
-bucket-count helper's missing 16-bit overflow check lets `rehash(SIZE_MAX)` wrap
-instead of rejecting the request; this is a semantic issue rather than a stack
-overflow.
+This path remains tracked in the C++ compliance gaps. Its insertion frame holds
+both directional algorithms' iterators and temporaries at O0. The backward path
+also retains deque-to-pointer and pointer-to-pointer move adapters; those calls
+remain in the static graph even when the runtime deque starts empty.
 
 ## ELF metadata
 

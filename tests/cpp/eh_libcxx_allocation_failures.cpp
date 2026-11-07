@@ -9,13 +9,22 @@ namespace {
 bool fail_next_allocation;
 
 struct large_payload {
-    unsigned char bytes[24];
+    // Larger than the wrapper, so assignment must allocate out of line.
+    unsigned char bytes[sizeof(std::any) + 1];
 };
 
 struct large_callable {
-    unsigned char bytes[24];
+    // Force allocation without unnecessarily large by-value copies at O0.
+    unsigned char bytes[sizeof(std::function<int()>) + 1];
     int operator()() const { return 41; }
 };
+
+// The failure test checks replacement of an existing target. Its holders need
+// no automatic lifetime, so keep them out of the allocation/throw stack path.
+std::function<int()> function_value = [] { return 17; };
+const large_callable function_target{};
+alignas(std::shared_ptr<int>)
+unsigned char shared_storage[sizeof(std::shared_ptr<int>)];
 
 int any_assignment_failure()
 {
@@ -34,12 +43,11 @@ int any_assignment_failure()
 
 int function_assignment_failure()
 {
-    std::function<int()> value = [] { return 17; };
     fail_next_allocation = true;
     try {
-        value = large_callable{};
+        function_value = function_target;
     } catch(const std::bad_alloc&) {
-        return value() == 17 ? 0 : 1;
+        return function_value() == 17 ? 0 : 1;
     } catch(...) {
         return 2;
     }
@@ -50,7 +58,11 @@ int shared_allocation_failure()
 {
     fail_next_allocation = true;
     try {
-        (void)std::make_shared<int>(23);
+        // Construct the returned holder directly in static storage, keeping
+        // the allocation-failure path free of a temporary shared_ptr frame.
+        ::new (static_cast<void*>(shared_storage))
+            std::shared_ptr<int>(std::make_shared<int>());
+        std::destroy_at(reinterpret_cast<std::shared_ptr<int>*>(shared_storage));
     } catch(const std::bad_alloc&) {
         return 0;
     } catch(...) {

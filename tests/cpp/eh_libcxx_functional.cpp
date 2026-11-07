@@ -3,7 +3,9 @@
 namespace {
 
 struct large_callable {
-    unsigned char bytes[24];
+    // This cannot fit inside std::function, but avoids oversized by-value
+    // callable copies in the O0 fixture.
+    unsigned char bytes[sizeof(std::function<int()>) + 1];
 
     int operator()() const { return bytes[0]; }
 };

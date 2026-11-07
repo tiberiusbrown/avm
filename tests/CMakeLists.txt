@@ -175,28 +175,6 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             set(test_support_sources "${AVM_C_TEST_DIR}/support/flash_cross_unit_impl.c")
         endif()
         set(test_compile_options "-${AVM_TEST_OPT_LEVEL}")
-        if(AVM_TEST_LANGUAGE STREQUAL "CXX" AND
-           AVM_TEST_NAME STREQUAL "memory_freestanding" AND
-           AVM_TEST_OPT_LEVEL STREQUAL "O0")
-            # The allocator-construction and raw-memory API coverage exceeds
-            # the VM stack budget in an unoptimized translation unit.
-            list(APPEND test_compile_options -O2)
-        endif()
-        if(AVM_TEST_LANGUAGE STREQUAL "CXX" AND
-           AVM_TEST_NAME STREQUAL "libcxx_containers" AND
-           AVM_TEST_OPT_LEVEL MATCHES "^(O0|Oz)$")
-            # libc++'s allocating container templates exceed the guest stack
-            # in O0 and Oz builds. Exercise the hosted allocator paths
-            # here with the SDK's optimized code shape.
-            list(APPEND test_compile_options -O2)
-        endif()
-        if(AVM_TEST_LANGUAGE STREQUAL "CXX" AND
-           AVM_TEST_NAME STREQUAL "libcxx_vocabulary" AND
-           AVM_TEST_OPT_LEVEL STREQUAL "O0")
-            # Allocation-dependent shared ownership exceeds the guest stack
-            # in an O0 translation unit.
-            list(APPEND test_compile_options -O2)
-        endif()
         set(test_include_dirs "${AVM_SYSROOT_DIR}/include")
         if(AVM_TEST_LANGUAGE STREQUAL "CXX")
             # AVM Clang discovers both libc++ and the C runtime from its
@@ -260,13 +238,6 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             set(test_support_object
                 "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}_${test_support_name}.o")
             set(test_support_compile_options ${test_compile_options})
-            if(AVM_TEST_NAME STREQUAL "libcxx_freestanding" AND
-               AVM_TEST_OPT_LEVEL STREQUAL "O0")
-                # The generic ranges sort partition path exceeds the AVM VM
-                # stack at O0. Keep the runtime test enabled using the SDK's
-                # normal optimized helper body in this one configuration.
-                list(APPEND test_support_compile_options -O2)
-            endif()
             avm_add_object(
                 OUTPUT "${test_support_object}"
                 SOURCE "${test_support_source}"
@@ -382,7 +353,11 @@ set(AVM_EH_SUPPORT_HEADERS
     "${AVM_CXX_TEST_DIR}/support/eh_virtual.h")
 foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
     get_filename_component(AVM_TEST_NAME "${AVM_TEST_SOURCE_FILE}" NAME_WE)
-    foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_EH_TEST_OPT_LEVELS)
+    set(test_opt_levels ${AVM_EH_TEST_OPT_LEVELS})
+    if(AVM_TEST_NAME MATCHES "^eh_libcxx_(allocation_failures|containers|functional|vocabulary)$")
+        set(test_opt_levels ${AVM_TEST_OPT_LEVELS})
+    endif()
+    foreach(AVM_TEST_OPT_LEVEL IN LISTS test_opt_levels)
         set(AVM_OPT_TEST_BINARY_DIR
             "${AVM_CXX_TEST_BINARY_DIR}/${AVM_TEST_OPT_LEVEL}")
         set(AVM_TEST_OBJECT "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}.o")
@@ -396,12 +371,6 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
             # Static typeid and the standard exceptions need RTTI, which the SDK's
             # -fno-rtti default disables.
             list(APPEND AVM_EH_TEST_COMPILE_OPTIONS -frtti)
-        endif()
-        if(AVM_TEST_OPT_LEVEL STREQUAL "O0"
-           AND AVM_TEST_NAME MATCHES "^eh_libcxx_(allocation_failures|containers|functional)$")
-            # Keep exception-sensitive hosted fixtures in a code shape that
-            # fits the VM stack at O0.
-            list(APPEND AVM_EH_TEST_COMPILE_OPTIONS -O2)
         endif()
         avm_add_object(
             OUTPUT "${AVM_TEST_OBJECT}"

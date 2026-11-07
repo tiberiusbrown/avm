@@ -13,6 +13,29 @@ global construction.
 C, and C++ fixture. Each C and C++ source is compiled separately at `-O0`,
 `-O1`, `-O2`, `-O3`, `-Os`, and `-Oz`; assembly fixtures run once.
 
+The libc++ fixtures use the requested optimization level without optimization
+overrides. The hosted `eh_libcxx_allocation_failures`, `eh_libcxx_containers`,
+`eh_libcxx_functional`, and `eh_libcxx_vocabulary` fixtures also have all six
+levels, rather than the other exception fixtures' O0/O2 matrix. Independent
+memory API checks run in separate functions, and allocation fixtures keep
+unrelated holders off the guest stack. Payloads larger than their wrapper types
+still force out-of-line allocation.
+
+These fixtures remain blocked by the 256-byte link-time stack check in the
+listed configurations. Their coverage is retained, so a full image build still
+reports these failures; they are not replaced by optimized images or skipped.
+
+| Fixture | Failing configurations | libc++ headers on the failing paths |
+|---|---|---|
+| `libcxx_freestanding` | O0: 337 bytes | `__algorithm/ranges_sort.h`, `__algorithm/sort.h` (bitset partition and swap helpers) |
+| `libcxx_containers` | O0: 443 bytes; Oz: 270 bytes | `__hash_table`, `__utility/try_key_extraction.h`, `__memory/allocator.h`, `__memory/allocator_traits.h`; isolated O0 deque/map paths also exceed the limit in `deque`, `__split_buffer`, and `__tree` |
+| `eh_libcxx_containers` | O0: 516 bytes; Os: 299 bytes; Oz: 287 bytes | `__hash_table`, `__utility/try_key_extraction.h`, `deque`, `__split_buffer`, and the allocator headers |
+
+The allocation paths include the exception runtime's matching stack even when
+the caller disables exceptions. Fixture adjustments do not remove the broader
+library stack-headroom limitations tracked in
+[`cpp23-compliance-gaps.md`](../docs/cpp23-compliance-gaps.md).
+
 The `avm_tests` runner runs independent cases in parallel by default, using one
 worker per logical processor (up to the number of selected cases). Each case owns
 its emulator. Use `--jobs N` to override the worker count, or `--jobs 1` for

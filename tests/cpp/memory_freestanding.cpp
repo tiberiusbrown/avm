@@ -97,7 +97,7 @@ static_assert(std::is_same_v<std::allocation_result<int*, unsigned>,
                              std::allocation_result<int*, unsigned>>);
 static_assert(std::is_same_v<decltype(std::allocator_arg), const std::allocator_arg_t>);
 
-extern "C" int avm_test_main() {
+__attribute__((noinline)) static int pointer_tests() {
   int value = 7;
   WrappedPointer<int> wrapped{&value};
   if (std::to_address(wrapped) != &value || std::to_address(&value) != &value)
@@ -118,6 +118,10 @@ extern "C" int avm_test_main() {
   if (std::assume_aligned<1>(&aligned_value) != &aligned_value)
     return 5;
 
+  return 0;
+}
+
+__attribute__((noinline)) static int allocator_construction_tests() {
   auto made = std::make_obj_using_allocator<AllocatedValue>(AllocatedValue::allocator_type{}, 31);
   if (made.value != 31)
     return 9;
@@ -127,6 +131,10 @@ extern "C" int avm_test_main() {
   if (allocated_value->value != 32)
     return 10;
   std::destroy_at(allocated_value);
+  return 0;
+}
+
+__attribute__((noinline)) static int fill_tests() {
   alignas(Tracked) unsigned char objects_storage[sizeof(Tracked) * 4];
   auto* objects = reinterpret_cast<Tracked*>(objects_storage);
   Tracked initial(41);
@@ -135,6 +143,10 @@ extern "C" int avm_test_main() {
     return 12;
   std::destroy_n(objects, 2);
 
+  return 0;
+}
+
+__attribute__((noinline)) static int range_basics_tests() {
   alignas(int) unsigned char range_storage[sizeof(int) * 4];
   auto* range_output = reinterpret_cast<int*>(range_storage);
   int input[] = {3, 4};
@@ -157,6 +169,10 @@ extern "C" int avm_test_main() {
     return 15;
   std::destroy(standard_values, standard_values + 3);
 
+  return 0;
+}
+
+__attribute__((noinline)) static int standard_algorithm_tests() {
   int algorithm_input[] = {5, 6, 7};
   alignas(int) unsigned char algorithm_storage[sizeof(int) * 4];
   auto* algorithm_values = reinterpret_cast<int*>(algorithm_storage);
@@ -195,6 +211,14 @@ extern "C" int avm_test_main() {
     return 30;
   std::destroy(algorithm_values, algorithm_values + 2);
 
+  return 0;
+}
+
+__attribute__((noinline)) static int range_algorithm_tests() {
+  int algorithm_input[] = {5, 6, 7};
+  alignas(int) unsigned char algorithm_storage[sizeof(int) * 4];
+  auto* algorithm_values = reinterpret_cast<int*>(algorithm_storage);
+  int* algorithm_end;
   algorithm_end = std::ranges::uninitialized_default_construct(algorithm_values, algorithm_values + 2);
   if (algorithm_end != algorithm_values + 2)
     return 31;
@@ -239,6 +263,10 @@ extern "C" int avm_test_main() {
     return 38;
   std::ranges::destroy_at(algorithm_values);
 
+  return 0;
+}
+
+__attribute__((noinline)) static int unique_ptr_tests() {
   bool deleter_called = false;
   int owned_value = 56;
   {
@@ -255,6 +283,10 @@ extern "C" int avm_test_main() {
   if (!deleter_called)
     return 19;
 
+  return 0;
+}
+
+__attribute__((noinline)) static int allocator_traits_tests() {
   alignas(int) unsigned char allocator_storage[sizeof(int) * 2];
   auto* allocator_values = reinterpret_cast<int*>(allocator_storage);
   unsigned deallocation_count = 0;
@@ -271,5 +303,25 @@ extern "C" int avm_test_main() {
   if (deallocation_count != 1 || Traits::select_on_container_copy_construction(allocator).storage != allocator_values)
     return 22;
 
+  return 0;
+}
+
+extern "C" int avm_test_main() {
+  if (int result = pointer_tests())
+    return result;
+  if (int result = allocator_construction_tests())
+    return result;
+  if (int result = fill_tests())
+    return result;
+  if (int result = range_basics_tests())
+    return result;
+  if (int result = standard_algorithm_tests())
+    return result;
+  if (int result = range_algorithm_tests())
+    return result;
+  if (int result = unique_ptr_tests())
+    return result;
+  if (int result = allocator_traits_tests())
+    return result;
   return 0;
 }

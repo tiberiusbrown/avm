@@ -398,9 +398,9 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
             list(APPEND AVM_EH_TEST_COMPILE_OPTIONS -frtti)
         endif()
         if(AVM_TEST_OPT_LEVEL STREQUAL "O0"
-           AND AVM_TEST_NAME MATCHES "^eh_libcxx_(allocation_failures|containers|functional|vocabulary)$")
+           AND AVM_TEST_NAME MATCHES "^eh_libcxx_(allocation_failures|containers|functional)$")
             # Keep exception-sensitive hosted fixtures in a code shape that
-            # fits the VM stack and produces valid unwind ranges at O0.
+            # fits the VM stack at O0.
             list(APPEND AVM_EH_TEST_COMPILE_OPTIONS -O2)
         endif()
         avm_add_object(

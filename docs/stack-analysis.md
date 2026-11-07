@@ -360,6 +360,22 @@ map, allocates all new blocks under a compact rollback guard, and then transfers
 the map in separate calls. Element construction runs after capacity growth
 returns. Resize keeps its shrinking iterator work out of the growing frame.
 
+Deque insertion decodes its iterator into a scalar position before capacity
+growth, then constructs and shifts elements in separate front/back helpers.
+Typed slot operations replace nested deque/move-iterator algorithm adapters;
+fill insertion tracks an aliased source as elements move. Emplacement retains
+allocator-aware temporary construction for aliased arguments. Bulk front growth
+uses the same allocation/commit phases as back growth. The standard-allocator
+block rollback guard stores only its map pointer; custom allocators retain their
+allocation and construction hooks.
+
+Input and forward ranges use an allocator-aware staging buffer with a pointer,
+constructed length and actual allocation count (six bytes with `std::allocator`).
+Staging, reallocation and transfer run in separate phases. Reserved-capacity
+checks tail-transfer into growth, releasing their frames even at O0. The public
+input/forward insertion dispatchers are inlined; element-moving loops remain
+outlined. C++23 range and initializer-list insertion use the same scalar helpers.
+
 Multi-key hash insertion separates bucket growth from equivalent-key lookup.
 Hint validation finishes before growth; a valid hint still inserts before the
 hinted equivalent element, and fallback insertion retains contiguous equivalent
@@ -382,6 +398,8 @@ Representative O0 machine frames from the fixtures are:
 | Hash growth decision | 29 bytes | 29 bytes |
 | Hash bucket-count normalization | 24 bytes | 24 bytes |
 | Deque single-block back growth | 26 bytes | 34 bytes |
+| Deque bulk back growth | 26 bytes | 32 bytes |
+| Deque count insertion | 24 bytes | 24 bytes |
 
 The disabled-exception insertion examples use an rvalue key and empty mapped
 tuple; the enabled-exception examples use two const-reference tuples. The
@@ -396,26 +414,51 @@ than through nested forwarding callbacks.
 | `eh_libcxx_containers` | 256 bytes | 217 bytes |
 | `libcxx_container_growth` | 254 bytes | 251 bytes |
 | `libcxx_unordered_multi` | 256 bytes | 190 bytes |
-| `libcxx_deque_growth` | 235 bytes | 148 bytes |
+| `libcxx_deque_growth` | 213 bytes | 148 bytes |
+| `libcxx_deque_insert` | 250 bytes | 187 bytes |
+| `libcxx_deque_storage` | 239 bytes | 225 bytes |
+| `eh_libcxx_deque_insert` | 255 bytes | 213 bytes |
 
-All five fixtures link and execute at all six optimization levels without
+All eight fixtures link and execute at all six optimization levels without
 overrides. The first two static maxima pass through associative insertion and allocation
 failure into the exception matcher. The linker reports incomplete whole-program
 bounds, so these figures describe known paths, not a proof for every execution.
-Unwind metadata validation covers all 124 positive exception images.
+Unwind metadata validation covers all 130 positive exception images.
 
-Isolated O0 probes measure 224 bytes for `deque<int>(4)`, 230 bytes for empty-deque
-`resize(4)`, and 235 bytes for `unordered_multimap<int, int>::emplace(1, 42)`.
-Deque insertion still exceeds the limit:
+Representative isolated O0 insertion probes measure:
 
-| Operation | Largest known static path | Main contributing frames |
-|---|---:|---|
-| Empty deque `insert(begin(), 3, 42)` | 500 bytes | `insert`: 156; nested move-backward iterator adapters |
+| Operation | Largest known static path |
+|---|---:|
+| Empty deque `insert(begin(), 3, 42)` | 229 bytes |
+| Single-element insert or emplace | 241 bytes |
+| Pointer-range insert | 235 bytes |
+| Initializer-list insert | 249 bytes |
+| Input or forward iterator insert, with an automatic three-element array | 236 bytes |
+| C++23 bidirectional/input/forward range insert | 235 / 246 / 250 bytes |
+| C++23 bidirectional/input/forward `prepend_range` | 239 / 250 / 254 bytes |
+| C++23 bidirectional/input/forward `append_range` | 212 / 239 / 218 bytes |
 
-This path remains tracked in the C++ compliance gaps. Its insertion frame holds
-both directional algorithms' iterators and temporaries at O0. The backward path
-also retains deque-to-pointer and pointer-to-pointer move adapters; those calls
-remain in the static graph even when the runtime deque starts empty.
+The count-insertion frame is 24 bytes rather than 156. Its known path no longer
+retains iterator-move adapters, including branches that are inactive when the
+deque starts empty.
+
+Hosted allocation also keeps automatic payloads and ownership holders in the
+fixtures. AVM inlines `std::function`'s by-value forwarding constructor and the
+scalar `make_shared`/`allocate_shared` and allocation-guard forwarding layers.
+The function target's empty base constructor is non-throwing; target copy/move
+construction is conditionally non-throwing. Throwing targets retain their
+allocation rollback and exception propagation.
+
+| O0 hosted fixture | Largest known static path | Measured execution peak |
+|---|---:|---:|
+| `eh_libcxx_functional` (automatic 24-byte callable) | 245 bytes | 152 bytes |
+| `libcxx_vocabulary` (automatic payload, any, shared and weak holders together) | 256 bytes | 197 bytes |
+| `eh_libcxx_allocation_failures` | 248 bytes | 202 bytes |
+| `eh_libcxx_vocabulary` | 171 bytes | 163 bytes |
+
+All four hosted fixtures execute at all six optimization levels. Their known
+paths include allocation failure and the exception matcher. These are fixture
+bounds; larger user objects, iterators or callbacks require their own analysis.
 
 ## ELF metadata
 

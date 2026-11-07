@@ -15,11 +15,14 @@ C, and C++ fixture. Each C and C++ source is compiled separately at `-O0`,
 
 The libc++ fixtures use the requested optimization level without optimization
 overrides. The hosted `eh_libcxx_allocation_failures`, `eh_libcxx_containers`,
-`eh_libcxx_functional`, and `eh_libcxx_vocabulary` fixtures also have all six
-levels, rather than the other exception fixtures' O0/O2 matrix. Independent
-memory API checks run in separate functions, and allocation fixtures keep
-unrelated holders off the guest stack. Payloads larger than their wrapper types
-still force out-of-line allocation.
+`eh_libcxx_deque_insert`, `eh_libcxx_functional`, and `eh_libcxx_vocabulary`
+fixtures also have all six levels, rather than the other exception fixtures'
+O0/O2 matrix. Independent memory API checks run in separate functions. The
+function allocation fixture uses an automatic 24-byte callable, including its
+by-value constructor copy.
+The vocabulary fixture keeps its automatic 26-byte payload, `any`, `shared_ptr`
+and `weak_ptr` together in one function. These payloads force out-of-line
+allocation. Shared-pointer arrays check zero and fill initialization as well.
 
 The container fixtures link and execute at all six optimization levels. At O0,
 the largest known static paths are 238 bytes for `libcxx_containers`, 256 bytes
@@ -41,6 +44,27 @@ load factor, and preservation of equivalent-element order through rehashing.
 `libcxx_deque_growth` checks count/fill construction, default/fill resize,
 shrinking, and resize with an aliased fill value.
 
+`libcxx_deque_insert` checks every insertion position in small deques, empty and
+nonempty ranges, and aliased fill/emplace arguments. It covers single/count,
+input/forward/bidirectional, initializer-list and C++23 range insertion,
+prepending and appending, with integers, observable moved-from values and
+three-byte function pointers.
+`libcxx_deque_storage` crosses block boundaries and checks stateful allocator
+hooks, exact `allocate_at_least` deallocation counts and private constructors.
+Its allocator borrows the framebuffer linker symbol for two 512-byte blocks;
+ordinary static RAM cannot hold both blocks. Both are freed before test drawing.
+At O0 these fixtures have known static paths of 250 and 239 bytes and measured
+peaks of 187 and 225 bytes. `eh_libcxx_deque_insert` fails map, block and staging
+allocation, including staging-buffer growth, and checks partial fill construction
+and staged-range cleanup after throwing copies. Its known O0 path is 255 bytes
+and its measured peak is 213 bytes.
+
+Hosted allocation failures check an automatic function target, preservation of
+an existing target on assignment failure, throwing target copies and moves,
+shared-object construction rollback, and PMR allocation failure. The original
+automatic function and combined vocabulary allocation cases have known O0 paths
+of 245 and 256 bytes respectively, including the exception runtime.
+
 `libcxx_algorithms` checks classic and ranges sorting at lengths 0 through 65,
 including duplicates, sorted/reverse inputs, permutation preservation, a
 comparison-count bound, move-only values, projections, and constant evaluation.
@@ -58,9 +82,9 @@ The AVM generic sorter uses a nonrecursive heapsort; the standard comparison
 complexity and public overloads are retained.
 
 The allocation paths include the exception runtime's matching stack even when
-the caller disables exceptions. Fixture adjustments do not remove the broader
-library stack-headroom limitations tracked in
-[`cpp23-compliance-gaps.md`](../docs/cpp23-compliance-gaps.md).
+the caller disables exceptions. Incomplete whole-program bounds and larger user
+objects, iterators or callbacks still require their own stack analysis. See
+[`stack-analysis.md`](../docs/stack-analysis.md) for the measured paths.
 
 The `avm_tests` runner runs independent cases in parallel by default, using one
 worker per logical processor (up to the number of selected cases). Each case owns

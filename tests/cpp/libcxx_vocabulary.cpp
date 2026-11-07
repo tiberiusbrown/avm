@@ -16,11 +16,6 @@ struct large_payload {
     int value;
 };
 
-// Keep the ownership holders off the small guest stack while exercising the
-// same make_shared allocation and weak-reference lifetime transitions.
-std::shared_ptr<int> shared;
-std::weak_ptr<int> weak;
-
 __attribute__((noinline)) int vocabulary_basics()
 {
     std::optional<int> maybe = 7;
@@ -58,7 +53,7 @@ __attribute__((noinline)) int vocabulary_basics()
     return 0;
 }
 
-__attribute__((noinline)) int any_allocation()
+__attribute__((noinline)) int allocation_dependent_types()
 {
     large_payload payload{};
     payload.value = 19;
@@ -66,24 +61,13 @@ __attribute__((noinline)) int any_allocation()
     const large_payload* stored = std::any_cast<large_payload>(&erased);
     if(!stored || stored->value != 19)
         return 1;
-    return 0;
-}
 
-__attribute__((noinline)) int shared_allocation()
-{
-    shared = std::make_shared<int>(23);
-    return 0;
-}
-
-__attribute__((noinline)) int shared_ownership()
-{
-    weak = shared;
+    std::shared_ptr<int> shared = std::make_shared<int>(23);
+    std::weak_ptr<int> weak = shared;
     if(!shared || *shared != 23 || shared.use_count() != 1 || weak.expired())
         return 2;
     shared.reset();
-    const int result = weak.expired() ? 0 : 3;
-    weak.reset();
-    return result;
+    return weak.expired() ? 0 : 3;
 }
 
 __attribute__((noinline)) int memory_resource_operations()
@@ -147,13 +131,25 @@ __attribute__((noinline)) int shared_ptr_aliasing()
     return 0;
 }
 
+__attribute__((noinline)) int shared_ptr_arrays()
+{
+    auto dynamic = std::make_shared<int[]>(3);
+    auto fixed = std::make_shared<int[3]>(17);
+    if(dynamic[0] != 0 || dynamic[2] != 0 || fixed[0] != 17 || fixed[2] != 17 ||
+       dynamic.use_count() != 1 || fixed.use_count() != 1)
+        return 1;
+    dynamic[1] = 23;
+    fixed[1] = 29;
+    return dynamic[1] == 23 && fixed[1] == 29 ? 0 : 2;
+}
+
 }
 
 extern "C" int avm_test_main()
 {
     if(vocabulary_basics() != 0)
         return 1;
-    if(any_allocation() != 0 || shared_allocation() != 0 || shared_ownership() != 0)
+    if(allocation_dependent_types() != 0)
         return 2;
     if(memory_resource_operations() != 0 || monotonic_resource_operations() != 0 ||
        pool_operations() != 0)
@@ -162,5 +158,7 @@ extern "C" int avm_test_main()
         return 4;
     if(shared_ptr_aliasing() != 0)
         return 5;
+    if(shared_ptr_arrays() != 0)
+        return 6;
     return 0;
 }

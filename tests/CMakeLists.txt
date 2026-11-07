@@ -354,7 +354,7 @@ set(AVM_EH_SUPPORT_HEADERS
 foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
     get_filename_component(AVM_TEST_NAME "${AVM_TEST_SOURCE_FILE}" NAME_WE)
     set(test_opt_levels ${AVM_EH_TEST_OPT_LEVELS})
-    if(AVM_TEST_NAME MATCHES "^eh_libcxx_(allocation_failures|containers|functional|vocabulary)$")
+    if(AVM_TEST_NAME MATCHES "^eh_libcxx_(allocation_failures|containers|deque_insert|functional|vocabulary)$")
         set(test_opt_levels ${AVM_TEST_OPT_LEVELS})
     endif()
     foreach(AVM_TEST_OPT_LEVEL IN LISTS test_opt_levels)
@@ -367,7 +367,7 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
         set(AVM_EH_TEST_COMPILE_OPTIONS -fexceptions)
         if(AVM_TEST_NAME STREQUAL "eh_typeinfo_identity"
            OR AVM_TEST_NAME STREQUAL "eh_rethrow_standard"
-           OR AVM_TEST_NAME MATCHES "^eh_libcxx_(allocation_failures|containers|functional|vocabulary)$")
+           OR AVM_TEST_NAME MATCHES "^eh_libcxx_(allocation_failures|containers|deque_insert|functional|vocabulary)$")
             # Static typeid and the standard exceptions need RTTI, which the SDK's
             # -fno-rtti default disables.
             list(APPEND AVM_EH_TEST_COMPILE_OPTIONS -frtti)

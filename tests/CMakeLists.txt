@@ -97,8 +97,10 @@ avm_add_check(avm_audio_tools_tests_run
         -o "cache_dir=${CMAKE_CURRENT_BINARY_DIR}/pytest-cache"
         --basetemp "${CMAKE_CURRENT_BINARY_DIR}/pytest-tmp"
     VERBATIM)
+# Every tool named in an AVM lit RUN line. The lld target provides ld.lld.
 set(lit_tools FileCheck count llvm-config not split-file llc llvm-as llvm-dis
-    llvm-dwarfdump llvm-mca llvm-nm llvm-readelf opt yaml2obj clang lld)
+    llvm-dwarfdump llvm-mca llvm-nm llvm-readelf opt yaml2obj clang lld
+    llvm-ar llvm-avm-image llvm-mc llvm-objcopy llvm-objdump llvm-readobj)
 foreach(suite llvm clang lld)
     if(suite STREQUAL "llvm")
         set(lit_dir "${PROJECT_BINARY_DIR}/llvm-build/test")

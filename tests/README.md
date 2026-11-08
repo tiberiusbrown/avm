@@ -9,7 +9,7 @@ cmake --build build --config RelWithDebInfo --parallel --target avm_validation_f
 cmake --build build --config RelWithDebInfo --parallel --target avm_validation_fast
 ```
 
-`avm_validation_build` builds prerequisites without executing checks. CTest then selects `fast`, `full`, or `extended` checks; explicit membership
+`avm_validation_build` builds prerequisites without executing checks. CTest then selects `fast`, `full`, or `extended` checks; `avm_validation_all` builds and runs every registered check. Explicit membership
 is listed in `cmake/Profiles.cmake`, and newly registered executable checks
 default to full validation. Full validation includes compiler lit suites, serial fixtures, EH/RTTI and corruption checks, interpreter hardware, header diagnostics, final-link inspections, Python tools and debugger/profiler integration when configured. Long replay, throughput measurements, exhaustive high-precision studies and optional complex host comparisons have the `extended` label.
 

@@ -15,7 +15,7 @@ cmake --build build --config RelWithDebInfo --parallel --target avm_validation_f
 The default build produces the SDK. Validation, benchmarks, diagnostic dumps
 and reference updates are explicit targets. The presets retain an existing build directory's generator and compiler. All configurations use RelWithDebInfo. `core` configures the SDK without Ardens under `build/core`; `headless` enables emulator validation and benchmarks without LLDB or the GUI under `build/headless`.
 
-`avm_validation_fast` selects focused hardware and runner checks. `avm_validation_full` covers the ordinary six-optimization matrix, EH/RTTI verifiers, debugger/profiler integration when enabled, host reference tests, Python tools, and AVM LLVM/Clang/LLD lit suites. `extended` CTest checks include lengthy high-precision studies, replay and throughput measurements. Test prerequisites are available separately:
+`avm_validation_fast` selects focused hardware and runner checks. `avm_validation_full` covers the ordinary six-optimization matrix, EH/RTTI verifiers, debugger/profiler integration when enabled, host reference tests, Python tools, and AVM LLVM/Clang/LLD lit suites. `extended` CTest checks include lengthy high-precision studies, replay and throughput measurements. `avm_validation_all` builds and runs every registered check, `fast`, `full` and `extended` together, and takes the longest. Test prerequisites are available separately:
 
 ```sh
 cmake --build build --config RelWithDebInfo --parallel --target avm_validation_build

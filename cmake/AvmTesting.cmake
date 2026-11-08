@@ -106,4 +106,10 @@ function(avm_finalize_testing)
             DEPENDS avm_validation_${profile}_build USES_TERMINAL VERBATIM)
     endforeach()
     add_custom_target(avm_validation_build DEPENDS avm_validation_full_build)
+    # Every registered check, including the fast-only and extended-only ones.
+    add_custom_target(avm_validation_all
+        COMMAND "${CMAKE_CTEST_COMMAND}" --test-dir "${PROJECT_BINARY_DIR}"
+            -C RelWithDebInfo --output-on-failure
+        DEPENDS avm_validation_fast_build avm_validation_full_build
+            avm_validation_extended_build USES_TERMINAL VERBATIM)
 endfunction()

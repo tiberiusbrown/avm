@@ -26,7 +26,7 @@ set(_LIBCPP_HAS_THREAD_API_WIN32 OFF)
 set(_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS ON)
 set(_LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS OFF)
 set(_LIBCPP_HAS_FILESYSTEM OFF)
-set(_LIBCPP_HAS_RANDOM_DEVICE OFF)
+set(_LIBCPP_HAS_RANDOM_DEVICE ON)
 set(_LIBCPP_HAS_LOCALIZATION OFF)
 set(_LIBCPP_HAS_UNICODE OFF)
 # AVM's C runtime provides the wide-character interfaces with an 8-bit wchar_t.
@@ -292,13 +292,13 @@ list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_ALGORITHM_OBJECT}")
 
 # Header-driven libc++ facilities with small out-of-line runtime pieces.
 foreach(LIBCXX_SOURCE
-        any expected hash memory memory_resource stdexcept string valarray variant verbose_abort)
+        any expected hash memory memory_resource random stdexcept string valarray variant verbose_abort)
     set(AVM_LIBCXX_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/libcxx_${LIBCXX_SOURCE}.o")
     set(libcxx_source_options -D_LIBCPP_BUILDING_LIBRARY -fexceptions)
     if(LIBCXX_SOURCE STREQUAL "memory_resource")
         list(APPEND libcxx_source_options -Wno-unused-parameter)
     endif()
-    if(LIBCXX_SOURCE MATCHES "^(any|expected|memory|stdexcept|variant)$")
+    if(LIBCXX_SOURCE MATCHES "^(any|expected|memory|random|stdexcept|variant)$")
         list(APPEND libcxx_source_options -frtti)
     endif()
     avm_add_runtime_object(

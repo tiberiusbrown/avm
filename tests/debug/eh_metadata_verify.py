@@ -650,12 +650,15 @@ def verify_eh_image(args, elf, image_path):
             'calls': call_count, 'lists': list_count, 'lookups': lookups}
 
 
-def verify_packer_rejects(packer, elf, scratch):
+def verify_packer_rejects(packer, objdump, elf, scratch):
     """Hiding a record section that a catch-all site needs must fail the pack. The
     section is renamed in the ELF section-name table to a name of the same length,
     which the packer does not recognize. The packer must name the missing record."""
-    cases = [(b'.avm.eh_calls\0', b'.avm.eh_xalls\0', 'has no call record'),
-             (b'.debug_frame\0', b'.debug_xrame\0', 'no .debug_frame unwind information')]
+    cases = [(b'.debug_frame\0', b'.debug_xrame\0', 'no .debug_frame unwind information')]
+    # A caller compiled without exceptions can retain the exception runtime
+    # without any catch/cleanup call records. Its missing call section is valid.
+    if compiler_calls(objdump, elf):
+        cases.insert(0, (b'.avm.eh_calls\0', b'.avm.eh_xalls\0', 'has no call record'))
     with open(elf, 'rb') as handle:
         original = handle.read()
     for name, renamed, diagnostic in cases:
@@ -716,7 +719,7 @@ def main():
                     no_crash = handle.read()
                 check(MAGIC in no_crash, '--no-crash-info removed the AVEH5 block')
                 verify_eh_image(args, elf, plain)
-                verify_packer_rejects(packer, elf, scratch)
+                verify_packer_rejects(packer, args.objdump, elf, scratch)
         except Failure as error:
             failures.append('%s: %s' % (elf, error))
 

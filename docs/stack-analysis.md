@@ -460,6 +460,76 @@ All four hosted fixtures execute at all six optimization levels. Their known
 paths include allocation failure and the exception matcher. These are fixture
 bounds; larger user objects, iterators or callbacks require their own analysis.
 
+## Hosted algorithms, adaptors and numerics
+
+AVM's `stable_sort` avoids libc++'s radix counters and recursive merge machinery.
+A small integer probe previously produced a 1091-byte radix-sort frame. The
+replacement searches the sorted prefix with binary search, then moves one value
+into place in a separate function. It uses O(N log N) comparisons and O(N²)
+element moves. It needs no allocation or recursive stack, but large arrays and
+expensive element moves can be slower. The exported default scalar `sort`
+functions now use the same nonrecursive heap dispatcher as generic AVM sorting.
+Scalar byte/word algorithms also avoid vector temporaries on AVM.
+
+The execution-policy backend dispatches directly to serial algorithms. This is
+permitted for all four standard policies; the `noexcept` boundary still terminates
+on an element callback's exception. Direct dispatch avoids nested default-backend
+algorithms, callback objects and optional results. Exclusive scans have direct
+policy wrappers as well. The execution feature macro advertises the policy types;
+the parallel-algorithm feature macro remains undefined while overloads are missing.
+
+Range adaptors avoid extra invocation layers when piping and binding arguments.
+Filter traversal and positive-count dropping use direct loops. Iterator caches
+store their active union member directly instead of optional's inheritance layers;
+pointer caches need only a pointer and an engagement flag. Their tests cover
+constant evaluation, non-propagation, nonmovable cached values, destruction and
+throwing replacement. Classic `copy` uses a direct loop for allocating insertion
+adaptors, avoiding iterator unwrap/result adapters.
+
+The 32-bit LCG helpers use a genuine 32-bit word, rather than 16-bit `unsigned`.
+Ranlux scalar seeding normalizes even a 64-bit seed before using the prescribed
+31-bit auxiliary generator. Its modulus and resulting engine sequences are
+unchanged. Full-width generators use a compact masking adaptor in
+`uniform_int_distribution`, and 16-bit results use 16-bit unsigned range arithmetic.
+`random_device` releases its ADC/timer sampling frames before throwing an error.
+It returns all 16 result bits and leaves the C PRNG state untouched.
+
+`gslice` allocates only its flattened indices, computing coordinates as mixed-radix
+indices without a second traversal array. Its allocation and fill phases are
+separate functions. Mask index filling likewise runs after its allocation phase.
+The valarray tests separate independent expressions and use static immutable test
+inputs/expectations, retaining automatic array owners and selection objects.
+The four-view pipeline also keeps its immutable input in static storage and its
+view and iterators automatic. Larger compositions and caller frames still need
+separate analysis.
+
+| O0 fixture | Largest known static path | Measured execution peak |
+|---|---:|---:|
+| `libcxx_stable_sort` | 144 bytes | 144 bytes |
+| `libcxx_execution` | 234 bytes | 234 bytes |
+| `libcxx_range_adaptors` | 254 bytes | 254 bytes |
+| `libcxx_random_engines` | 243 bytes | 213 bytes |
+| `libcxx_random_device` | 218 bytes | 117 bytes |
+| `libcxx_valarray` | 256 bytes | 174 bytes |
+| `eh_libcxx_algorithms` | 219 bytes | 173 bytes |
+| `eh_libcxx_execution` | 254 bytes | 208 bytes |
+| `eh_libcxx_random_device` | 225 bytes | 221 bytes |
+| `eh_libcxx_valarray` | 254 bytes | 210 bytes |
+
+All ten fixtures link and execute at O0/O1/O2/O3/Os/Oz without optimization
+overrides. The first three have complete linker bounds; the remaining figures
+are known-path analyses with incomplete whole-program bounds. Observed peaks
+cover the tested inputs only. Unwind validation covers 180 positive images,
+including the new ordinary images that retain exception support, and two images
+without exception metadata. RTTI/cast checks and the full benchmark suite pass;
+existing instruction, C and C++ benchmark timings are unchanged.
+
+The fixed memory layout remains a separate limit: `mt19937` requires 2498 bytes,
+`mt19937_64` has a similarly large state, and `knuth_b` requires 1032 bytes.
+None fits the 1 KiB static/heap region. Alias parameters are checked, and
+small-state instances exercise the MT/shuffle recurrences against independent
+sequences; this does not establish execution of the full-state standard aliases.
+
 ## ELF metadata
 
 LLVM automatically emits `.stack_sizes` using the finalized machine frame.

@@ -4,6 +4,17 @@ This directory owns target-side startup objects, public runtime headers,
 addressable library wrappers, and compiler helper routines. Compiler target
 semantics and `__avm_*` builtins remain in the LLVM submodule.
 
+`std::random_device` samples the existing ADC/timer seed service through the
+weak C hook `uint16_t __avm_random_device_sample() noexcept`. The `"avm"` and
+`"/dev/urandom"` tokens select this source. Sampling leaves the deterministic
+C `rand`/`avm_random` state alone. Each result collects all 16 unsigned bits;
+equal low-bit sample pairs are discarded, with at most 64 attempts per bit.
+A stalled source or unsupported token throws an implementation-defined type
+derived from `std::exception`, with a static diagnostic message. Sampling
+frames are released before throwing. `entropy()` returns zero because the
+hardware source has no calibrated entropy estimate. Tests validate filtering,
+range, bounded failure and recovery; they do not establish cryptographic quality.
+
 ## Build targets
 
 From the main AVM build:

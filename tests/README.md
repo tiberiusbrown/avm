@@ -14,11 +14,10 @@ C, and C++ fixture. Each C and C++ source is compiled separately at `-O0`,
 `-O1`, `-O2`, `-O3`, `-Os`, and `-Oz`; assembly fixtures run once.
 
 The libc++ fixtures use the requested optimization level without optimization
-overrides. The hosted `eh_libcxx_allocation_failures`, `eh_libcxx_containers`,
-`eh_libcxx_deque_insert`, `eh_libcxx_functional`, and `eh_libcxx_vocabulary`
-fixtures also have all six levels, rather than the other exception fixtures'
-O0/O2 matrix. Independent memory API checks run in separate functions. The
-function allocation fixture uses an automatic 24-byte callable, including its
+overrides. The hosted `eh_libcxx_*` allocation/container fixtures and the algorithms,
+execution, random-device and valarray fixtures also have all six levels,
+rather than the other exception fixtures' O0/O2 matrix. Independent memory API
+checks run in separate functions. The function allocation fixture uses an automatic 24-byte callable, including its
 by-value constructor copy.
 The vocabulary fixture keeps its automatic 26-byte payload, `any`, `shared_ptr`
 and `weak_ptr` together in one function. These payloads force out-of-line
@@ -80,6 +79,40 @@ Oversized rehash requests, including `SIZE_MAX`, must throw before allocation
 and leave existing elements and buckets intact.
 The AVM generic sorter uses a nonrecursive heapsort; the standard comparison
 complexity and public overloads are retained.
+
+`libcxx_stable_sort` checks stable classic/ranges sorting, move-only values,
+projections, comparison counts, duplicates, signed inputs and default scalar
+sorting. `eh_libcxx_algorithms` checks throwing comparisons, moves and assignments,
+and range-cache cleanup, failed replacement and construction without copying.
+The AVM stable sorter uses binary insertion: O(N log N) comparisons and O(N²)
+element moves, with no recursion, allocation or radix counter array.
+
+`libcxx_execution` checks all four standard execution policies on the serial
+backend, including predicates, copying, transformation, sorting, reductions,
+scans, forward iterators and uninitialized storage. `eh_libcxx_execution` checks
+that a throwing element callback terminates even under `seq`. Missing policy
+interfaces remain listed in the C++23 gap tracker. `libcxx_range_adaptors` checks
+filter/transform/drop/take composition, join, stride, reverse, enumerate, zip,
+pairwise, chunk-by, counted iterators and insertion adaptors. Its pipeline input
+is static; the view and its iterators have automatic lifetimes. Other checks keep
+small input arrays automatic. Pointer-cache behavior is also constant-evaluated.
+
+`libcxx_random_engines` compares fixed-width engine and seed-sequence output with
+independent host-library sequences, including discard and 64-bit seed cases.
+It exercises the minstd and ranlux aliases and small-state MT/shuffle instances.
+The full `mt19937` object needs 2498 bytes and `knuth_b` exceeds 1 KiB, so their
+alias parameters are checked but full-state execution is not claimed.
+`libcxx_random_device` exercises the emulator's ADC/timer source, distributions,
+and independence from the C PRNG. `eh_libcxx_random_device` replaces the sampling
+hook to check full-width results, equal-pair rejection, source failure through a
+distribution, bad tokens and recovery.
+
+`libcxx_valarray` checks arithmetic/logical expressions, reductions, slice,
+gslice, mask and indirect selection, shifts, both function-pointer `apply`
+overloads, copying, moving, resizing and swapping. Independent operations use
+separate functions and immutable expected/input arrays use static storage.
+`eh_libcxx_valarray` fails each gslice allocation and both mask-selection
+allocations, checking cleanup and preservation of the source array.
 
 The allocation paths include the exception runtime's matching stack even when
 the caller disables exceptions. Incomplete whole-program bounds and larger user

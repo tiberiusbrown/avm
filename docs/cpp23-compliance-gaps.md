@@ -56,8 +56,10 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Algorithms, ranges, numerics, and random facilities
 
-- [ ] **Algorithms and iterators:** Provide hosted iterator/range adaptors and `<execution>` policy overloads, including sorting paths whose libc++ radix-sort stack use exceeds AVM's 256-byte limit.
-- [ ] **Numerical utilities:** Provide `<random_device>` with an entropy source, libc++'s standard 32-bit random-engine aliases on the 16-bit-`int` target, and `<valarray>` operations within the AVM stack limit.
+- [ ] **Range and iterator adaptors:** Provide C++23 `basic_const_iterator`, constant-iterator/sentinel factories, and the `as_const`, `chunk`, `slide`, and `cartesian_product` views. Stream iterators and stream views require the missing streams library.
+- [ ] **Execution-policy overloads:** Provide the remaining policy overloads for `copy_if`, partitioning, removal, uniqueness, `rotate`, partial sorting, `nth_element`, and `inplace_merge`, with their required exception and complexity semantics.
+- [ ] **Large-state random engines:** Provide storage and execution for the standard `mt19937`, `mt19937_64`, and `knuth_b` engines, whose required state exceeds AVM's 1 KiB static/heap region.
+
 ### I/O, formatting, locale, and filesystems
 
 - [ ] **Streams:** Provide `<ios>`, `<iosfwd>`, `<iostream>`, `<istream>`, `<ostream>`, `<streambuf>`, `<sstream>`, `<fstream>`, `<iomanip>`, and `<syncstream>`, including standard stream objects and error/locale semantics.

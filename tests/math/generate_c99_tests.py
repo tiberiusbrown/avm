@@ -31,4 +31,4 @@ lines += ['static int c99_cases(void)', '{']
 for n,p in C99_POLICIES.items():
     lines += [f'    if (check_unary_accuracy({n},{n}_cases,sizeof({n}_cases)/sizeof({n}_cases[0]),{p})) return 1;']
 lines += ['    return 0;', '}', '']
-Path('tests/c/math_c99_cases.h').write_text('\n'.join(lines),encoding='utf-8')
+Path('tests/runtime/math/c/math_c99_cases.h').write_text('\n'.join(lines),encoding='utf-8')

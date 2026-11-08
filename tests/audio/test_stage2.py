@@ -42,7 +42,7 @@ def fixture(channels=(0,), duration=1.2):
     return midi.Arrangement("Synthetic", duration, voices, instruments, (4, 4), 16, midi.Analysis([], 1), {"warnings": []})
 
 
-@unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need tools/requirements-stage2.txt")
+@unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need the .[audio] Python extra")
 class RenderTests(unittest.TestCase):
     def test_score_volume_max_has_no_overload_across_loop_phases_and_rates(self):
         source = """
@@ -242,7 +242,7 @@ class RenderTests(unittest.TestCase):
 
 
 
-@unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need tools/requirements-stage2.txt")
+@unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need the .[audio] Python extra")
 class FeatureTests(unittest.TestCase):
     def test_dc_is_not_treated_as_audible_loudness(self):
         silence = extract(np.zeros(8000), 15625)
@@ -289,7 +289,7 @@ class FeatureTests(unittest.TestCase):
         self.assertTrue(np.all(aligned[:round(.37*rate)] == 0))
 
 
-@unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need tools/requirements-stage2.txt")
+@unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need the .[audio] Python extra")
 class OptimizationTests(unittest.TestCase):
     def fit(self, initial, target, evaluations=160):
         audio = render(midi.compile_arrangement(deepcopy(target))[1]).audio

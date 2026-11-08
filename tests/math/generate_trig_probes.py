@@ -43,12 +43,12 @@ def main():
             lines+=['#if TRIG_PROBE == 13 || TRIG_PROBE == 14',
                     'static volatile float probe_remainders[8]={'+','.join(x.hex()+'f' for x in rs)+'};','#endif']
     lines+=['#endif','']
-    (ROOT/'bench/c/math_trig_probe_inputs.h').write_text('\n'.join(lines))
+    (ROOT/'bench/workloads/math/c/math_trig_probe_inputs.h').write_text('\n'.join(lines))
     pairs=[(k,d) for d in range(11) for k in [0,1,2,3,9,10,11,12]]
     pairs += [(4,2),(5,2),(7,4),(6,11),(8,7),(8,8),(13,4),(14,4)]
     for k,d in pairs:
         name=f'math_trig_probe_{KINDS[k]}_{list(DOMAINS)[d]}'
-        (ROOT/'bench/c'/f'{name}.c').write_text(f'#define TRIG_PROBE {k}\n#define TRIG_PROBE_DOMAIN {d}\n#include "math_trig_probe.h"\n')
+        (ROOT/'bench/workloads/math/c'/f'{name}.c').write_text(f'#define TRIG_PROBE {k}\n#define TRIG_PROBE_DOMAIN {d}\n#include "math_trig_probe.h"\n')
     print(f'Generated {len(pairs)} matched probes')
 
 if __name__=='__main__': main()

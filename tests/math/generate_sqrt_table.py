@@ -112,8 +112,7 @@ def main():
     if INTERVALS < 2 or INTERVALS & (INTERVALS-1):
         parser.error("interval count must be a power of two")
     outputs = {
-        ROOT / 'tests/c/math_sqrtf_lookup.c': boundary_cases(),
-        ROOT / 'tests/c/math_sqrtf_lookup_output.txt': 'P\n',
+        ROOT / 'tests/runtime/math/c/math_sqrtf_lookup.c': boundary_cases(),
     }
     for path, content in outputs.items():
         if args.check:

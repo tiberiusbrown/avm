@@ -1,128 +1,7 @@
-set(AVM_TERM_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/fixtures")
+set(AVM_TERM_SOURCE_DIR "${PROJECT_SOURCE_DIR}/tests/runtime/termination/link")
 set(AVM_TERM_RESULT_DIR "${CMAKE_CURRENT_BINARY_DIR}/results")
 set(AVM_TERM_HELPER
     "${CMAKE_CURRENT_SOURCE_DIR}/RunLinkFixture.cmake")
-
-function(avm_term_source stem extension content)
-    file(GENERATE
-        OUTPUT "${AVM_TERM_SOURCE_DIR}/${stem}.${extension}"
-        CONTENT "${content}"
-    )
-endfunction()
-
-avm_term_source(unused c [=[
-int main(void) { return 0; }
-]=])
-avm_term_source(exit_only c [=[
-#include <stdlib.h>
-int main(void) { exit(5); }
-]=])
-avm_term_source(immediate_only c [=[
-#include <stdlib.h>
-int main(void) { _Exit(5); }
-]=])
-avm_term_source(abort_only c [=[
-#include <stdlib.h>
-int main(void) { abort(); }
-]=])
-avm_term_source(plain c [=[
-#include <stdlib.h>
-static void f(void) {}
-int main(void) { return atexit(f); }
-]=])
-avm_term_source(mixed cpp [=[
-extern "C" int main();
-#include <stdlib.h>
-struct G { ~G(); };
-G::~G() { asm volatile("" : : "r"(this) : "memory"); }
-G g;
-int main() { return atexit(+[]{}); }
-]=])
-avm_term_source(local_only cpp [=[
-extern "C" int main();
-struct G {
-    ~G() { asm volatile("" : : "r"(this) : "memory"); }
-};
-int main() { static G g; }
-]=])
-avm_term_source(globals_only cpp [=[
-extern "C" int main();
-#include <stdlib.h>
-struct G { ~G(); };
-G::~G() { asm volatile("" : : "r"(this) : "memory"); }
-G g;
-int main() { return 0; }
-]=])
-avm_term_source(cpp_exit_only cpp [=[
-extern "C" int main();
-#include <stdlib.h>
-struct G { ~G(); };
-G::~G() { asm volatile("" : : "r"(this) : "memory"); }
-G g;
-int main() { exit(3); }
-]=])
-avm_term_source(bare__Exit c [=[
-#include <stdlib.h>
-void _start(void) { _Exit(5); }
-]=])
-avm_term_source(bare_abort c [=[
-#include <stdlib.h>
-void _start(void) { abort(); }
-]=])
-avm_term_source(dead_registration c [=[
-#include <stdlib.h>
-static void f(void) {}
-void dead(void) { atexit(f); }
-int main(void) { return 0; }
-]=])
-avm_term_source(safe c [=[
-#include <stdlib.h>
-volatile unsigned char input;
-__attribute__((noinline))
-static void a(void) {
-    volatile unsigned char x[20];
-    x[input % 20] = 1;
-}
-__attribute__((noinline))
-static void b(void) {
-    volatile unsigned char x[30];
-    x[input % 30] = 2;
-}
-int main(void) { return atexit(input ? a : b); }
-]=])
-avm_term_source(registrar_pointer c [=[
-#include <stdlib.h>
-volatile unsigned char input;
-__attribute__((noinline))
-static void a(void) {
-    volatile unsigned char x[20];
-    x[input % 20] = 1;
-}
-__attribute__((noinline))
-static void b(void) {
-    volatile unsigned char x[30];
-    x[input % 30] = 2;
-}
-int main(void) {
-    int (*reg)(void (*)(void)) = atexit;
-    return reg(input ? a : b);
-}
-]=])
-avm_term_source(unknown c [=[
-#include <stdlib.h>
-void (*volatile target)(void);
-int main(void) { return atexit(target); }
-]=])
-avm_term_source(overflow c [=[
-#include <stdlib.h>
-volatile unsigned char input;
-__attribute__((noinline))
-static void callback(void) {
-    volatile unsigned char frame[240];
-    frame[input % 240] = 1;
-}
-int main(void) { return atexit(callback); }
-]=])
 
 set(AVM_TERM_CHECK_OUTPUTS)
 
@@ -186,7 +65,7 @@ function(avm_term_case name source extension)
             ${CASE_FLAGS}
             -o "${elf}"
         DEPENDS
-            avm_sdk
+            avm_sdk_tools avm_sysroot
             "${src}"
             "${AVM_TERM_HELPER}"
         COMMENT "Linking AVM termination fixture ${name}"
@@ -240,12 +119,12 @@ foreach(opt IN ITEMS O0 O2 Oz)
 endforeach()
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
-add_custom_target(avm_termination_checks
+avm_add_check(avm_termination_checks
     COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/check_link.py"
         --work "${AVM_TERM_RESULT_DIR}"
     DEPENDS
-        avm_sdk
+        avm_sdk_tools avm_sysroot
         ${AVM_TERM_CHECK_OUTPUTS}
         "${CMAKE_CURRENT_SOURCE_DIR}/check_link.py"
     COMMENT "Checking AVM termination RAM layout and callback stack bounds"

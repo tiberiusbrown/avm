@@ -81,7 +81,6 @@ def refresh_fixtures(directory):
     path.write_text(text)
 
 if __name__=='__main__':
-    path=Path(__file__).resolve().parents[1]/'c/math_trig_regressions.c'
+    path=Path(__file__).resolve().parents[1]/'runtime/math/c/math_trig_regressions.c'
     path.write_text(fixture())
-    path.with_name('math_trig_regressions_output.txt').write_text('P\n')
     refresh_fixtures(path.parent)

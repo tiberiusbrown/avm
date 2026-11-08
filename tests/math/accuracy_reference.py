@@ -330,7 +330,7 @@ def main():
         pairs=[pair for pair in pairs if (pair[0]&0x7fffff) in [0,1,0x400000,0x7fffff] or
                abs(value(pair[0]))<16 or not math.isfinite(value(pair[0]))]
     def fixtures(name):
-        paths=Path(__file__).resolve().parents[1]/'c'
+        paths=Path(__file__).resolve().parents[1]/'runtime/math/c'
         result=set()
         for path in paths.glob('math_'+name+'*.c'):
             result.update((int(a,16),int(b,16)) for a,b in re.findall(
@@ -425,8 +425,8 @@ def main():
             for a,b in sorted(inputs): lines.append(f'    {{0x{a:08x}UL,0x{b:08x}UL,0x{expected_bits(n,a,b,reference(n,a,b)):08x}UL,1}},')
             binary=n in ['hypotf','powf','atan2f','fmodf']
             lines+=['};','int avm_test_main(void) {',f'    return check_{"binary" if binary else "unary"}_accuracy({n}, cases, sizeof(cases)/sizeof(cases[0]), {policy});','}','']
-            path=Path('tests/c')/f'math_{n}_accuracy.c'
-            path.write_text('\n'.join(lines), encoding='utf-8'); path.with_name(path.stem+'_output.txt').write_text('P\n', encoding='utf-8')
+            path=Path('tests/runtime/math/c')/f'math_{n}_accuracy.c'
+            path.write_text('\n'.join(lines), encoding='utf-8')
     print(json.dumps(stats,indent=2))
     raise SystemExit(any(s['failures'] for s in stats.values()))
 

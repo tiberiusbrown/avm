@@ -490,7 +490,7 @@ def _exact(target, steps, index, penalty, next_seed):
     best = cost[state]
     for t in range(n - 1, 0, -1):
         recon[t], codes[t - 1] = state - 128, symbols[t, state]
-        state = parents[t, state]
+        state = int(parents[t, state])
     recon[0] = target[0]
     return best, codes, recon
 

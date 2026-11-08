@@ -216,7 +216,7 @@ def read_midi(path):
     try:
         import mido
     except ImportError as error:
-        raise ValueError("MIDI import requires mido: python -m pip install -r tools/requirements-midi.txt") from error
+        raise ValueError("MIDI import requires mido: python -m pip install '.[midi]'") from error
     try:
         midi = mido.MidiFile(path)
     except (OSError, ValueError, EOFError, KeyError) as error:

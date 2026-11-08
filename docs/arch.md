@@ -1413,7 +1413,7 @@ floating-point exception state. Arithmetic and conversion results use
 round-to-nearest, ties-to-even unless an instruction specifies another
 rounding direction. NaN result payloads are unspecified except for `FNEG` and `FABS`,
 whose bit-level behavior is defined below. Math functions live in
-the guest runtime; see the [migration measurements](math-runtime-tradeoff.md).
+the guest runtime; see the [benchmark guide](../bench/README.md).
 
 The C99 `<fenv.h>` interface supports only `FE_TONEAREST` and no
 exception flags (`FE_ALL_EXCEPT == 0`). Saved environments are invariant;
@@ -4245,7 +4245,7 @@ Constrained binary32 addition, subtraction, multiplication, division, square
 root, comparisons, and 16-/32-bit integer conversions lower to existing
 floating-point operations. The C99 environment fixes dynamic rounding
 to nearest-even and has no observable exception state. See the
-[backend crash regression](fenv-backend-crash.md).
+[floating-point regression fixtures](../tests/runtime/math/c).
 
 Physical `GPR32` copies select `MOV32`. Upper-pair-to-upper-pair copies expand
 to two compact `MOV` instructions; all other pair copies use `F2 60-6B`.
@@ -6163,8 +6163,7 @@ uses this option when generating disassembly artifacts. Relative branch operands
 are offsets from the end of the instruction; the accompanying `<L...>` annotation
 identifies the destination. Indirect transfers retain their register operands.
 
-Benchmark listings use `FOCUSED_DISASSEMBLY` in `avm_add_image` (also available
-in `avm_add_project`). This mode uses the final ELF and its linker map to omit
+Benchmark listings use `FOCUSED_DISASSEMBLY` in `avm_add_image`. This mode uses the final ELF and its linker map to omit
 the selected startup object and the runtime's halt, termination, and trap
 infrastructure, including private helpers. It retains benchmark functions,
 other library members, instruction bytes, local labels, and symbolic calls,
@@ -7472,7 +7471,7 @@ Measured with `tests/debug/eh_stack_report.py`, the rethrow fixtures peak at 203
 (`eh_rethrow_standard` at O0) and the largest static bound of a rethrow image is 214 bytes
 (`eh_rethrow_inheritance` at O0). Both are inside the 256-byte guest stack.
 
-The C++ tests are `tests/cpp/eh_rethrow*.cpp`. `tests/debug/eh_rethrow_verify.py` checks the
+The C++ tests are `tests/runtime/cxxabi/cpp/eh_rethrow*.cpp`. `tests/debug/eh_rethrow_verify.py` checks the
 probe trace of each linear rethrow image: the header's identity, the state at each runtime
 boundary, the order throw, begin, rethrow, release, end, destructor, and free, the rethrow
 context against the disassembly, and that the release precedes the next catch. It also decodes
@@ -7598,7 +7597,7 @@ tail-transfers to `__avm_eh_throw`, which initializes `resume_context` from
 each action pool in full, checks each list with the same rules as `match_list`,
 requires every site's action to name the start of a list, requires every list to
 be named, and requires the pool to end at `next_offset`. Throws do not call it. The
-unit test `tests/cpp/eh_block_validation.cpp` runs it on valid and malformed blocks.
+unit test `tests/runtime/cxxabi/cpp/eh_block_validation.cpp` runs it on valid and malformed blocks.
 
 #### Measured stack, cycles, and memory
 
@@ -7857,7 +7856,7 @@ record, inside a list, and before the pool, reserved flags, a zero selector, a
 repeated selector, a catch-all that is not last, and a type address outside program
 space.
 
-`tests/cpp/eh_block_validation.cpp` checks `avm_eh_validate_block` on six valid
+`tests/runtime/cxxabi/cpp/eh_block_validation.cpp` checks `avm_eh_validate_block` on six valid
 blocks, with cleanup-only, combined, typed, and shared action lists, and a two-function
 block with its index. It also checks 59 malformed blocks. These cover the index, the
 record checks, the action pool, and the catch entries. Each malformed block differs
@@ -7897,7 +7896,7 @@ fixture.
 and it counts the entries that each search reads. Every lookup must find the covering
 function, or no function in a gap, before the first function, or after the last. Every
 search must read no more than `ceil(log2(N + 1))` entries. The runtime's own lookups
-are checked by `tests/cpp/eh_index_lookup.cpp`, which throws through 48 functions, each
+are checked by `tests/runtime/cxxabi/cpp/eh_index_lookup.cpp`, which throws through 48 functions, each
 caught in its own caller. The index holds about a hundred functions, so the lookups
 reach its first, middle, and last entries, and every caught value must match.
 
@@ -7914,15 +7913,15 @@ type ID that `llvm.eh.typeid.for` produces. `eh-unsupported.ll` checks that an
 exception filter still fails the compile. `clang/test/CodeGenCXX/avm-eh-pointer-catch.cpp`
 checks the pointer catch and the copy path.
 
-The runtime fixtures are `tests/cpp/eh_typed.cpp`, which covers the exact cases, with
-its cross-translation-unit support in `tests/cpp/support/eh_typed_unit.cpp`, and
-`tests/cpp/eh_typed_high_address.cpp`. Each runs at O0 and O2, and `eh_typed` also runs
+The runtime fixtures are `tests/runtime/cxxabi/cpp/eh_typed.cpp`, which covers the exact cases, with
+its cross-translation-unit support in `tests/support/cpp/eh_typed_unit.cpp`, and
+`tests/runtime/cxxabi/cpp/eh_typed_high_address.cpp`. Each runs at O0 and O2, and `eh_typed` also runs
 under full LTO.
 
-The base-matching fixtures are `tests/cpp/eh_inheritance.cpp`, which covers the direct,
+The base-matching fixtures are `tests/runtime/cxxabi/cpp/eh_inheritance.cpp`, which covers the direct,
 chained, eight-level, nested, by-reference, by-value, private, protected, ambiguous,
 clause-order, cleanup, virtual, and pointer cases, with the cross-translation-unit
-support in `tests/cpp/support/eh_inheritance_unit.cpp`. `eh_inheritance_high_address.cpp`
+support in `tests/support/cpp/eh_inheritance_unit.cpp`. `eh_inheritance_high_address.cpp`
 places its descriptors above 0xFFFF, and `eh_inheritance_cross_unit.cpp` runs under
 full LTO too. `eh_inheritance_virtual_unhandled.cpp` and
 `eh_inheritance_depth_unhandled.cpp` check the two terminating limits, and
@@ -7930,14 +7929,14 @@ full LTO too. `eh_inheritance_virtual_unhandled.cpp` and
 patches. `tests/debug/eh_inheritance_verify.py` checks each handler's selector,
 adjustment, and returned pointers against the emulator and the packed RTTI.
 
-The pointer fixtures are `tests/cpp/eh_pointer_conversion.cpp`, which covers the base,
+The pointer fixtures are `tests/runtime/cxxabi/cpp/eh_pointer_conversion.cpp`, which covers the base,
 qualification, void, noexcept, nullptr, exact and converted reference, clause-order, cleanup,
-and exact-regression cases. `tests/cpp/eh_pointer_high_address.cpp` places a program pointer, a
-function, and their descriptors above 0xFFFF. `tests/cpp/eh_pointer_cross_unit.cpp` catches a
-derived pointer that `tests/cpp/support/eh_pointer_conversion_unit.cpp` throws, with the shared
-types in `tests/cpp/support/eh_pointer_conversion.h`. Each runs at O0 and O2, and the
-cross-unit and main fixtures also run under full LTO. `tests/cpp/eh_pointer_depth_unhandled.cpp`
-is a nine-level chain that must halt. `tests/cpp/eh_pointer_corrupt_target.cpp` is the image
+and exact-regression cases. `tests/runtime/cxxabi/cpp/eh_pointer_high_address.cpp` places a program pointer, a
+function, and their descriptors above 0xFFFF. `tests/runtime/cxxabi/cpp/eh_pointer_cross_unit.cpp` catches a
+derived pointer that `tests/support/cpp/eh_pointer_conversion_unit.cpp` throws, with the shared
+types in `tests/support/cpp/eh_pointer_conversion.h`. Each runs at O0 and O2, and the
+cross-unit and main fixtures also run under full LTO. `tests/runtime/cxxabi/cpp/eh_pointer_depth_unhandled.cpp`
+is a nine-level chain that must halt. `tests/runtime/cxxabi/cpp/eh_pointer_corrupt_target.cpp` is the image
 that `tests/debug/eh_pointer_corrupt_verify.py` patches. Its four paths throw a virtual-base
 pointer, a mutable base reference, a noexcept function pointer, and a nested pointer. The
 unchanged image reports success on every path, and each of the sixteen patches must halt.
@@ -7969,14 +7968,14 @@ implemented:
   within its limits fails the throw. Shared virtual bases are walked once per path, so a hierarchy
   with many paths can exceed the 512-edge budget: three classes at each of six levels,
   each deriving virtually from all three below, fail the throw
-  (`tests/cpp/eh_virtual_lattice_unhandled.cpp`), while five levels match
-  (`tests/cpp/eh_virtual_lattice.cpp`);
+  (`tests/runtime/cxxabi/cpp/eh_virtual_lattice_unhandled.cpp`), while five levels match
+  (`tests/runtime/cxxabi/cpp/eh_virtual_lattice.cpp`);
 - exception filters, which the backend rejects with a diagnostic;
 - nested exceptions: only one exception may be active, so a throw while one is active,
   including from a destructor, terminates;
 - overlapping catches of one exception: a rethrow that a handler inside the still-active
   abandoned catch would catch terminates when that catch begins
-  (`tests/cpp/eh_rethrow_nested_handler.cpp`), because the runtime keeps no count of
+  (`tests/runtime/cxxabi/cpp/eh_rethrow_nested_handler.cpp`), because the runtime keeps no count of
   simultaneous catches;
 - `std::set_terminate` and `std::get_terminate`; `std::terminate` calls `abort()`;
 - `typeid` and `dynamic_cast`, which need RTTI and the virtual-base offsets.
@@ -7987,12 +7986,12 @@ selectors only. The 24-bit descriptor addresses are not truncated.
 A class-typed throw links under `-flto=full`. Earlier, the bitcode reader rejected
 the module, because the compiler declared `__cxa_throw` with an AS0 destructor
 parameter and called it with a program-space destructor. The declaration now names
-program space, so the call's operand types match. `tests/cpp/eh_cleanup_object.cpp`
+program space, so the call's operand types match. `tests/runtime/cxxabi/cpp/eh_cleanup_object.cpp`
 runs at O0, O2, and O2 with full LTO, and `tests/debug/eh_rtti_verify.py` checks its
 descriptor in the linked image.
 
 A frame without CFI in `.debug_frame` terminates the program deterministically,
-which `tests/cpp/eh_missing_cfi.cpp` checks. The metadata that the throw trusts is
+which `tests/runtime/cxxabi/cpp/eh_missing_cfi.cpp` checks. The metadata that the throw trusts is
 checked by the packer and by `avm_eh_validate_block`. A corruption that keeps every
 checked field valid, such as a different outgoing byte count within range, is not
 detected at run time. The host-side verifier detects it against the ELF.

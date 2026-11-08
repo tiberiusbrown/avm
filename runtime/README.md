@@ -21,7 +21,8 @@ From the main AVM build:
 
 ```text
 avm_runtime         Build CRT objects and target libraries.
-avm_runtime_asm     Regenerate checked-in runtime/asm disassemblies.
+avm_runtime_asm     Generate production disassemblies under build/runtime/disassembly.
+avm_runtime_asm_update  Refresh checked-in runtime/asm references.
 avm_runtime_checks  Compile C and C++ header smoke tests.
 avm_sysroot         Stage headers, CRT objects, and libraries.
 avm_sdk             Build the AVM toolchain and complete staged sysroot.
@@ -29,10 +30,13 @@ avm_sdk             Build the AVM toolchain and complete staged sysroot.
 
 `runtime/asm/` contains per-source disassemblies of the production CRT, library,
 and compiler-helper objects, including every function before unused sections
-are removed. Paths mirror the sources, for example
+are removed. Paths mirror the sources, with upstream libc++ objects under
+`asm/libcxx/src/`, for example
 `lib/math/ef_sqrt.c` produces `asm/lib/math/ef_sqrt.asm`. These files are intended
-to be versioned. The default build, `avm_runtime`, and `avm_sdk` refresh them;
-`avm_runtime_asm` regenerates them without building diagnostic MIR dumps.
+to be versioned. `avm_runtime_asm_update` refreshes them explicitly.
+`avm_runtime_asm` generates listings under the selected build directory;
+`avm_runtime_mir` generates optional diagnostic dumps. SDK and ordinary runtime
+builds do not generate either artifact.
 
 Disassemblies include instruction bytes, symbols, and relocation records.
 Relocations identify unresolved call targets and data references; the final
@@ -359,7 +363,7 @@ The math kernels use only binary32 arithmetic. Polynomial coefficients and
 range-reduction digits are embedded as instruction immediates; functions are
 linked on demand with `--gc-sections`. They report math errors through `errno` (`math_errhandling == MATH_ERRNO`);
 floating-point exception state is not provided. See
-[code size and performance measurements](../docs/math-runtime-tradeoff.md).
+[the math guide](lib/math/README.md) and [benchmark references](../bench/reference/cycles_c.txt).
 
 `string.h` retains its function-like call macros; define
 `AVM_STRING_NO_BUILTIN_MACROS` before including it to request ordinary calls.
@@ -458,17 +462,14 @@ directory: a function index, a filename index, source checkpoints, a delta-encod
 source transition stream, and a string pool. `docs/arch.md` Section 69.2 gives
 the full layout, and `tools/dump-crash.py` inspects it.
 
-Two size-saving opt-outs are available. `avm_add_project()` and
-`avm_add_image()` take `NO_CRASH_INFO`, which passes `--no-crash-info` to
-`llvm-avm-image`. The packer then writes `crashInfo` zero and no block:
+The internal `avm_add_image()` helper accepts `NO_CRASH_INFO`. SDK consumers
+can invoke the image packer directly with `--no-crash-info` after linking:
 
-```cmake
-avm_add_project(my_game
-    SOURCES main.cpp
-    COMPILE_OPTIONS -O2
-    GC_SECTIONS
-    NO_CRASH_INFO)
+```sh
+avm-image --development --no-crash-info my_game.elf -o my_game.bin
 ```
+
+The packer then writes `crashInfo` zero and no metadata block.
 
 Source lines require `-g`. Function names do not, so a build without `-g` still
 names its functions on the crash screen. Function names come from final linked `STT_FUNC` symbols. C++ names are
@@ -564,7 +565,7 @@ landing pads. A cleanup pad destroys its objects and calls `_Unwind_Resume`. Eac
 call site is an entry in `.avm.eh_sites`, and each call in a function with landing
 pads is an entry in `.avm.eh_calls`. The packer turns those records, the action lists
 in `.avm.eh_sites`, and the `.debug_frame` rows into the `AVEH5` block described in
-[arch.md](arch.md) Section 69.3. The unwinder's `eh_unwind.c` is built without
+[arch.md](../docs/arch.md) Section 69.3. The unwinder's `eh_unwind.c` is built without
 unwind tables, because the unwinder never unwinds through its own frames.
 
 The runtime objects are `eh_cxa.c`, `eh_unwind.c`, `eh_context.asm`, `eh_cxa_throw.asm`,
@@ -585,7 +586,7 @@ descriptors name, in program space: `__class_type_info`, `__fundamental_type_inf
 pointer type that a catch of a non-const pointer by reference must match exactly, and the
 runtime classifies it by this vtable alone.
 The descriptors themselves are emitted by the compiler into program flash; see
-[arch.md](arch.md) Section 60.1.
+[arch.md](../docs/arch.md) Section 60.1.
 
 Propagation has two phases. Phase one searches the frames from the throw for the
 first catch that matches the thrown type. The search looks up each frame's function by
@@ -691,10 +692,10 @@ the records it consumes, and `avm_eh_validate_block` checks the whole block.
 
 The guest stack holds 256 bytes, so the exception runtime's own stack use
 matters. Measured peaks, the header size, and the metadata and image costs are in
-[arch.md](arch.md) Section 69.3.
+[arch.md](../docs/arch.md) Section 69.3.
 
-Tests use the `avm_eh_catch_all_run` target. It builds `tests/cpp/eh_*.cpp` and
-`tests/asm/eh_*.asm` at O0 and O2, and it runs them through `avm_tests`. The
+Tests use the `avm_eh_catch_all_run` target. It builds `tests/runtime/cxxabi/cpp/eh_*.cpp` and
+`tests/interp/isa/eh_*.asm` at O0 and O2, and it runs them through `avm_tests`. The
 `avm_eh_inheritance_run` target runs the base-matching fixtures at O0, O2, and LTO/O2.
 It checks each handler's selector and adjustment against the emulator and the packed
 RTTI, and it checks that each malformed RTTI field fails the throw. The

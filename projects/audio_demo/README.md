@@ -18,7 +18,7 @@ validation does not establish musical quality on the physical piezo.
 To regenerate imports from the original MIDI files (optional `mido` required):
 
 ```sh
-python -m pip install -r tools/requirements-midi.txt
+python -m pip install '.[midi]'
 python projects/audio_demo/import_midi.py /path/to/Downloads
 ```
 
@@ -75,18 +75,21 @@ volume and duty, and saturates the complete mix at the PWM limits.
 Build from the repository root:
 
 ```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DAVM_BUILD_EXAMPLES=ON
 cmake --build build --config RelWithDebInfo --target avm_audio_demo
 ```
 
 Or configure this directory with an installed AVM SDK:
 
 ```sh
-cmake -S projects/audio_demo -B projects/audio_demo/build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DAVM_SDK_ROOT=/path/to/avm-sdk
-cmake --build projects/audio_demo/build --config RelWithDebInfo
+cmake -S projects/audio_demo -B build/audio-demo -DCMAKE_BUILD_TYPE=RelWithDebInfo -DAVM_SDK_ROOT=/path/to/avm-sdk
+cmake --build build/audio-demo --config RelWithDebInfo
 ```
 
 This uses the installed SDK's Clang, linker, image packer,
-and interpreter. The repository build installs its SDK before building the demo.
+and interpreter through the installed CMake integration. The repository build
+uses the same public driver without installing the SDK first. Products stay in
+the selected build directory; building the demo does not overwrite the tracked package.
 Both builds copy the package to `projects/audio_demo/audio_demo.arduboy`.
 Objects, ELF, and the development FX image stay in `projects/audio_demo/build`.
 The checked-in `music.h`, `effect.h`, and `songs/*.h` let ordinary SDK builds

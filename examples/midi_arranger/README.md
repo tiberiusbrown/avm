@@ -3,7 +3,7 @@
 These AVMS scores come from original, programmatically generated fixtures in
 `tests/audio/midi_fixtures.py`. Regenerate with
 `python tests/audio/generate_midi_examples.py` after installing
-`tools/requirements-midi.txt`. Fixture MIDI and compiled A5 files go under
+``.[midi]` in pyproject.toml`. Fixture MIDI and compiled A5 files go under
 `build/midi-arranger/examples/`.
 
 - `progression.avms`: eight-bar C–F–G–C melody, bass, chords and drums.

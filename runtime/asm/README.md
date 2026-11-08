@@ -8,10 +8,13 @@ and `lib/math/ef_sqrt.asm` shows compiled `sqrtf`.
 Regenerate with the configured toolchain environment initialized:
 
 ```sh
-cmake --build build --config RelWithDebInfo --target avm_runtime_asm --parallel
+cmake --build build --config RelWithDebInfo --target avm_runtime_asm_update --parallel
 ```
 
-The default build, `avm_runtime`, and `avm_sdk` also refresh these files.
+Ordinary SDK/runtime builds leave these references untouched.
+`avm_runtime_asm` generates listings under `build/runtime/disassembly/`;
+`avm_runtime_asm_update` explicitly copies them here. Upstream libc++ object
+listings live under `libcxx/src/`.
 Listings include bytes, symbol tables, and relocations. They precede final-link
 relaxation, so calls and branches may shorten when linked into a program.
 Relocation records identify unresolved call targets and data references beside

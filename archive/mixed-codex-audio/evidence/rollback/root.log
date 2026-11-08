@@ -1,0 +1,1050 @@
+[0/2] Re-checking globbed directories...
+-- GLOB mismatch!
+The following files were added:
+  +C:/Users/Brown/Documents/GitHub/avm/runtime/lib/audio_tone.c
+[1/2] Re-running CMake...
+CMake Deprecation Warning at deps/Ardens/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- ARDENS_VERSION: HEAD-HASH-NOTFOUND
+-- ARDENS_VERSION_SHORT: HEAD
+-- ARDENS_VERSION_MAJOR: 0
+-- ARDENS_VERSION_MINOR: 0
+-- ARDENS_VERSION_PATCH: 0
+-- {fmt} version: 11.0.2
+-- Build type: RelWithDebInfo
+CMake Deprecation Warning at deps/Ardens/deps/miniz/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+CMake Deprecation Warning at deps/Ardens/deps/bitsery/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+skip bitsery examples
+skip bitsery tests
+-- Could NOT find PkgConfig (missing: PKG_CONFIG_EXECUTABLE) 
+-- Could NOT find LibUSB (missing: LibUSB_LIBRARY LibUSB_INCLUDE_PATH) (found version "LibUSB_VERSION-NOTFOUND")
+-- 
+-- SDL3 was configured with the following options:
+-- 
+-- Platform: Windows-10.0.26200
+-- 64-bit:   TRUE
+-- Compiler: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe
+-- Revision: SDL-3.4.12-HEAD-HASH-NOTFOUND
+-- Vendor:   
+-- 
+-- Subsystems:
+--   Audio:    ON
+--   Video:    ON
+--   GPU:      ON
+--   Render:   ON
+--   Camera:   ON
+--   Joystick: ON
+--   Haptic:   ON
+--   Hidapi:   ON
+--   Power:    ON
+--   Sensor:   ON
+--   Dialog:   ON
+--   Tray:     ON
+-- 
+-- Options:
+--   SDL_ALSA                    (Wanted: OFF): OFF
+--   SDL_ALSA_SHARED             (Wanted: OFF): OFF
+--   SDL_ALTIVEC                 (Wanted: OFF): OFF
+--   SDL_ARMNEON                 (Wanted: OFF): OFF
+--   SDL_ASAN                    (Wanted: OFF): OFF
+--   SDL_ASSEMBLY                (Wanted: ON): ON
+--   SDL_ASSERTIONS              (Wanted: auto): auto
+--   SDL_AVX                     (Wanted: ON): ON
+--   SDL_AVX2                    (Wanted: ON): ON
+--   SDL_AVX512F                 (Wanted: ON): ON
+--   SDL_BACKGROUNDING_SIGNAL    (Wanted: OFF): OFF
+--   SDL_CCACHE                  (Wanted: OFF): OFF
+--   SDL_CLANG_TIDY              (Wanted: OFF): OFF
+--   SDL_CLOCK_GETTIME           (Wanted: OFF): OFF
+--   SDL_COCOA                   (Wanted: OFF): OFF
+--   SDL_DBUS                    (Wanted: OFF): OFF
+--   SDL_DEPS_SHARED             (Wanted: ON): OFF
+--   SDL_DIRECTX                 (Wanted: ON): ON
+--   SDL_DISKAUDIO               (Wanted: ON): ON
+--   SDL_DLOPEN_NOTES            (Wanted: OFF): OFF
+--   SDL_DUMMYAUDIO              (Wanted: ON): ON
+--   SDL_DUMMYCAMERA             (Wanted: ON): ON
+--   SDL_DUMMYVIDEO              (Wanted: ON): ON
+--   SDL_EXAMPLES                (Wanted: OFF): OFF
+--   SDL_EXAMPLES_LINK_SHARED    (Wanted: OFF): OFF
+--   SDL_FOREGROUNDING_SIGNAL    (Wanted: OFF): OFF
+--   SDL_FRIBIDI                 (Wanted: OFF): OFF
+--   SDL_FRIBIDI_SHARED          (Wanted: OFF): OFF
+--   SDL_GCC_ATOMICS             (Wanted: OFF): OFF
+--   SDL_HIDAPI                  (Wanted: ON): ON
+--   SDL_HIDAPI_JOYSTICK         (Wanted: ON): ON
+--   SDL_HIDAPI_LIBUSB           (Wanted: ON): OFF
+--   SDL_HIDAPI_LIBUSB_SHARED    (Wanted: ON): OFF
+--   SDL_IBUS                    (Wanted: OFF): OFF
+--   SDL_INSTALL                 (Wanted: OFF): OFF
+--   SDL_INSTALL_TESTS           (Wanted: OFF): OFF
+--   SDL_JACK                    (Wanted: OFF): OFF
+--   SDL_JACK_SHARED             (Wanted: OFF): OFF
+--   SDL_KMSDRM                  (Wanted: OFF): OFF
+--   SDL_KMSDRM_SHARED           (Wanted: OFF): OFF
+--   SDL_LASX                    (Wanted: OFF): OFF
+--   SDL_LIBC                    (Wanted: ON): ON
+--   SDL_LIBICONV                (Wanted: OFF): OFF
+--   SDL_LIBTHAI                 (Wanted: OFF): OFF
+--   SDL_LIBTHAI_SHARED          (Wanted: OFF): OFF
+--   SDL_LIBUDEV                 (Wanted: ON): OFF
+--   SDL_LIBURING                (Wanted: OFF): OFF
+--   SDL_LSX                     (Wanted: OFF): OFF
+--   SDL_METAL                   (Wanted: OFF): OFF
+--   SDL_MMX                     (Wanted: ON): OFF
+--   SDL_OFFSCREEN               (Wanted: ON): ON
+--   SDL_OPENGL                  (Wanted: ON): ON
+--   SDL_OPENGLES                (Wanted: ON): ON
+--   SDL_OPENVR                  (Wanted: OFF): OFF
+--   SDL_OSS                     (Wanted: OFF): OFF
+--   SDL_PIPEWIRE                (Wanted: OFF): OFF
+--   SDL_PIPEWIRE_SHARED         (Wanted: OFF): OFF
+--   SDL_PTHREADS                (Wanted: OFF): OFF
+--   SDL_PTHREADS_SEM            (Wanted: OFF): OFF
+--   SDL_PULSEAUDIO              (Wanted: OFF): OFF
+--   SDL_PULSEAUDIO_SHARED       (Wanted: OFF): OFF
+--   SDL_RENDER_D3D              (Wanted: ON): ON
+--   SDL_RENDER_D3D11            (Wanted: ON): ON
+--   SDL_RENDER_D3D12            (Wanted: ON): ON
+--   SDL_RENDER_GPU              (Wanted: ON): ON
+--   SDL_RENDER_METAL            (Wanted: OFF): OFF
+--   SDL_RENDER_VULKAN           (Wanted: ON): ON
+--   SDL_ROCKCHIP                (Wanted: OFF): OFF
+--   SDL_RPATH                   (Wanted: OFF): OFF
+--   SDL_RPI                     (Wanted: OFF): OFF
+--   SDL_SNDIO                   (Wanted: OFF): OFF
+--   SDL_SNDIO_SHARED            (Wanted: OFF): OFF
+--   SDL_SSE                     (Wanted: ON): ON
+--   SDL_SSE2                    (Wanted: ON): ON
+--   SDL_SSE3                    (Wanted: ON): ON
+--   SDL_SSE4_1                  (Wanted: ON): ON
+--   SDL_SSE4_2                  (Wanted: ON): ON
+--   SDL_SYSTEM_ICONV            (Wanted: OFF): OFF
+--   SDL_TESTS                   (Wanted: OFF): OFF
+--   SDL_TESTS_LINK_SHARED       (Wanted: OFF): OFF
+--   SDL_UNINSTALL               (Wanted: OFF): OFF
+--   SDL_VIRTUAL_JOYSTICK        (Wanted: ON): ON
+--   SDL_VIVANTE                 (Wanted: OFF): OFF
+--   SDL_VULKAN                  (Wanted: ON): ON
+--   SDL_WASAPI                  (Wanted: ON): ON
+--   SDL_WAYLAND                 (Wanted: OFF): OFF
+--   SDL_WAYLAND_LIBDECOR        (Wanted: OFF): OFF
+--   SDL_WAYLAND_LIBDECOR_SHARED (Wanted: OFF): OFF
+--   SDL_WAYLAND_SHARED          (Wanted: OFF): OFF
+--   SDL_X11                     (Wanted: OFF): OFF
+--   SDL_X11_SHARED              (Wanted: OFF): OFF
+--   SDL_X11_XCURSOR             (Wanted: OFF): OFF
+--   SDL_X11_XDBE                (Wanted: OFF): OFF
+--   SDL_X11_XFIXES              (Wanted: OFF): OFF
+--   SDL_X11_XINPUT              (Wanted: OFF): OFF
+--   SDL_X11_XRANDR              (Wanted: OFF): OFF
+--   SDL_X11_XSCRNSAVER          (Wanted: OFF): OFF
+--   SDL_X11_XSHAPE              (Wanted: OFF): OFF
+--   SDL_X11_XSYNC               (Wanted: OFF): OFF
+--   SDL_X11_XTEST               (Wanted: OFF): OFF
+--   SDL_XINPUT                  (Wanted: ON): ON
+-- 
+--  Build Shared Library: OFF
+--  Build Static Library: ON
+-- 
+-- Enabled backends:
+--   Video drivers: dummy offscreen windows
+--   Render drivers: d3d d3d11 d3d12 gpu ogl ogl_es2 vulkan
+--   GPU drivers: d3d12 vulkan
+--   Audio drivers: disk dsound dummy wasapi
+--   Joystick drivers: dinput gameinput hidapi rawinput virtual wgi xinput
+--   Camera drivers: dummy mediafoundation
+-- 
+-- bolt project is disabled
+-- clang project is enabled
+-- clang-tools-extra project is disabled
+-- compiler-rt project is disabled
+-- cross-project-tests project is disabled
+-- libclc project is disabled
+-- lld project is enabled
+-- lldb project is enabled
+-- mlir project is disabled
+-- openmp project is disabled
+-- polly project is disabled
+-- flang project is disabled
+-- libc project is disabled
+-- Found Python3: C:/Users/Brown/AppData/Local/Programs/Python/Python313/python.exe (found suitable version "3.13.0", minimum required is "3.8") found components: Interpreter
+-- Could NOT find ZLIB (missing: ZLIB_LIBRARY ZLIB_INCLUDE_DIR) 
+-- Could NOT find LibXml2 (missing: LIBXML2_LIBRARY LIBXML2_INCLUDE_DIR) 
+-- Could NOT find Backtrace (missing: Backtrace_LIBRARY Backtrace_INCLUDE_DIR) 
+-- LLVM host triple: x86_64-pc-windows-msvc
+-- Native target X86 is not selected; lli will not JIT code
+-- Threads enabled.
+-- Doxygen disabled.
+-- Ninja version: 1.13.2
+-- Could NOT find OCaml (missing: OCAMLFIND OCAML_VERSION OCAML_STDLIB_PATH) 
+-- OCaml bindings disabled.
+-- LLVM default target triple: 
+-- Targeting AVM
+-- LLD version: 22.1.8
+-- Clang version: 22.1.8
+CMake Deprecation Warning at deps/llvm-project/clang/CMakeLists.txt:456 (message):
+  'CLANG_ENABLE_ARCMT' is deprecated as ARCMigrate has been removed from
+  Clang.  Please use 'CLANG_ENABLE_OBJC_REWRITER' instead to enable or
+  disable the Objective-C rewriter.
+
+
+-- Found Python3: C:/Users/Brown/AppData/Local/Programs/Python/Python313/python.exe (found version "3.13.0") found components: Interpreter
+-- Enable SWIG to generate LLDB bindings: FALSE
+-- Enable editline support in LLDB: FALSE
+-- Enable curses support in LLDB: FALSE
+-- Enable LZMA compression support in LLDB: FALSE
+-- Enable Lua scripting support in LLDB: FALSE
+-- Enable Python scripting support in LLDB: FALSE
+-- Enable Libxml 2 support in LLDB: FALSE
+-- Enable libfbsdvmcore support in LLDB: 0
+-- LLDB version: 22.1.8
+-- Skipping FreeBSDKernel plugin due to missing libfbsdvmcore
+-- Could NOT find Doxygen (missing: DOXYGEN_EXECUTABLE) 
+-- Could NOT find 'dirname'
+CMake Warning at deps/llvm-project/lldb/test/API/CMakeLists.txt:82 (message):
+  Many LLDB API tests require the GNU coreutils tools.  Please make sure they
+  are installed and in PATH.
+
+
+-- BugpointPasses ignored -- Loadable modules not supported on this platform.
+-- Not building llvm-mt.exe because libxml2 is not available
+-- Google Benchmark version: v0.0.0, normalized to 0.0.0
+-- Performing Test HAVE_GNU_POSIX_REGEX -- failed to compile
+-- Performing Test HAVE_POSIX_REGEX -- failed to compile
+CMake Warning at deps/llvm-project/third-party/benchmark/CMakeLists.txt:319 (message):
+  Using std::regex with exceptions disabled is not fully supported
+
+
+-- Performing Test HAVE_STEADY_CLOCK -- success
+-- Performing Test HAVE_PTHREAD_AFFINITY -- failed to compile
+-- Configuring done (33.6s)
+-- Generating done (16.1s)
+-- Build files have been written to: C:/Users/Brown/Documents/GitHub/avm/build
+[0/4] Re-checking globbed directories...
+[1/180] LLDB headers: stage LLDB headers in include directory
+[2/180] LLDB headers: stage LLDB headers in include directory
+[3/180] LLDB headers: stage LLDB headers in include directory
+[4/180] LLDB headers: stage LLDB headers in include directory
+[5/180] LLDB headers: stage LLDB headers in include directory
+[6/180] LLDB headers: stage LLDB headers in include directory
+[7/180] LLDB headers: stage LLDB headers in include directory
+[8/180] LLDB headers: stage LLDB headers in include directory
+[9/180] LLDB headers: stage LLDB headers in include directory
+[10/180] LLDB headers: stage LLDB headers in include directory
+[11/180] LLDB headers: stage LLDB headers in include directory
+[12/180] LLDB headers: stage LLDB headers in include directory
+[13/180] LLDB headers: stage LLDB headers in include directory
+[14/180] LLDB headers: stage LLDB headers in include directory
+[15/180] LLDB headers: stage LLDB headers in include directory
+[16/180] LLDB headers: stage LLDB headers in include directory
+[17/180] LLDB headers: stage LLDB headers in include directory
+[18/180] LLDB headers: stage LLDB headers in include directory
+[19/180] LLDB headers: stage LLDB headers in include directory
+[20/180] LLDB headers: stage LLDB headers in include directory
+[21/180] LLDB headers: stage LLDB headers in include directory
+[22/180] LLDB headers: stage LLDB headers in include directory
+[23/180] LLDB headers: stage LLDB headers in include directory
+[24/180] LLDB headers: stage LLDB headers in include directory
+[25/180] LLDB headers: stage LLDB headers in include directory
+[26/180] LLDB headers: stage LLDB headers in include directory
+[27/180] LLDB headers: stage LLDB headers in include directory
+[28/180] LLDB headers: stage LLDB headers in include directory
+[29/180] LLDB headers: stage LLDB headers in include directory
+[30/180] LLDB headers: stage LLDB headers in include directory
+[31/180] LLDB headers: stage LLDB headers in include directory
+[32/180] LLDB headers: stage LLDB headers in include directory
+[33/180] LLDB headers: stage LLDB headers in include directory
+[34/180] LLDB headers: stage LLDB headers in include directory
+[35/180] LLDB headers: stage LLDB headers in include directory
+[36/180] LLDB headers: stage LLDB headers in include directory
+[37/180] LLDB headers: stage LLDB headers in include directory
+[38/180] LLDB headers: stage LLDB headers in include directory
+[39/180] LLDB headers: stage LLDB headers in include directory
+[40/180] LLDB headers: stage LLDB headers in include directory
+[41/180] LLDB headers: stage LLDB headers in include directory
+[42/180] LLDB headers: stage LLDB headers in include directory
+[43/180] LLDB headers: stage LLDB headers in include directory
+[44/180] LLDB headers: stage LLDB headers in include directory
+[45/180] LLDB headers: stage LLDB headers in include directory
+[46/180] LLDB headers: stage LLDB headers in include directory
+[47/180] LLDB headers: stage LLDB headers in include directory
+[48/180] LLDB headers: stage LLDB headers in include directory
+[49/180] LLDB headers: stage LLDB headers in include directory
+[50/180] LLDB headers: stage LLDB headers in include directory
+[51/180] LLDB headers: stage LLDB headers in include directory
+[52/180] LLDB headers: stage LLDB headers in include directory
+[53/180] LLDB headers: stage LLDB headers in include directory
+[54/180] LLDB headers: stage LLDB headers in include directory
+[55/180] LLDB headers: stage LLDB headers in include directory
+[56/180] LLDB headers: stage LLDB headers in include directory
+[57/180] LLDB headers: stage LLDB headers in include directory
+[58/180] LLDB headers: stage LLDB headers in include directory
+[59/180] LLDB headers: stage LLDB headers in include directory
+[60/180] LLDB headers: stage LLDB headers in include directory
+[61/180] LLDB headers: stage LLDB headers in include directory
+[62/180] LLDB headers: stage LLDB headers in include directory
+[63/180] LLDB headers: stage LLDB headers in include directory
+[64/180] LLDB headers: stage LLDB headers in include directory
+[65/180] LLDB headers: stage LLDB headers in include directory
+[66/180] LLDB headers: stage LLDB headers in include directory
+[67/180] LLDB headers: stage LLDB headers in include directory
+[68/180] LLDB headers: stage LLDB headers in include directory
+[69/180] LLDB headers: stage LLDB headers in include directory
+[70/180] LLDB headers: stage LLDB headers in include directory
+[71/180] LLDB headers: stage LLDB headers in include directory
+[72/180] LLDB headers: stage LLDB headers in include directory
+[73/180] LLDB headers: stage LLDB headers in include directory
+[74/180] LLDB headers: stage LLDB headers in include directory
+[75/180] LLDB headers: stage LLDB headers in include directory
+[76/180] LLDB headers: stage LLDB headers in include directory
+[77/180] LLDB headers: stage LLDB headers in include directory
+[78/180] LLDB headers: stage LLDB headers in include directory
+[79/180] LLDB headers: stage LLDB headers in include directory
+[80/180] LLDB headers: stage LLDB headers in include directory
+[80/180] Building the AVR AVM interpreter
+-- Interpreter binary size: 29008 bytes (limit: 29696 bytes)
+[102/180] Building the AVR AVM interpreter for Arduboy FX-C
+-- Interpreter binary size: 29008 bytes (limit: 29696 bytes)
+[104/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/objects/math.o
+[105/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/objects/local_dtor.o
+[106/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/objects/pgmspace.o
+[107/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/objects/runtime.o
+[108/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/objects/stdio.o
+[109/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/objects/string.o
+[110/180] Generating interp-boundary.json
+[111/180] Generating ../llvm-build/bin/avm/interp.fxc.hex
+[112/180] Generating ../llvm-build/bin/avm/interp.hex
+[113/180] Archiving AVM library C:/Users/Brown/Documents/GitHub/avm/build/runtime/libavm-builtins.a
+[114/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/objects/crt0.o
+[115/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/objects/crt0_sketch.o
+[116/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/objects/crt0_test.o
+[117/180] Archiving AVM library C:/Users/Brown/Documents/GitHub/avm/build/runtime/libavm.a
+[118/180] Generating ../llvm-build/bin/avm-lldb.exe, ../llvm-build/bin/avm/interp.elf, ../llvm-build/bin/avm/interp-boundary.json
+[119/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/lib/audio_tone.o
+[120/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/crt/crt0_sketch.o
+[121/180] Compiling AVM CXX object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/lib/cxxabi.o
+[122/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/lib/font_5x7.o
+[123/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/crt/crt0.o
+[124/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/crt/crt0_test.o
+[125/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/lib/font_br4.o
+[126/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/lib/font_br5.o
+[127/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/lib/font_br5d_x5.o
+[128/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/lib/avm.o
+[129/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/lib/font_br5n.o
+[130/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/lib/runtime.o
+[131/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/lib/stdio.o
+[132/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/lib/math.o
+[133/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/lib/pgmspace.o
+[134/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/objects/header_smoke_c.o
+[135/180] Compiling AVM CXX object C:/Users/Brown/Documents/GitHub/avm/build/runtime/objects/header_smoke_cpp.o
+[136/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/lib/local_dtor.o
+[137/180] Staging the AVM runtime sysroot
+[138/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/lib/string.o
+[139/180] Generating audio_hardware/FXC/interp.hex
+-- Interpreter binary size: 29008 bytes (limit: 29696 bytes)
+[140/180] Generating audio_hardware/MINI/interp.hex
+-- Interpreter binary size: 29008 bytes (limit: 29696 bytes)
+[141/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/tests/c/O0/audio.o
+[142/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/tests/c/O1/audio.o
+[143/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/tests/c/O2/audio.o
+[144/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/tests/c/O3/audio.o
+[145/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/tests/c/Os/audio.o
+[146/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/tests/c/Oz/audio.o
+[147/180] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\Brown\Documents\GitHub\avm && C:\Users\Brown\AppData\Local\Programs\Python\Python313\python.exe -m unittest discover -s tests/audio -v"
+test_accidentals_octaves_and_retrigger (test_score.ScoreTests.test_accidentals_octaves_and_retrigger) ... ok
+test_beat_synchronized_tremolo (test_score.ScoreTests.test_beat_synchronized_tremolo) ... ok
+test_checked_in_scores_and_generated_headers (test_score.ScoreTests.test_checked_in_scores_and_generated_headers) ... ok
+test_dots_tuplet_multipliers_and_bars (test_score.ScoreTests.test_dots_tuplet_multipliers_and_bars) ... ok
+test_exact_fractional_timing_and_loop_period (test_score.ScoreTests.test_exact_fractional_timing_and_loop_period) ... ok
+test_json_input_is_rejected (test_score.ScoreTests.test_json_input_is_rejected) ... ok
+test_linear_envelope_and_packed_waveform (test_score.ScoreTests.test_linear_envelope_and_packed_waveform) ... ok
+test_location_diagnostics_and_validation (test_score.ScoreTests.test_location_diagnostics_and_validation) ... ok
+test_long_delays_use_continue_records (test_score.ScoreTests.test_long_delays_use_continue_records) ... ok
+test_long_wait_and_unlimited_asset_size (test_score.ScoreTests.test_long_wait_and_unlimited_asset_size) ... ok
+test_new_note_cancels_old_release (test_score.ScoreTests.test_new_note_cancels_old_release) ... ok
+test_note_override_and_noise (test_score.ScoreTests.test_note_override_and_noise) ... ok
+test_phrase_and_repeat (test_score.ScoreTests.test_phrase_and_repeat) ... ok
+test_pitches_durations_and_inheritance (test_score.ScoreTests.test_pitches_durations_and_inheritance) ... ok
+test_raw_increments_and_compact_sfx_ownership (test_score.ScoreTests.test_raw_increments_and_compact_sfx_ownership) ... ok
+test_sfx_rejects_loops_and_unavailable_channels (test_score.ScoreTests.test_sfx_rejects_loops_and_unavailable_channels) ... ok
+test_short_note_releases_from_current_attack_level (test_score.ScoreTests.test_short_note_releases_from_current_attack_level) ... ok
+test_simultaneous_tracks_and_initial_silence (test_score.ScoreTests.test_simultaneous_tracks_and_initial_silence) ... ok
+test_stepped_custom_breakpoints (test_score.ScoreTests.test_stepped_custom_breakpoints) ... ok
+test_ties_preserve_one_attack (test_score.ScoreTests.test_ties_preserve_one_attack) ... ok
+test_tremolo_depth_and_shape (test_score.ScoreTests.test_tremolo_depth_and_shape) ... ok
+test_tremolo_note_and_song_phase (test_score.ScoreTests.test_tremolo_note_and_song_phase) ... ok
+test_word_export_preserves_bytes_and_padding (test_score.ScoreTests.test_word_export_preserves_bytes_and_padding) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 1.061s
+
+OK
+[148/180] Building CXX object tests\CMakeFiles\avm_audio_tests.dir\interp\audio.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[149/180] Linking and packaging AVM image C:/Users/Brown/Documents/GitHub/avm/build/tests/c/O0/audio.bin
+[150/180] Linking and packaging AVM image C:/Users/Brown/Documents/GitHub/avm/build/tests/c/O1/audio.bin
+[151/180] Linking and packaging AVM image C:/Users/Brown/Documents/GitHub/avm/build/tests/c/O2/audio.bin
+[152/180] Linking and packaging AVM image C:/Users/Brown/Documents/GitHub/avm/build/tests/c/O3/audio.bin
+[153/180] Linking and packaging AVM image C:/Users/Brown/Documents/GitHub/avm/build/tests/c/Os/audio.bin
+[154/180] Linking and packaging AVM image C:/Users/Brown/Documents/GitHub/avm/build/tests/c/Oz/audio.bin
+[155/180] Generating display_system/SH1106/interp.hex, display_system/SH1106/interp.lst
+-- Interpreter binary size: 29032 bytes (limit: 29696 bytes)
+[156/180] Generating display_system/SSD1306/interp.hex, display_system/SSD1306/interp.lst
+-- Interpreter binary size: 29008 bytes (limit: 29696 bytes)
+[156/180] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\Brown\Documents\GitHub\avm && C:\Users\Brown\Documents\GitHub\avm\build\tests\avm_push16_tests.exe C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.hex C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.lst C:/Users/Brown/Documents/GitHub/avm/build/tests/interp/push16.bin"
+Passed 152 PUSH16/POP16 cases; all B0-B7 pushes = 19 cycles, all B8-BF pops = 18 cycles; C/Z/S preserved; post-write boundary/trap verified.
+[158/180] Generating display_system/SSD1309/interp.hex, display_system/SSD1309/interp.lst
+-- Interpreter binary size: 29008 bytes (limit: 29696 bytes)
+[159/180] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\Brown\Documents\GitHub\avm && C:\Users\Brown\Documents\GitHub\avm\build\tests\avm_stack_bounds_tests.exe C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.hex C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.lst C:/Users/Brown/Documents/GitHub/avm/build/tests/interp/stack_bounds.bin C:/Users/Brown/Documents/GitHub/avm/build/tests/interp/stack_bounds.asm"
+Passed 1133 checked stack-bound cases: all calls/RET/carries, signed ADJSP, SETSP r0-r7, C/Z/S, memory and fatal paths.
+Measured ADJSP=35, CALL8=131, CALL16=140, CALLF=154, all CALLP=123, all SETSP=40, RET=114 cycles.
+[160/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/builtins/integer.o
+[161/180] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\Brown\Documents\GitHub\avm && C:\Users\Brown\Documents\GitHub\avm\build\tests\avm_display_system_tests.exe C:/Users/Brown/Documents/GitHub/avm/build/tests/display_system/SSD1306/interp.hex C:/Users/Brown/Documents/GitHub/avm/build/tests/display_system/SSD1306/interp.lst C:/Users/Brown/Documents/GitHub/avm/build/tests/display_system/display_system.bin C:/Users/Brown/Documents/GitHub/avm/build/tests/display_system/display_system.asm 1 && C:\Users\Brown\Documents\GitHub\avm\build\tests\avm_display_system_tests.exe C:/Users/Brown/Documents/GitHub/avm/build/tests/display_system/SSD1309/interp.hex C:/Users/Brown/Documents/GitHub/avm/build/tests/display_system/SSD1309/interp.lst C:/Users/Brown/Documents/GitHub/avm/build/tests/display_system/display_system.bin C:/Users/Brown/Documents/GitHub/avm/build/tests/display_system/display_system.asm 2 && C:\Users\Brown\Documents\GitHub\avm\build\tests\avm_display_system_tests.exe C:/Users/Brown/Documents/GitHub/avm/build/tests/display_system/SH1106/interp.hex C:/Users/Brown/Documents/GitHub/avm/build/tests/display_system/SH1106/interp.lst C:/Users/Brown/Documents/GitHub/avm/build/tests/display_system/display_system.bin C:/Users/Brown/Documents/GitHub/avm/build/tests/display_system/display_system.asm 3"
+Display type 1: 88 preservation cases and command/display sequencing passed
+Display type 2: 88 preservation cases and command/display sequencing passed
+Display type 3: 88 preservation cases and command/display sequencing passed
+[163/180] Compiling AVM CXX object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/tests/header_smoke_cpp.o
+[164/180] Linking CXX executable tests\avm_audio_tests.exe
+[165/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/builtins/wide_integer.o
+[166/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/runtime/mir/builtins/atomic.o
+[167/180] Installing the AVM SDK for projects
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/avm-clang.exe
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/avm-ld.exe
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/avm-ar.exe
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/avm-mc.exe
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/avm-objdump.exe
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/avm-readobj.exe
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/avm-image.exe
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/avm_music.py
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/builtins.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/float.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__float_float.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__float_header_macro.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__float_infinity_nan.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/inttypes.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/iso646.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/limits.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/stdalign.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/stdarg.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stdarg___gnuc_va_list.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stdarg___va_copy.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stdarg_header_macro.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stdarg_va_arg.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stdarg_va_copy.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stdarg_va_list.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/stdatomic.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/stdbool.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/stdcountof.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/stdckdint.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/stddef.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/stddefer.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stddef_header_macro.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stddef_max_align_t.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stddef_null.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stddef_nullptr_t.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stddef_offsetof.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stddef_ptrdiff_t.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stddef_rsize_t.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stddef_size_t.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stddef_unreachable.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stddef_wchar_t.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/__stddef_wint_t.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/stdint.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/stdnoreturn.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/tgmath.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/unwind.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/lib/clang/22/include/varargs.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/include
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/include/avm
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/include/avm/audio.h
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/include/avm/framebuffer.h
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/include/avm/pgmspace.h
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/include/avm/runtime.h
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/include/avm.h
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/include/cstddef
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/include/math.h
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/include/new
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/include/stdarg.h
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/include/stdio.h
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/include/string.h
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/lib
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/lib/crt0.o
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/lib/crt0_sketch.o
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/lib/crt0_test.o
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/lib/libavm-builtins.a
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/sysroot/lib/libavm.a
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/avm/interp.hex
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/avm/interp.fxc.hex
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/avm-prof.exe
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/avm/interp.elf
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/avm-lldb.exe
+-- Installing: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/avm/interp-boundary.json
+-- Up-to-date: C:/Users/Brown/Documents/GitHub/avm/build/avm-sdk-install/bin/liblldb.dll
+[168/180] Compiling audio_demo with the AVM SDK
+[169/180] Linking and packaging audio_demo
+AVM maximum provable stack usage is 30 bytes; complete bound: yes
+maximum stack path:
+  _start: frame 12
+    call: return address 3, outgoing arguments 0
+  loop: frame 12
+    call: return address 3, outgoing arguments 0
+  avm_next_frame: frame 0
+
+AVM stack analysis gaps: 0; paths shown: 0; omitted: 0
+[170/180] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\Brown\Documents\GitHub\avm\build\projects\audio_demo && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different C:/Users/Brown/Documents/GitHub/avm/projects/audio_demo/build/audio_demo.arduboy C:/Users/Brown/Documents/GitHub/avm/projects/audio_demo/audio_demo.arduboy"
+[171/180] Generating audio_large/audio_large.h
+[172/180] Compiling AVM C object C:/Users/Brown/Documents/GitHub/avm/build/tests/audio_large/C.o
+[173/180] Compiling AVM CXX object C:/Users/Brown/Documents/GitHub/avm/build/tests/audio_large/CXX.o
+[174/180] Linking and packaging AVM image C:/Users/Brown/Documents/GitHub/avm/build/tests/audio_large/C.bin
+[175/180] Linking and packaging AVM image C:/Users/Brown/Documents/GitHub/avm/build/tests/audio_large/CXX.bin
+[175/180] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\Brown\Documents\GitHub\avm && C:\Users\Brown\Documents\GitHub\avm\build\tests\avm_audio_tests.exe C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.hex C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.lst C:/Users/Brown/Documents/GitHub/avm/build/tests/interp/audio.bin C:/Users/Brown/Documents/GitHub/avm/projects/audio_demo/build/audio_demo.bin C:/Users/Brown/Documents/GitHub/avm/build/tests/c/O0/audio.bin C:/Users/Brown/Documents/GitHub/avm/build/tests/audio_large/C.bin C:/Users/Brown/Documents/GitHub/avm/build/tests/audio_large/CXX.bin"
+decimal division: 2560 byte pairs and 10 u32 boundaries passed
+CSET: 49152 condition/register/flag/PC cases at 41 cycles and 1664 invalid-encoding cases passed
+libm relocation: four exact atan2 rounding cases passed
+startup to first opcode: 235781 cycles; audio init: 1870 cycles
+format RAM %d: 817 cycles
+format RAM %65536d: 1239 cycles
+format RAM %.65536d: 1272 cycles
+format RAM %12.5d: 1053 cycles
+format program %d: 1072 cycles
+format program %65536d: 1679 cycles
+format program %.65536d: 1749 cycles
+format program %12.5d: 1456 cycles
+format fields: 46 RAM/program width/precision cases passed; native stack 27 bytes
+SYS dispatch: all 61 services and 195 invalid IDs passed
+float precision: 96 precision/value/flag cases passed
+hexadecimal fraction: 7192 byte-pattern/random/case/T checks passed; 123..147 cycles
+Timer1 startup/rate-switch phase: 32000 rate/counter/prescaler combinations, 64..120 cycles modulo 128; 11968 real-timer outputs, maximum extra lateness 1 cycles
+SYS IDLE continuation: eight audio/wakeup/PC-carry cases passed
+1-channel note+volume service: 885 cycles
+4-channel note+volume service: 1047 cycles
+4-channel volume-only service: 947 cycles
+continue service: 508 cycles
+sparse tick service: 98 cycles
+note-off service: 876 cycles
+Timer0 total including entry/vector: 35..47 cycles
+Timer0 with full millis carry and audio tick: 63 cycles
+Timer1 PWM write including entry/vector: 21 cycles at both rates
+prepared gains: 65536 music and 65536 SFX controls, 256 mixed-owner cases passed
+saturation reference: 2029 signed mixes, 886 low and 887 high saturations passed
+mixed waveform gain reference: 196608 samples passed
+waveform reference: 24576 samples across four shapes, 32 levels, three voices passed
+maximum tuning error: 4.05126 cents
+four-voice handoff ISR including entry/vector: 255 cycles
+10 byte FX burst: 255 cycles
+16 byte FX burst: 357 cycles
+32 byte FX burst: 629 cycles
+64 byte FX burst: 1173 cycles
+FX reads interrupted with SPI active: 14
+14-byte event fetch: 348 cycles
+inactive pending-tick seek overhead: 29 cycles
+active countdown seek overhead: 109 cycles
+inactive seek hook: 4 cycles
+41 native audio cases passed
+Timer1 including entry/vector: 186..193 cycles; CPU 9.42383%
+observed idle service gap: 4.01 ms
+animated demo: 62 frames, 7811 outputs, 7811 synthesis samples, service gap 4.1415 ms, native stack 37 bytes; SFX/pause/resume passed
+animated demo with rate toggles: 62 frames, 10935 outputs, 10935 synthesis samples, service gap 4.1415 ms, native stack 37 bytes; SFX/pause/resume passed
+libm/formatter with sample interrupts: native stack 41 bytes
+large exported C/C++ asset: all 22000 attacks and terminal record beyond 64 KB passed
+large exported C/C++ asset: all 22000 attacks and terminal record beyond 64 KB passed
+[176/180] Running all AVM tests in-process
+Running 471 AVM test(s) in one process
+[ASM] add32.asm                           PASS
+[ASM] add_full.asm                        PASS
+[ASM] add_upper.asm                       PASS
+[ASM] addi_s8_lower.asm                   PASS
+[ASM] addi_s8_upper.asm                   PASS
+[ASM] adjsp.asm                           PASS
+[ASM] and_full.asm                        PASS
+[ASM] and_upper.asm                       PASS
+[ASM] asr16_1.asm                         PASS
+[ASM] asr16i.asm                          PASS
+[ASM] asr16v.asm                          PASS
+[ASM] asr32_1.asm                         PASS
+[ASM] bool.asm                            PASS
+[ASM] branch16.asm                        PASS
+[ASM] branch8.asm                         PASS
+[ASM] bswap16.asm                         PASS
+[ASM] cmov_eq_ne.asm                      PASS
+[ASM] cmov_slt_sge.asm                    PASS
+[ASM] cmov_ult_uge.asm                    PASS
+[ASM] cmp32.asm                           PASS
+[ASM] cmp_full.asm                        PASS
+[ASM] cmp_upper.asm                       PASS
+[ASM] cmpi_s8_lower.asm                   PASS
+[ASM] cmpi_s8_upper.asm                   PASS
+[ASM] cset.asm                            PASS
+[ASM] dec16.asm                           PASS
+[ASM] fabs.asm                            PASS
+[ASM] fadd.asm                            PASS
+[ASM] fceil.asm                           PASS
+[ASM] fclass.asm                          PASS
+[ASM] fcmp.asm                            PASS
+[ASM] fdiv.asm                            PASS
+[ASM] ffloor.asm                          PASS
+[ASM] fmax.asm                            PASS
+[ASM] fmin.asm                            PASS
+[ASM] fmul.asm                            PASS
+[ASM] fneg.asm                            PASS
+[ASM] fround.asm                          PASS
+[ASM] fsqrt.asm                           PASS
+[ASM] fsub.asm                            PASS
+[ASM] ftos16.asm                          PASS
+[ASM] ftos32.asm                          PASS
+[ASM] ftou16.asm                          PASS
+[ASM] ftou32.asm                          PASS
+[ASM] ftrunc.asm                          PASS
+[ASM] getsp_setsp.asm                     PASS
+[ASM] inc16.asm                           PASS
+[ASM] jmp_call16.asm                      PASS
+[ASM] jmp_call8.asm                       PASS
+[ASM] jmp_call_far.asm                    PASS
+[ASM] jmpp_callp.asm                      PASS
+[ASM] ld16_displaced.asm                  PASS
+[ASM] ld16_full.asm                       PASS
+[ASM] ld16_general.asm                    PASS
+[ASM] ld16_postinc.asm                    PASS
+[ASM] ld16_upper.asm                      PASS
+[ASM] ld32.asm                            PASS
+[ASM] ld8u_displaced.asm                  PASS
+[ASM] ld8u_full.asm                       PASS
+[ASM] ld8u_general.asm                    PASS
+[ASM] ld8u_postinc.asm                    PASS
+[ASM] ld8u_upper.asm                      PASS
+[ASM] ldi16_lower.asm                     PASS
+[ASM] ldi16_upper.asm                     PASS
+[ASM] ldi8_lower.asm                      PASS
+[ASM] ldi8_upper.asm                      PASS
+[ASM] ldm16.asm                           PASS
+[ASM] ldm8u.asm                           PASS
+[ASM] ldp16.asm                           PASS
+[ASM] ldp24.asm                           PASS
+[ASM] ldp32.asm                           PASS
+[ASM] ldp8s.asm                           PASS
+[ASM] ldp8u.asm                           PASS
+[ASM] ldsp16_full.asm                     PASS
+[ASM] ldsp16_upper.asm                    PASS
+[ASM] ldsp8s.asm                          PASS
+[ASM] ldsp8u_full.asm                     PASS
+[ASM] ldsp8u_upper.asm                    PASS
+[ASM] leasp.asm                           PASS
+[ASM] lsl16_1.asm                         PASS
+[ASM] lsl16i.asm                          PASS
+[ASM] lsr16_1.asm                         PASS
+[ASM] lsr16i.asm                          PASS
+[ASM] lsr16v.asm                          PASS
+[ASM] lsr32_1.asm                         PASS
+[ASM] mov32.asm                           PASS
+[ASM] mov_full.asm                        PASS
+[ASM] mov_upper.asm                       PASS
+[ASM] mul16.asm                           PASS
+[ASM] mul8.asm                            PASS
+[ASM] muls8_w.asm                         PASS
+[ASM] mulsu8_w.asm                        PASS
+[ASM] mulu8_w.asm                         PASS
+[ASM] neg16.asm                           PASS
+[ASM] not16.asm                           PASS
+[ASM] or_full.asm                         PASS
+[ASM] or_upper.asm                        PASS
+[ASM] pop16.asm                           PASS
+[ASM] push16.asm                          PASS
+[ASM] push_pop_sequences.asm              PASS
+[ASM] putc.asm                            PASS
+[ASM] ret.asm                             PASS
+[ASM] s16tof.asm                          PASS
+[ASM] s32tof.asm                          PASS
+[ASM] sdiv16.asm                          PASS
+[ASM] sext8.asm                           PASS
+[ASM] shl16v.asm                          PASS
+[ASM] srem16.asm                          PASS
+[ASM] st16_displaced.asm                  PASS
+[ASM] st16_full.asm                       PASS
+[ASM] st16_general.asm                    PASS
+[ASM] st16_postinc.asm                    PASS
+[ASM] st16_upper.asm                      PASS
+[ASM] st32.asm                            PASS
+[ASM] st8_displaced.asm                   PASS
+[ASM] st8_full.asm                        PASS
+[ASM] st8_general.asm                     PASS
+[ASM] st8_postinc.asm                     PASS
+[ASM] st8_upper.asm                       PASS
+[ASM] stm16.asm                           PASS
+[ASM] stm8.asm                            PASS
+[ASM] stsp16_full.asm                     PASS
+[ASM] stsp16_upper.asm                    PASS
+[ASM] stsp8_full.asm                      PASS
+[ASM] stsp8_upper.asm                     PASS
+[ASM] sub32.asm                           PASS
+[ASM] sub_full.asm                        PASS
+[ASM] sub_upper.asm                       PASS
+[ASM] swap8.asm                           PASS
+[ASM] sys_atan2f.asm                      PASS
+[ASM] sys_cosf.asm                        PASS
+[ASM] sys_expf.asm                        PASS
+[ASM] sys_fmodf.asm                       PASS
+[ASM] sys_hypotf.asm                      PASS
+[ASM] sys_log10f.asm                      PASS
+[ASM] sys_log2f.asm                       PASS
+[ASM] sys_logf.asm                        PASS
+[ASM] sys_memcpy.asm                      PASS
+[ASM] sys_memcpy_p.asm                    PASS
+[ASM] sys_memmove.asm                     PASS
+[ASM] sys_memset.asm                      PASS
+[ASM] sys_powf.asm                        PASS
+[ASM] sys_sinf.asm                        PASS
+[ASM] sys_tanf.asm                        PASS
+[ASM] tst16.asm                           PASS
+[ASM] tst8.asm                            PASS
+[ASM] u16tof.asm                          PASS
+[ASM] u32tof.asm                          PASS
+[ASM] udiv16.asm                          PASS
+[ASM] urem16.asm                          PASS
+[ASM] xor_full.asm                        PASS
+[ASM] xor_upper.asm                       PASS
+[ASM] zext8.asm                           PASS
+[C   O0] atomic64.c                       PASS
+[C   O1] atomic64.c                       PASS
+[C   O2] atomic64.c                       PASS
+[C   O3] atomic64.c                       PASS
+[C   Os] atomic64.c                       PASS
+[C   Oz] atomic64.c                       PASS
+[C   O0] audio.c                          PASS
+[C   O1] audio.c                          PASS
+[C   O2] audio.c                          PASS
+[C   O3] audio.c                          PASS
+[C   Os] audio.c                          PASS
+[C   Oz] audio.c                          PASS
+[C   O0] codegen_calls.c                  PASS
+[C   O1] codegen_calls.c                  PASS
+[C   O2] codegen_calls.c                  PASS
+[C   O3] codegen_calls.c                  PASS
+[C   Os] codegen_calls.c                  PASS
+[C   Oz] codegen_calls.c                  PASS
+[C   O0] codegen_control.c                PASS
+[C   O1] codegen_control.c                PASS
+[C   O2] codegen_control.c                PASS
+[C   O3] codegen_control.c                PASS
+[C   Os] codegen_control.c                PASS
+[C   Oz] codegen_control.c                PASS
+[C   O0] codegen_float.c                  PASS
+[C   O1] codegen_float.c                  PASS
+[C   O2] codegen_float.c                  PASS
+[C   O3] codegen_float.c                  PASS
+[C   Os] codegen_float.c                  PASS
+[C   Oz] codegen_float.c                  PASS
+[C   O0] codegen_integer.c                PASS
+[C   O1] codegen_integer.c                PASS
+[C   O2] codegen_integer.c                PASS
+[C   O3] codegen_integer.c                PASS
+[C   Os] codegen_integer.c                PASS
+[C   Oz] codegen_integer.c                PASS
+[C   O0] codegen_memory.c                 PASS
+[C   O1] codegen_memory.c                 PASS
+[C   O2] codegen_memory.c                 PASS
+[C   O3] codegen_memory.c                 PASS
+[C   Os] codegen_memory.c                 PASS
+[C   Oz] codegen_memory.c                 PASS
+[C   O0] codegen_stack.c                  PASS
+[C   O1] codegen_stack.c                  PASS
+[C   O2] codegen_stack.c                  PASS
+[C   O3] codegen_stack.c                  PASS
+[C   Os] codegen_stack.c                  PASS
+[C   Oz] codegen_stack.c                  PASS
+[C   O0] constant_arith_result.c          PASS
+[C   O1] constant_arith_result.c          PASS
+[C   O2] constant_arith_result.c          PASS
+[C   O3] constant_arith_result.c          PASS
+[C   Os] constant_arith_result.c          PASS
+[C   Oz] constant_arith_result.c          PASS
+[C   O0] data_model.c                     PASS
+[C   O1] data_model.c                     PASS
+[C   O2] data_model.c                     PASS
+[C   O3] data_model.c                     PASS
+[C   Os] data_model.c                     PASS
+[C   Oz] data_model.c                     PASS
+[C   O0] debug_printf.c                   PASS
+[C   O1] debug_printf.c                   PASS
+[C   O2] debug_printf.c                   PASS
+[C   O3] debug_printf.c                   PASS
+[C   Os] debug_printf.c                   PASS
+[C   Oz] debug_printf.c                   PASS
+[C   O0] debug_printf_float.c             PASS
+[C   O1] debug_printf_float.c             PASS
+[C   O2] debug_printf_float.c             PASS
+[C   O3] debug_printf_float.c             PASS
+[C   Os] debug_printf_float.c             PASS
+[C   Oz] debug_printf_float.c             PASS
+[C   O0] display_system.c                 PASS
+[C   O1] display_system.c                 PASS
+[C   O2] display_system.c                 PASS
+[C   O3] display_system.c                 PASS
+[C   Os] display_system.c                 PASS
+[C   Oz] display_system.c                 PASS
+[C   O0] draw_text_clipping.c             PASS
+[C   O1] draw_text_clipping.c             PASS
+[C   O2] draw_text_clipping.c             PASS
+[C   O3] draw_text_clipping.c             PASS
+[C   Os] draw_text_clipping.c             PASS
+[C   Oz] draw_text_clipping.c             PASS
+[C   O0] dynamic_stack_bit_counts.c       PASS
+[C   O1] dynamic_stack_bit_counts.c       PASS
+[C   O2] dynamic_stack_bit_counts.c       PASS
+[C   O3] dynamic_stack_bit_counts.c       PASS
+[C   Os] dynamic_stack_bit_counts.c       PASS
+[C   Oz] dynamic_stack_bit_counts.c       PASS
+[C   O0] filled_rect.c                    PASS
+[C   O1] filled_rect.c                    PASS
+[C   O2] filled_rect.c                    PASS
+[C   O3] filled_rect.c                    PASS
+[C   Os] filled_rect.c                    PASS
+[C   Oz] filled_rect.c                    PASS
+[C   O0] frame_rate_range.c               PASS
+[C   O1] frame_rate_range.c               PASS
+[C   O2] frame_rate_range.c               PASS
+[C   O3] frame_rate_range.c               PASS
+[C   Os] frame_rate_range.c               PASS
+[C   Oz] frame_rate_range.c               PASS
+[C   O0] idle_random.c                    PASS
+[C   O1] idle_random.c                    PASS
+[C   O2] idle_random.c                    PASS
+[C   O3] idle_random.c                    PASS
+[C   Os] idle_random.c                    PASS
+[C   Oz] idle_random.c                    PASS
+[C   O0] progmem_widen.c                  PASS
+[C   O1] progmem_widen.c                  PASS
+[C   O2] progmem_widen.c                  PASS
+[C   O3] progmem_widen.c                  PASS
+[C   Os] progmem_widen.c                  PASS
+[C   Oz] progmem_widen.c                  PASS
+[C   O0] runtime_function_pointers.c      PASS
+[C   O1] runtime_function_pointers.c      PASS
+[C   O2] runtime_function_pointers.c      PASS
+[C   O3] runtime_function_pointers.c      PASS
+[C   Os] runtime_function_pointers.c      PASS
+[C   Oz] runtime_function_pointers.c      PASS
+[C   O0] save_load.c                      PASS
+[C   O1] save_load.c                      PASS
+[C   O2] save_load.c                      PASS
+[C   O3] save_load.c                      PASS
+[C   Os] save_load.c                      PASS
+[C   Oz] save_load.c                      PASS
+[C   O0] save_load_max.c                  PASS
+[C   O1] save_load_max.c                  PASS
+[C   O2] save_load_max.c                  PASS
+[C   O3] save_load_max.c                  PASS
+[C   Os] save_load_max.c                  PASS
+[C   Oz] save_load_max.c                  PASS
+[C   O0] save_zero.c                      PASS
+[C   O1] save_zero.c                      PASS
+[C   O2] save_zero.c                      PASS
+[C   O3] save_zero.c                      PASS
+[C   Os] save_zero.c                      PASS
+[C   Oz] save_zero.c                      PASS
+[C   O0] sprite_cached_erase.c            PASS
+[C   O1] sprite_cached_erase.c            PASS
+[C   O2] sprite_cached_erase.c            PASS
+[C   O3] sprite_cached_erase.c            PASS
+[C   Os] sprite_cached_erase.c            PASS
+[C   Oz] sprite_cached_erase.c            PASS
+[C   O0] sprite_cached_overwrite.c        PASS
+[C   O1] sprite_cached_overwrite.c        PASS
+[C   O2] sprite_cached_overwrite.c        PASS
+[C   O3] sprite_cached_overwrite.c        PASS
+[C   Os] sprite_cached_overwrite.c        PASS
+[C   Oz] sprite_cached_overwrite.c        PASS
+[C   O0] sprite_cached_plus_mask.c        PASS
+[C   O1] sprite_cached_plus_mask.c        PASS
+[C   O2] sprite_cached_plus_mask.c        PASS
+[C   O3] sprite_cached_plus_mask.c        PASS
+[C   Os] sprite_cached_plus_mask.c        PASS
+[C   Oz] sprite_cached_plus_mask.c        PASS
+[C   O0] sprite_cached_self_masked.c      PASS
+[C   O1] sprite_cached_self_masked.c      PASS
+[C   O2] sprite_cached_self_masked.c      PASS
+[C   O3] sprite_cached_self_masked.c      PASS
+[C   Os] sprite_cached_self_masked.c      PASS
+[C   Oz] sprite_cached_self_masked.c      PASS
+[C   O0] sprite_erase.c                   PASS
+[C   O1] sprite_erase.c                   PASS
+[C   O2] sprite_erase.c                   PASS
+[C   O3] sprite_erase.c                   PASS
+[C   Os] sprite_erase.c                   PASS
+[C   Oz] sprite_erase.c                   PASS
+[C   O0] sprite_overwrite.c               PASS
+[C   O1] sprite_overwrite.c               PASS
+[C   O2] sprite_overwrite.c               PASS
+[C   O3] sprite_overwrite.c               PASS
+[C   Os] sprite_overwrite.c               PASS
+[C   Oz] sprite_overwrite.c               PASS
+[C   O0] sprite_plus_mask.c               PASS
+[C   O1] sprite_plus_mask.c               PASS
+[C   O2] sprite_plus_mask.c               PASS
+[C   O3] sprite_plus_mask.c               PASS
+[C   Os] sprite_plus_mask.c               PASS
+[C   Oz] sprite_plus_mask.c               PASS
+[C   O0] sprite_self_masked.c             PASS
+[C   O1] sprite_self_masked.c             PASS
+[C   O2] sprite_self_masked.c             PASS
+[C   O3] sprite_self_masked.c             PASS
+[C   Os] sprite_self_masked.c             PASS
+[C   Oz] sprite_self_masked.c             PASS
+[C   O0] stdio_header.c                   PASS
+[C   O1] stdio_header.c                   PASS
+[C   O2] stdio_header.c                   PASS
+[C   O3] stdio_header.c                   PASS
+[C   Os] stdio_header.c                   PASS
+[C   Oz] stdio_header.c                   PASS
+[C   O0] string_progmem_compare.c         PASS
+[C   O1] string_progmem_compare.c         PASS
+[C   O2] string_progmem_compare.c         PASS
+[C   O3] string_progmem_compare.c         PASS
+[C   Os] string_progmem_compare.c         PASS
+[C   Oz] string_progmem_compare.c         PASS
+[C   O0] string_progmem_copy.c            PASS
+[C   O1] string_progmem_copy.c            PASS
+[C   O2] string_progmem_copy.c            PASS
+[C   O3] string_progmem_copy.c            PASS
+[C   Os] string_progmem_copy.c            PASS
+[C   Oz] string_progmem_copy.c            PASS
+[C   O0] string_ram_compare.c             PASS
+[C   O1] string_ram_compare.c             PASS
+[C   O2] string_ram_compare.c             PASS
+[C   O3] string_ram_compare.c             PASS
+[C   Os] string_ram_compare.c             PASS
+[C   Oz] string_ram_compare.c             PASS
+[C   O0] string_ram_copy.c                PASS
+[C   O1] string_ram_copy.c                PASS
+[C   O2] string_ram_copy.c                PASS
+[C   O3] string_ram_copy.c                PASS
+[C   Os] string_ram_copy.c                PASS
+[C   Oz] string_ram_copy.c                PASS
+[C   O0] vsnprintf.c                      PASS
+[C   O1] vsnprintf.c                      PASS
+[C   O2] vsnprintf.c                      PASS
+[C   O3] vsnprintf.c                      PASS
+[C   Os] vsnprintf.c                      PASS
+[C   Oz] vsnprintf.c                      PASS
+[C   O0] wide_integer.c                   PASS
+[C   O1] wide_integer.c                   PASS
+[C   O2] wide_integer.c                   PASS
+[C   O3] wide_integer.c                   PASS
+[C   Os] wide_integer.c                   PASS
+[C   Oz] wide_integer.c                   PASS
+[C++ O0] abstract_dispatch.cpp            PASS
+[C++ O1] abstract_dispatch.cpp            PASS
+[C++ O2] abstract_dispatch.cpp            PASS
+[C++ O3] abstract_dispatch.cpp            PASS
+[C++ Os] abstract_dispatch.cpp            PASS
+[C++ Oz] abstract_dispatch.cpp            PASS
+[C++ O0] covariant_returns.cpp            PASS
+[C++ O1] covariant_returns.cpp            PASS
+[C++ O2] covariant_returns.cpp            PASS
+[C++ O3] covariant_returns.cpp            PASS
+[C++ Os] covariant_returns.cpp            PASS
+[C++ Oz] covariant_returns.cpp            PASS
+[C++ O0] data_model.cpp                   PASS
+[C++ O1] data_model.cpp                   PASS
+[C++ O2] data_model.cpp                   PASS
+[C++ O3] data_model.cpp                   PASS
+[C++ Os] data_model.cpp                   PASS
+[C++ Oz] data_model.cpp                   PASS
+[C++ O0] diamond_inheritance.cpp          PASS
+[C++ O1] diamond_inheritance.cpp          PASS
+[C++ O2] diamond_inheritance.cpp          PASS
+[C++ O3] diamond_inheritance.cpp          PASS
+[C++ Os] diamond_inheritance.cpp          PASS
+[C++ Oz] diamond_inheritance.cpp          PASS
+[C++ O0] display_system.cpp               PASS
+[C++ O1] display_system.cpp               PASS
+[C++ O2] display_system.cpp               PASS
+[C++ O3] display_system.cpp               PASS
+[C++ Os] display_system.cpp               PASS
+[C++ Oz] display_system.cpp               PASS
+[C++ O0] global_lifetime.cpp              PASS
+[C++ O1] global_lifetime.cpp              PASS
+[C++ O2] global_lifetime.cpp              PASS
+[C++ O3] global_lifetime.cpp              PASS
+[C++ Os] global_lifetime.cpp              PASS
+[C++ Oz] global_lifetime.cpp              PASS
+[C++ O0] interleaved_lifetime.cpp         PASS
+[C++ O1] interleaved_lifetime.cpp         PASS
+[C++ O2] interleaved_lifetime.cpp         PASS
+[C++ O3] interleaved_lifetime.cpp         PASS
+[C++ Os] interleaved_lifetime.cpp         PASS
+[C++ Oz] interleaved_lifetime.cpp         PASS
+[C++ O0] local_static_lifetime.cpp        PASS
+[C++ O1] local_static_lifetime.cpp        PASS
+[C++ O2] local_static_lifetime.cpp        PASS
+[C++ O3] local_static_lifetime.cpp        PASS
+[C++ Os] local_static_lifetime.cpp        PASS
+[C++ Oz] local_static_lifetime.cpp        PASS
+[C++ O0] member_pointer_high_address.cpp  PASS
+[C++ O1] member_pointer_high_address.cpp  PASS
+[C++ O2] member_pointer_high_address.cpp  PASS
+[C++ O3] member_pointer_high_address.cpp  PASS
+[C++ Os] member_pointer_high_address.cpp  PASS
+[C++ Oz] member_pointer_high_address.cpp  PASS
+[C++ O0] multiple_translation_units.cpp   PASS
+[C++ O1] multiple_translation_units.cpp   PASS
+[C++ O2] multiple_translation_units.cpp   PASS
+[C++ O3] multiple_translation_units.cpp   PASS
+[C++ Os] multiple_translation_units.cpp   PASS
+[C++ Oz] multiple_translation_units.cpp   PASS
+[C++ O0] placement_new.cpp                PASS
+[C++ O1] placement_new.cpp                PASS
+[C++ O2] placement_new.cpp                PASS
+[C++ O3] placement_new.cpp                PASS
+[C++ Os] placement_new.cpp                PASS
+[C++ Oz] placement_new.cpp                PASS
+[C++ O0] separate_compilation.cpp         PASS
+[C++ O1] separate_compilation.cpp         PASS
+[C++ O2] separate_compilation.cpp         PASS
+[C++ O3] separate_compilation.cpp         PASS
+[C++ Os] separate_compilation.cpp         PASS
+[C++ Oz] separate_compilation.cpp         PASS
+[C++ O0] stdio_header.cpp                 PASS
+[C++ O1] stdio_header.cpp                 PASS
+[C++ O2] stdio_header.cpp                 PASS
+[C++ O3] stdio_header.cpp                 PASS
+[C++ Os] stdio_header.cpp                 PASS
+[C++ Oz] stdio_header.cpp                 PASS
+[C++ O0] virtual_destructors.cpp          PASS
+[C++ O1] virtual_destructors.cpp          PASS
+[C++ O2] virtual_destructors.cpp          PASS
+[C++ O3] virtual_destructors.cpp          PASS
+[C++ Os] virtual_destructors.cpp          PASS
+[C++ Oz] virtual_destructors.cpp          PASS
+[C++ O0] virtual_dispatch.cpp             PASS
+[C++ O1] virtual_dispatch.cpp             PASS
+[C++ O2] virtual_dispatch.cpp             PASS
+[C++ O3] virtual_dispatch.cpp             PASS
+[C++ Os] virtual_dispatch.cpp             PASS
+[C++ Oz] virtual_dispatch.cpp             PASS
+
+All 471 AVM test(s) passed.

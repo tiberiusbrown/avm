@@ -75,6 +75,8 @@ enum class test_kind_t {
 };
 
 struct options_t {
+    fs::path manifest = AVM_TEST_MANIFEST;
+    bool source_override = false;
     fs::path interpreter = AVM_TEST_INTERPRETER_HEX;
     fs::path asm_dir = AVM_TEST_ASM_DIR;
     fs::path c_dir = AVM_TEST_C_DIR;
@@ -107,13 +109,14 @@ struct failure_t {
 std::string usage_text()
 {
     return
-        "Usage: avm_tests [--interpreter FILE] [--asm-dir DIR] "
+        "Usage: avm_tests [--manifest FILE] [--interpreter FILE] [--asm-dir DIR] "
         "[--c-dir DIR] [--cpp-dir DIR] [--bin-dir DIR] "
         "[--c-bin-dir DIR] [--cpp-bin-dir DIR] "
         "[--advance-limit PICOSECONDS] [--jobs N] [--verbose] [--fxc] [--filter REGEX] [--opt O0,O2] [--list]\n"
         "Filter searches source stems; --opt selects compiled tests (ASM runs once).\n"
         "--jobs defaults to logical processor count; --jobs 1 runs sequentially.\n"
-        "--list needs no interpreter or built images. No filters runs the full suite.";
+        "--list needs no interpreter or built images. No filter selects core fixtures.\n"
+        "Configured builds read the fixture manifest; source overrides select isolated directories.";
 }
 
 [[noreturn]] void usage_error(std::string const& message)
@@ -152,12 +155,20 @@ options_t parse_options(int argc, char** argv)
 
         if(arg == "--interpreter")
             options.interpreter = require_value(arg);
-        else if(arg == "--asm-dir")
+        else if(arg == "--manifest")
+            options.manifest = require_value(arg);
+        else if(arg == "--asm-dir") {
             options.asm_dir = require_value(arg);
-        else if(arg == "--c-dir")
+            options.source_override = true;
+        }
+        else if(arg == "--c-dir") {
             options.c_dir = require_value(arg);
-        else if(arg == "--cpp-dir")
+            options.source_override = true;
+        }
+        else if(arg == "--cpp-dir") {
             options.cpp_dir = require_value(arg);
+            options.source_override = true;
+        }
         else if(arg == "--bin-dir")
             options.asm_bin_dir = require_value(arg);
         else if(arg == "--c-bin-dir")
@@ -503,6 +514,41 @@ std::vector<test_case_t> discover_tests(options_t const& options)
 {
     std::vector<test_case_t> tests;
     auto const& optimization_levels = options.optimizations;
+    if(!options.source_override) {
+        std::ifstream manifest(options.manifest);
+        if(!manifest)
+            throw std::runtime_error("Unable to open fixture manifest: " + options.manifest.string());
+        std::string line;
+        while(std::getline(manifest, line)) {
+            if(!line.empty() && line.back() == '\r') line.pop_back();
+            std::vector<std::string> fields;
+            std::istringstream record(line);
+            std::string field;
+            while(std::getline(record, field, '\t')) fields.push_back(field);
+            if(fields.size() != 5)
+                throw std::runtime_error("Invalid fixture manifest record: " + line);
+            test_kind_t kind;
+            fs::path bin;
+            if(fields[0] == "ASM") { kind = test_kind_t::assembly; bin = options.asm_bin_dir; }
+            else if(fields[0] == "C") { kind = test_kind_t::c; bin = options.c_bin_dir; }
+            else if(fields[0] == "CXX") { kind = test_kind_t::cpp; bin = options.cpp_bin_dir; }
+            else throw std::runtime_error("Invalid fixture language: " + fields[0]);
+            fs::path source(fields[2]);
+            auto const stem = source.stem().string();
+            if(!options.selection.matches(stem) ||
+               (options.selection.expression.empty() && fields[4] != "core")) continue;
+            std::istringstream variants(fields[1]);
+            while(std::getline(variants, field, ',')) {
+                std::string opt = field == "ASM" ? "" : field;
+                if(!opt.empty() && std::find(optimization_levels.begin(), optimization_levels.end(), opt) == optimization_levels.end()) continue;
+                fs::path image_dir = opt.empty() ? bin : bin / opt;
+                tests.push_back({kind, opt, source, fields[3], image_dir / (stem + ".bin"),
+                                 image_dir / (stem + "_actual.txt")});
+            }
+        }
+        if(!manifest.eof()) throw std::runtime_error("Unable to read fixture manifest");
+    }
+    else {
     append_tests(tests, test_kind_t::assembly, options.asm_dir,
                  options.asm_bin_dir, ".asm", optimization_levels);
     append_tests(tests, test_kind_t::c, options.c_dir,
@@ -521,6 +567,7 @@ std::vector<test_case_t> discover_tests(options_t const& options)
             return true;
         return !options.selection.matches(stem);
     }), tests.end());
+    }
 
     std::sort(tests.begin(), tests.end(),
         [](test_case_t const& lhs, test_case_t const& rhs) {
@@ -554,7 +601,7 @@ void run_test(test_case_t const& test,
               std::uint64_t advance_limit,
               bool fxc, bool verbose, std::ostream& log)
 {
-    require_file(test.expected, "expected-output file");
+    if(test.expected != "@PASS") require_file(test.expected, "expected-output file");
     require_file(test.image, "built AVM test image");
 
     if(verbose) {
@@ -563,7 +610,8 @@ void run_test(test_case_t const& test,
                   << "    expected:    " << test.expected << '\n';
     }
 
-    std::vector<std::uint8_t> const expected = read_binary_file(test.expected);
+    std::vector<std::uint8_t> const expected = test.expected == "@PASS"
+        ? std::vector<std::uint8_t>{'P', '\n'} : read_binary_file(test.expected);
     std::vector<std::uint8_t> const actual =
         run_image(interpreter, test.image, advance_limit, fxc);
 

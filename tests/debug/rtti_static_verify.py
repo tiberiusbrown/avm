@@ -46,42 +46,10 @@ def check(condition, message):
         sys.exit(1)
 
 
-class Elf:
-    """A 32-bit little-endian AVM ELF with its sections and defined symbols."""
-
-    def __init__(self, path):
-        with open(path, 'rb') as f:
-            self.data = f.read()
-        check(self.data[:4] == b'\x7fELF' and self.data[4] == 1,
-              '%s is not a 32-bit ELF' % path)
-        shoff = struct.unpack_from('<I', self.data, 0x20)[0]
-        shentsize, shnum, shstrndx = struct.unpack_from('<HHH', self.data, 0x2e)
-        raw = [struct.unpack_from('<IIIIIIIIII', self.data, shoff + i * shentsize)
-               for i in range(shnum)]
-        strtab = raw[shstrndx][4]
-        self.sections = []
-        for entry in raw:
-            self.sections.append({'name': self._cstring(strtab + entry[0]),
-                                  'type': entry[1], 'flags': entry[2],
-                                  'addr': entry[3], 'offset': entry[4],
-                                  'size': entry[5], 'link': entry[6]})
-        self.symbols = {}
-        for section in self.sections:
-            if section['type'] != SHT_SYMTAB:
-                continue
-            names = self.sections[section['link']]['offset']
-            for i in range(section['size'] // 16):
-                name_off, value, size, info, _, shndx = struct.unpack_from(
-                    '<IIIBBH', self.data, section['offset'] + i * 16)
-                name = self._cstring(names + name_off)
-                if not name or shndx == SHN_UNDEF or shndx >= SHN_LORESERVE:
-                    continue
-                self.symbols.setdefault(name, []).append(
-                    {'value': value, 'size': size, 'section': self.sections[shndx]})
-
-    def _cstring(self, offset):
-        end = self.data.index(b'\0', offset)
-        return self.data[offset:end].decode()
+# Keep the format reader independent of the SDK implementation.
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'support'))
+from avm_elf import Elf
 
 
 class Image:

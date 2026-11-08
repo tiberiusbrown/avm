@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Historical evidence has recorded byte hashes, including original line endings.
+archive/** -text

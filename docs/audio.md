@@ -1095,7 +1095,7 @@ Noise uses the same stopped sentinel: phase, LFSR and mixing are skipped in
 five cycles. Muted noise with nonzero increment still advances both phase and
 LFSR. Pending retriggers reset phase and reseed before the sentinel check,
 including while stopped. Active noise takes 25 cycles without overflow,
-29 with a shift and 30 with feedback. See [audio-benchmarks.md](audio-benchmarks.md)
+29 with a shift and 30 with feedback. See [audio-benchmarks.md](../bench/README.md)
 for instruction accounting and measured before/after results.
 
 ## Binary stream format
@@ -1319,7 +1319,7 @@ ordinary/pending maxima are 205/282 cycles with filtering off and 219/296
 with any named filter preset at either sample rate. Other gains have different output paths.
 PWM writes remain at 21 cycles at both rates and all levels. FX, FX-C and Mini
 firmware is 29364 bytes, leaving 332 bytes below the 29696-byte boundary.
-See [audio-benchmarks.md](audio-benchmarks.md) for gain/filter timings.
+See [audio-benchmarks.md](../bench/README.md) for gain/filter timings.
 
 The compact FX reader performs one interruptible burst per due event with
 24-bit cursors and actual-consumption advancement, preserving speculative
@@ -1340,7 +1340,7 @@ Garden and four MIDI imports with wraparound, preserving pause and rate.
 Build `audio_demo_assets` then
 `avm_audio_demo`; the checked-in package is `projects/audio_demo/audio_demo.arduboy`.
 
-See [audio-benchmarks.md](audio-benchmarks.md) for measured resource results.
+See [audio-benchmarks.md](../bench/README.md) for measured resource results.
 `avm_audio_tests_run` uses Ardens' AVR instruction emulator for samples,
 sequencing, ownership, publication races, SPI and native-stack checks, plus
 Python compiler tests and Mini/FX-C assembly. `avm_tests_run` adds all interpreter

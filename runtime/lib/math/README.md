@@ -85,7 +85,7 @@ log1p and division. Large inverse arguments use `log(x)+ln(2)`.
 The polynomial constant terms are exactly one. The odd kernels preserve tiny
 inputs and signed zeros without a separate dispatch; cosh(0)=1 and acosh(1)=0
 also follow directly from their polynomial forms. Coefficients are reproduced by
-[`hyperbolic_coefficients.py`](../../../tests/math/hyperbolic_coefficients.py),
+[`hyperbolic_coefficients.py`](../../../tools/research/math/hyperbolic_coefficients.py),
 and native FPOLY evaluates them with the existing extended significand.
 The hyperbolic acceptance budget is 1e-5 relative error, with exceptional
 values and zero signs checked separately. No floating-point exception state or correctly-rounded
@@ -151,7 +151,7 @@ Exponential uses centered base-two reduction, a degree-four Remez polynomial
 for 2^r through FPOLY, and exponent packing with a staged subnormal multiply.
 It performs no division. The shared unity-anchored fit handles tiny and zero
 arguments without a separate 1+x path. The generator and measured
-alternatives are described in the [generated phase 1–2 report](../../../docs/math-runtime/report.md).
+alternatives are described in the [generated phase 1–2 report](../../../bench/README.md).
 
 `hypotf` takes the square root of the sum of squares without sorting or scaling
 for ordinary inputs. Extreme inputs retain scaling and a magnitude-gap shortcut.
@@ -205,7 +205,7 @@ magnitude-dispatched native/guest paths (32 iterations per workload):
 
 `atanf` retains its reciprocal above one and shared four-interval kernel on
 [0,1]. `atan2f` divides the smaller magnitude by the larger and uses that
-kernel. `tests/math/phase34_coefficients.py` reproduces the selected fits.
+kernel. `tools/research/math/phase34_coefficients.py` reproduces the selected fits.
 
 The three logarithms classify and normalize once, then inline one division-free
 base-two mantissa engine: f*P6(f), where f is the normalized mantissa minus one.
@@ -263,16 +263,16 @@ errors, worst inputs and ULP distributions are reported.
 `avm_math_accuracy_tests_run` uses mpmath at 100 decimal digits against the same
 production reference objects. Its deterministic corpus and adaptive searches
 export worst inputs to interpreter fixtures at all six optimization levels.
-[Committed generated accuracy results](../../../docs/math-runtime/accuracy.md)
+[Committed generated accuracy results](../../../bench/README.md)
 include the JSON inputs and regeneration commands. Exact remainder, rounding,
 classification and sign checks remain unchanged. The window reducer's dense
 32/48-bit arithmetic and independent reconstruction checks replace the former
 280-bit product acceptance test. Quick/full workflows are documented in the
-[fast trig report](../../../docs/math-runtime/trig-fast/report.md).
+[fast trig report](../../../bench/README.md).
 
-See [earlier measurements](../../../docs/math-runtime-tradeoff.md) for historical
-results, the [phase 1–2 study](../../../docs/math-runtime/report.md), and
-[phase 3–4 measurements and validation](../../../docs/math-runtime/phase34/report.md).
+See [earlier measurements](../../../bench/README.md) for historical
+results, the [phase 1–2 study](../../../bench/README.md), and
+[phase 3–4 measurements and validation](../../../bench/README.md).
 
 The linked native package adds 704 interpreter bytes (26,632 to 27,336),
 including 32 bytes of FF table growth; existing FPOLY brings its package total
@@ -297,7 +297,7 @@ arithmetic or floating-point environment state were added.
 | `acosf` | `pi/2-asin(x)` on [-1/2,1/2]; endpoint paths compute `2*asin(sqrt((1-abs(x))/2))`, subtracting from pi for negative x. Shares the small asin polynomial and inline FSQRT wrapper. |
 
 The anchored exponential fit and scale helper are shared by `expf`, `exp2f`,
-and `powf`. `tests/math/c99_coefficients.py` reproduces the selected Remez fits
+and `powf`. `tools/research/math/c99_coefficients.py` reproduces the selected Remez fits
 using the existing coefficient generator. All coefficients and guest arithmetic
 are binary32; FPOLY uses the already established avr-libc extended accumulator.
 
@@ -475,7 +475,7 @@ the intentional scalbn underflow cutoff and pow's shared exponential range
 guards. The six pow workloads improved by 0.06–1.50 percent from the native-word
 integer guards, with their polynomial and accuracy policy unchanged.
 The instruction-mix report includes the new workloads and reconciles with
-cycle timings. `tests/math/report_c99.py` regenerates the tables from build
+cycle timings. `tools/research/math/report_c99.py` regenerates the tables from build
 reports, final benchmark output, stack traces, and object symbols.
 
 ## C23 additions
@@ -511,7 +511,7 @@ Limits:
 * `ffma` inherits the `fmaf` policy: a single rounding is not guaranteed after
   severe cancellation or intermediate overflow.
 
-Coverage: `tests/c/math_c23_*.c` checks these families at O0 and O2, including
+Coverage: `tests/runtime/math/c/math_c23_*.c` checks these families at O0 and O2, including
 boundary widths, rounding directions, zero signs, NaN and infinity rules, errno
 values, and the wider forms. Off-target checks against host libm used glibc 2.39
 for `roundeven`, `nextup`, `nextdown`, `llogb`, the max/min families, and the

@@ -18,8 +18,17 @@ def main():
         result=subprocess.run([str(build/(runner+suffix)),*map(str,options)],text=True,capture_output=True)
         assert (result.returncode==0)==success, result.stdout+result.stderr
         return result.stdout+result.stderr
+    # The configured manifest is authoritative, including actual variant limits.
+    out=run('avm_tests','--filter','^affine_store_values$','--opt','O0,O2','--list')
+    assert out.splitlines()==['[C   O0] affine_store_values.c','[C   O2] affine_store_values.c'],out
+    out=run('avm_tests','--filter','^eh_catch_all$','--list')
+    assert out.splitlines()==['[C++ O0] eh_catch_all.cpp','[C++ O2] eh_catch_all.cpp'],out
+    assert 'No tests match' in run('avm_tests','--filter','^eh_catch_all$','--opt','O3','--list',success=False)
     with tempfile.TemporaryDirectory(dir=build) as tmp:
         tmp=Path(tmp)
+        bad_manifest=tmp/'bad.tsv'
+        bad_manifest.write_text('invalid record\n')
+        assert 'Invalid fixture manifest' in run('avm_tests','--manifest',bad_manifest,'--list',success=False)
         for lang,extension in [('asm','.asm'),('c','.c'),('cpp','.cpp')]:
             (tmp/lang).mkdir()
             (tmp/lang/('unbuilt'+extension)).write_text('')
@@ -53,7 +62,7 @@ def main():
         # Run an actual selected image with an unbuilt peer in its source dir.
         for name in ['math_sin','math_cos']:
             (tmp/('c/'+name+'.c')).write_text('')
-        committed=Path(__file__).resolve().parents[1]/'bench/cycles_c.txt'
+        committed=Path(__file__).resolve().parents[1]/'bench/reference/cycles_c.txt'
         before=hashlib.sha256(committed.read_bytes()).digest()
         run('avm_bench','--c-only','--c-source-dir',tmp/'c','--c-image-dir',build/'bench/c',
             '--filter','^math_sin$','--c-output',tmp/'cycles.txt')
@@ -98,7 +107,7 @@ def main():
         (tmp/'O2').mkdir()
         for name in ['extra_a', 'extra_b', 'math_sin', 'math_cos']:
             shutil.copyfile(build/'tests/c/O2/affine_store_values.bin', tmp/('O2/'+name+'.bin'))
-            shutil.copyfile(Path(__file__).parent/'c/affine_store_values_output.txt',
+            shutil.copyfile(Path(__file__).parent/'codegen/c/affine_store_values_output.txt',
                             tmp/('c/'+name+'_output.txt'))
         test_options=['--asm-dir', tmp/'asm', '--c-dir', tmp/'c', '--cpp-dir', tmp/'cpp',
                       '--c-bin-dir', tmp, '--opt', 'O2', '--verbose',

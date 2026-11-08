@@ -130,7 +130,7 @@ the interpreter, runner, baseline, and the C/C++ images selected by
 `bench/instruction_mix_benchmarks.txt`, reusing the normal benchmark image rules
 and configured `AVM_OPT_LEVEL`. It does not run the assembly latency suite,
 tests, other compiled benchmarks, or MIR diagnostics. The only report is
-`bench/instruction_mix.txt`.
+`bench/reference/instruction_mix.txt`.
 
 The runner's `--instruction-mix` mode steps Ardens with AVR instruction merging
 disabled. Like the debugger profiler, it charges each completed instruction the

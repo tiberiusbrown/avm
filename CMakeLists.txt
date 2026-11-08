@@ -9,23 +9,31 @@ project(avm LANGUAGES C CXX ASM)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AvmBuild)
+include(AvmTesting)
+add_library(avm_runner_support INTERFACE)
+target_include_directories(avm_runner_support INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/tools/support")
 
-# The LLVM toolchain also builds when the optional Ardens submodule is absent.
-# Keep the Ardens-backed LLDB integration, emulator tests, and benchmarks
-# together so a toolchain-only configure has no Ardens dependency.
+# Components share Ardens without requiring the debugger or GUI for tests.
 set(AVM_ARDENS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/Ardens")
-if(EXISTS "${AVM_ARDENS_SOURCE_DIR}/CMakeLists.txt")
-    set(AVM_WITH_ARDENS_DEFAULT ON)
-else()
-    set(AVM_WITH_ARDENS_DEFAULT OFF)
+option(AVM_WITH_ARDENS "Enable Ardens-dependent components" ON)
+option(AVM_BUILD_TESTS "Build AVM validation suites" ${AVM_WITH_ARDENS})
+option(AVM_BUILD_BENCHMARKS "Build AVM benchmark tools" ${AVM_WITH_ARDENS})
+option(AVM_BUILD_DEBUGGER "Build AVM LLDB and profiler" ${AVM_WITH_ARDENS})
+option(AVM_BUILD_EXAMPLES "Build SDK examples" OFF)
+if(NOT AVM_WITH_ARDENS)
+    set(AVM_BUILD_TESTS OFF)
+    set(AVM_BUILD_BENCHMARKS OFF)
+    set(AVM_BUILD_DEBUGGER OFF)
 endif()
-option(AVM_WITH_ARDENS
-    "Build the Ardens-backed LLDB debugger, tests, and benchmarks"
-    ${AVM_WITH_ARDENS_DEFAULT})
-if(AVM_WITH_ARDENS AND NOT EXISTS "${AVM_ARDENS_SOURCE_DIR}/CMakeLists.txt")
-    message(FATAL_ERROR
-        "AVM_WITH_ARDENS=ON requires the deps/Ardens submodule. "
-        "Initialize it or configure with -DAVM_WITH_ARDENS=OFF.")
+set(AVM_NEEDS_ARDENS OFF)
+if(AVM_BUILD_TESTS OR AVM_BUILD_BENCHMARKS OR AVM_BUILD_DEBUGGER)
+    set(AVM_NEEDS_ARDENS ON)
+    if(NOT EXISTS "${AVM_ARDENS_SOURCE_DIR}/CMakeLists.txt")
+        message(FATAL_ERROR "Initialize deps/Ardens or disable Ardens components")
+    endif()
+endif()
+if(AVM_BUILD_TESTS)
+    enable_testing()
 endif()
 
 # Build the AVM Clang/LLVM/LLD toolchain in-tree. The target includes a
@@ -34,7 +42,7 @@ set(LLVM_TARGETS_TO_BUILD              ""          CACHE STRING "" FORCE)
 set(LLVM_EXPERIMENTAL_TARGETS_TO_BUILD "AVM"       CACHE STRING "" FORCE)
 set(LLVM_ENABLE_PIC                     ON          CACHE BOOL   "" FORCE)
 set(AVM_LLVM_PROJECTS clang lld)
-if(AVM_WITH_ARDENS)
+if(AVM_BUILD_DEBUGGER)
     list(APPEND AVM_LLVM_PROJECTS lldb)
 endif()
 set(LLVM_ENABLE_PROJECTS "${AVM_LLVM_PROJECTS}" CACHE STRING "" FORCE)
@@ -51,7 +59,7 @@ set(LLVM_BUILD_TESTS                   OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_EXAMPLES                OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_BENCHMARKS              OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_DOCS                    OFF         CACHE BOOL   "" FORCE)
-if(AVM_WITH_ARDENS)
+if(AVM_NEEDS_ARDENS)
     # The SDK debugger uses LLDB's native command interpreter and C++ API.
     # Optional bindings and terminal UI dependencies are unnecessary for it.
     set(LLDB_ENABLE_PYTHON OFF CACHE STRING "" FORCE)
@@ -61,12 +69,17 @@ if(AVM_WITH_ARDENS)
     set(LLDB_ENABLE_LIBEDIT OFF CACHE STRING "" FORCE)
     set(LLDB_ENABLE_LZMA OFF CACHE STRING "" FORCE)
     set(LLDB_ENABLE_LIBXML2 OFF CACHE STRING "" FORCE)
-    set(LLDB_ENABLE_PROTOCOL_SERVERS OFF CACHE BOOL "" FORCE)
+    # Native-launch routing validation needs a matching host debug server.
+    set(avm_protocol_servers OFF)
+    if(AVM_BUILD_TESTS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        set(avm_protocol_servers ON)
+    endif()
+    set(LLDB_ENABLE_PROTOCOL_SERVERS ${avm_protocol_servers} CACHE BOOL "" FORCE)
 
     # Define the adapter before entering LLVM so LLDB can discover it as an
     # ordinary CMake target. Ardens's own LLVM loader remains disabled.
     set(ARDENS_LLVM      OFF CACHE BOOL "" FORCE)
-    set(ARDENS_DEBUGGER  ON  CACHE BOOL "" FORCE)
+    set(ARDENS_DEBUGGER  ${AVM_BUILD_DEBUGGER}  CACHE BOOL "" FORCE)
     set(ARDENS_PLAYER    OFF CACHE BOOL "" FORCE)
     set(ARDENS_FLASHCART OFF CACHE BOOL "" FORCE)
     set(ARDENS_LIB       OFF CACHE BOOL "" FORCE)
@@ -74,14 +87,16 @@ if(AVM_WITH_ARDENS)
     set(ARDENS_DIST      OFF CACHE BOOL "" FORCE)
     set(ARDENS_BENCHMARK OFF CACHE BOOL "" FORCE)
     set(ARDENS_CYCLES    OFF CACHE BOOL "" FORCE)
-    set(ARDENS_SDL       ON  CACHE BOOL "" FORCE)
+    set(ARDENS_SDL       ${AVM_BUILD_DEBUGGER}  CACHE BOOL "" FORCE)
     add_subdirectory("${AVM_ARDENS_SOURCE_DIR}" ardens-build EXCLUDE_FROM_ALL)
     # liblldb is shared; its static Ardens dependencies must be PIC.
     set_target_properties(ardensdebuggerlib fmt miniz PROPERTIES
         POSITION_INDEPENDENT_CODE ON)
-    add_custom_target(avm_ardens_debugger ALL DEPENDS Ardens)
+    if(AVM_BUILD_DEBUGGER)
+        add_custom_target(avm_ardens_debugger DEPENDS Ardens)
+    endif()
 
-    add_library(avm_debug_emulator STATIC debug/AvmEmulator.cpp debug/AvmHost.cpp)
+    add_library(avm_debug_emulator STATIC EXCLUDE_FROM_ALL debug/AvmEmulator.cpp debug/AvmHost.cpp)
     target_compile_features(avm_debug_emulator PUBLIC cxx_std_17)
     target_include_directories(avm_debug_emulator
         PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/debug"
@@ -90,24 +105,26 @@ if(AVM_WITH_ARDENS)
     target_link_libraries(avm_debug_emulator
         PUBLIC ardensdebuggerlib LLVMSupport)
 
-    add_library(avm_profile STATIC
-        debug/AvmProfileFormat.cpp
-        debug/AvmProfileSymbol.cpp
-        debug/AvmProfileReport.cpp)
-    set_target_properties(avm_debug_emulator avm_profile PROPERTIES
-        POSITION_INDEPENDENT_CODE ON)
-    target_compile_features(avm_profile PUBLIC cxx_std_17)
-    target_include_directories(avm_profile
-        PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/debug"
-        PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps/llvm-project/lldb/include"
-                "${CMAKE_BINARY_DIR}/llvm-build/tools/lldb/include"
-                "${CMAKE_CURRENT_SOURCE_DIR}/deps/llvm-project/llvm/include"
-                "${CMAKE_BINARY_DIR}/llvm-build/include")
-    target_link_libraries(avm_profile PUBLIC avm_debug_emulator LLVMSupport)
+    if(AVM_BUILD_DEBUGGER)
+        add_library(avm_profile STATIC EXCLUDE_FROM_ALL
+            debug/AvmProfileFormat.cpp
+            debug/AvmProfileSymbol.cpp
+            debug/AvmProfileReport.cpp)
+        set_target_properties(avm_debug_emulator avm_profile PROPERTIES
+            POSITION_INDEPENDENT_CODE ON)
+        target_compile_features(avm_profile PUBLIC cxx_std_17)
+        target_include_directories(avm_profile
+            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/debug"
+            PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps/llvm-project/lldb/include"
+                    "${CMAKE_BINARY_DIR}/llvm-build/tools/lldb/include"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/deps/llvm-project/llvm/include"
+                    "${CMAKE_BINARY_DIR}/llvm-build/include")
+        target_link_libraries(avm_profile PUBLIC avm_debug_emulator LLVMSupport)
+    endif()
 endif()
 set(BUG_REPORT_URL "https://github.com/tiberiusbrown/llvm-project/issues/" CACHE STRING "" FORCE)
 
-add_subdirectory(deps/llvm-project/llvm llvm-build)
+add_subdirectory(deps/llvm-project/llvm llvm-build EXCLUDE_FROM_ALL)
 
 # Supplement LLVM's native PCH selection for targets that don't already reuse a PCH.
 include(AvmLlvmPch)
@@ -132,7 +149,7 @@ set(AVM_DISASSEMBLE_SCRIPT
 
 # These paths are consumed by more than one feature subdirectory.
 set(AVM_INTERPRETER_HEX
-    "${CMAKE_CURRENT_SOURCE_DIR}/interp/build/interp.hex")
+    "${CMAKE_CURRENT_SOURCE_DIR}/build/interp/interp.hex")
 
 add_subdirectory(runtime)
 
@@ -165,6 +182,9 @@ add_dependencies(avm_toolchain avm_sdk_tools)
 
 install(PROGRAMS ${AVM_SDK_ALIAS_OUTPUTS}
     DESTINATION bin COMPONENT avm-sdk)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AvmSdk.cmake"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AVMConfig.cmake"
+    DESTINATION share/avm/cmake COMPONENT avm-sdk)
 install(PROGRAMS "${CMAKE_CURRENT_SOURCE_DIR}/tools/avm_music.py"
     DESTINATION bin COMPONENT avm-sdk)
 # Only Clang's target-independent builtin headers belong in the AVM SDK.
@@ -182,23 +202,38 @@ install(FILES ${AVM_SDK_CLANG_CORE_HEADERS}
     DESTINATION "${AVM_SDK_CLANG_HEADER_DIR}" COMPONENT avm-sdk)
 install(DIRECTORY "${AVM_SYSROOT_DIR}/"
     DESTINATION sysroot COMPONENT avm-sdk
-    PATTERN ".runtime-stamp" EXCLUDE)
+    PATTERN ".runtime-stamp" EXCLUDE PATTERN ".avm-headers" EXCLUDE)
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/deps/llvm-project/LICENSE.TXT"
     DESTINATION share/licenses/libc++ COMPONENT avm-sdk)
 
 add_subdirectory(interp)
-if(AVM_WITH_ARDENS)
+include(AvmSdk)
+add_custom_target(avm_sdk_install
+    COMMAND "${CMAKE_COMMAND}" --install "${CMAKE_BINARY_DIR}"
+        --config RelWithDebInfo --component avm-sdk --prefix "${CMAKE_BINARY_DIR}/avm-sdk-install"
+    DEPENDS avm_sdk COMMENT "Installing the relocatable AVM SDK" VERBATIM)
+if(AVM_BUILD_DEBUGGER)
     add_subdirectory(debug)
 endif()
-add_subdirectory(projects)
-if(AVM_WITH_ARDENS)
-    add_subdirectory(tests)
-    add_subdirectory(bench)
+if(AVM_BUILD_EXAMPLES)
+    add_subdirectory(projects)
 endif()
+if(AVM_BUILD_TESTS)
+    add_subdirectory(tests EXCLUDE_FROM_ALL)
+endif()
+if(AVM_BUILD_BENCHMARKS)
+    add_subdirectory(bench EXCLUDE_FROM_ALL)
+endif()
+if(AVM_BUILD_TESTS)
+    avm_finalize_testing()
+endif()
+
+# The default build produces the SDK; validation and measurement are explicit.
+add_custom_target(avm_default ALL DEPENDS avm_sdk)
 
 # Match LLVM's RTTI configuration for custom AVM targets
 # that use LLVM's C++ libraries.
-if(AVM_WITH_ARDENS AND NOT LLVM_ENABLE_RTTI)
+if(AVM_BUILD_DEBUGGER AND NOT LLVM_ENABLE_RTTI)
     if(MSVC)
         set(AVM_NO_RTTI_FLAG /GR-)
     else()

@@ -168,7 +168,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true')
     options = parser.parse_args()
-    path = Path(__file__).resolve().parents[1] / 'c' / 'printf_long_long_vectors.h'
+    path = Path(__file__).resolve().parents[1] / 'runtime/stdio/c' / 'printf_long_long_vectors.h'
     content = generate()
     if options.check:
         if path.read_text() != content:

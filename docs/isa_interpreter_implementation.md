@@ -3920,7 +3920,7 @@ accumulators. The only `__fp_round` call occurs after the last coefficient.
 `avm_fpoly_tests_run` executes the handler with checked SPI writes, verifies
 all preserved architectural state and fetch continuation, checks PC carries,
 and exercises Timer1 interruptions. Performance and flash measurements are in
-[fpoly measurements](fpoly-performance.md).
+[fpoly measurements](../bench/README.md).
 
 ## 39. Fatal trap dispatch
 

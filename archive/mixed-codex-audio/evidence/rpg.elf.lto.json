@@ -1,0 +1,7 @@
+{
+  "game_reference_arguments_eliminated": true,
+  "unconditional_global_game": true,
+  "retained_game_rule_functions": [],
+  "map_tile_position_storage_eliminated": true,
+  "optimized_ir": "rpg.optimized.ll"
+}

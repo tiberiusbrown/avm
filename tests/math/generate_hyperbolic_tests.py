@@ -22,4 +22,4 @@ lines += ['#ifdef __cplusplus', 'extern "C"', '#endif', 'int avm_test_main(void)
 for name in HYPERBOLIC:
     lines += [f'    if (check_unary_accuracy({name}, {name}_cases, sizeof({name}_cases)/sizeof({name}_cases[0]), AVM_HYPERBOLIC)) return 1;']
 lines += ['    return 0;', '}', '']
-Path('tests/c/math_hyperbolic.c').write_text('\n'.join(lines), encoding='utf-8')
+Path('tests/runtime/math/c/math_hyperbolic.c').write_text('\n'.join(lines), encoding='utf-8')

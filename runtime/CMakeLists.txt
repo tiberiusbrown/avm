@@ -3,7 +3,7 @@ set(AVM_RUNTIME_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 set(AVM_RUNTIME_OBJECT_DIR "${AVM_RUNTIME_BUILD_DIR}/objects")
 set(AVM_RUNTIME_INCLUDE_DIR "${AVM_RUNTIME_SOURCE_DIR}/include")
 set(AVM_RUNTIME_MIR_BUILD_DIR "${AVM_RUNTIME_BUILD_DIR}/mir")
-set(AVM_RUNTIME_ASM_DIR "${AVM_RUNTIME_SOURCE_DIR}/asm")
+set(AVM_RUNTIME_ASM_DIR "${AVM_RUNTIME_BUILD_DIR}/disassembly")
 set(AVM_LIBCXX_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/llvm-project/libcxx")
 set(AVM_LIBCXX_SOURCE_INCLUDE_DIR "${AVM_LIBCXX_SOURCE_DIR}/include")
 set(AVM_LIBCXX_GENERATED_INCLUDE_DIR "${AVM_RUNTIME_BUILD_DIR}/libcxx/include")
@@ -62,97 +62,23 @@ configure_file(
 function(avm_add_runtime_object)
     cmake_parse_arguments(DISASM "" "SOURCE;OUTPUT" "" ${ARGN})
     avm_add_object(${ARGN})
+    set_property(DIRECTORY PROPERTY "AVM_RUNTIME_RECIPE_${DISASM_OUTPUT}" "${ARGN}")
     set_property(DIRECTORY APPEND PROPERTY AVM_RUNTIME_DISASSEMBLY_OBJECTS
         "${DISASM_SOURCE}|${DISASM_OUTPUT}")
 endfunction()
 
 set(RUNTIME_SOURCES
-    assert
-    atexit
-    audio_tone
-    avm
-    wctype
-    wchar_string
-    wchar_numeric
-    wchar_time
-    wchar_stream
-    wchar_format
-    wchar_scan
-    ctype
-    exit
-    fenv
-    font_5x7
-    font_br4
-    font_br5
-    font_br5d_x5
-    font_br5n
-    local_dtor
-    immediate_exit
-    inttypes
-    locale
-    malloc
-    eh_cxa
-    eh_unwind
-    rtti_dynamic
-    dynamic_cast
-    dynamic_cast_void
-    multibyte
-    math
-    math_standard
-    math_c23
-    complex_standard
-    pgmspace
-    qsort
-    bsearch
-    runtime
-    trap_lookup
-    trap_report
-    signal
-    stdio
-    stdio_control
-    stdio_error
-    stdio_files
-    stdio_format
-    stdio_getchar
-    stdio_gets
-    stdio_input
-    stdio_output
-    stdio_perror
-    stdio_position
-    stdio_printf
-    stdio_putchar
-    stdio_puts
-    stdio_scan_core
-    stdio_scan_integer
-    stdio_scan_float
-    stdio_scan_string
-    stdio_scan_stream
-    stdio_scan_stdin
-    stdio_stderr
-    stdio_stdin
-    stdio_stdout
-    stdlib
-    quick_exit
-    strfrom
-    uchar
-    stdbit
-    strtof
-    strtof_internal
-    string
-    time
-    time_calendar
-    time_mktime
-    time_gmtime
-    time_localtime
-    time_names
-    time_asctime
-    time_ctime
-    time_strftime
-    time_timespec
-    time_gmtime_r
-    time_localtime_r
-    time_timegm
-    termination
+    assert atexit audio_tone avm wctype wchar_string wchar_numeric wchar_time wchar_stream
+    wchar_format wchar_scan ctype exit fenv font_5x7 font_br4 font_br5 font_br5d_x5 font_br5n
+    local_dtor immediate_exit inttypes locale malloc eh_cxa eh_unwind rtti_dynamic dynamic_cast
+    dynamic_cast_void multibyte math math_standard math_c23 complex_standard pgmspace qsort
+    bsearch runtime trap_lookup trap_report signal stdio stdio_control stdio_error stdio_files
+    stdio_format stdio_getchar stdio_gets stdio_input stdio_output stdio_perror stdio_position
+    stdio_printf stdio_putchar stdio_puts stdio_scan_core stdio_scan_integer stdio_scan_float
+    stdio_scan_string stdio_scan_stream stdio_scan_stdin stdio_stderr stdio_stdin stdio_stdout
+    stdlib quick_exit strfrom uchar stdbit strtof strtof_internal string time time_calendar
+    time_mktime time_gmtime time_localtime time_names time_asctime time_ctime time_strftime
+    time_timespec time_gmtime_r time_localtime_r time_timegm termination
 )
 
 set(AVM_SYSROOT_DIR
@@ -175,19 +101,6 @@ string(JOIN "\n" AVM_RUNTIME_HEADER_PATHS ${AVM_RUNTIME_HEADERS})
 file(GENERATE OUTPUT "${AVM_RUNTIME_HEADER_MANIFEST}"
     CONTENT "${AVM_RUNTIME_HEADER_PATHS}\n")
 
-# Capture pass-by-pass LLVM IR/MIR for every C and C++ translation unit in the
-# runtime. Assembly sources are excluded because they do not pass through LLVM
-# code generation and therefore have no MIR to dump.
-file(GLOB_RECURSE AVM_RUNTIME_MIR_SOURCES CONFIGURE_DEPENDS
-    "${AVM_RUNTIME_SOURCE_DIR}/crt/*.c"
-    "${AVM_RUNTIME_SOURCE_DIR}/crt/*.cpp"
-    "${AVM_RUNTIME_SOURCE_DIR}/lib/*.c"
-    "${AVM_RUNTIME_SOURCE_DIR}/lib/*.cpp"
-    "${AVM_RUNTIME_SOURCE_DIR}/builtins/*.c"
-    "${AVM_RUNTIME_SOURCE_DIR}/builtins/*.cpp"
-    "${AVM_RUNTIME_SOURCE_DIR}/tests/*.c"
-    "${AVM_RUNTIME_SOURCE_DIR}/tests/*.cpp")
-
 set(AVM_CRT0_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/crt0.o")
 set(AVM_CRT0_TEST_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/crt0_test.o")
 set(AVM_CRT0_SKETCH_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/crt0_sketch.o")
@@ -198,21 +111,21 @@ avm_add_runtime_object(
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/crt/crt0.c"
     LANGUAGE C
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} "${AVM_CRT_INIT_FINI_HEADER}"
+    DEPENDS "${AVM_CRT_INIT_FINI_HEADER}"
 )
 avm_add_runtime_object(
     OUTPUT "${AVM_CRT0_TEST_OBJECT}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/crt/crt0_test.c"
     LANGUAGE C
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} "${AVM_CRT_INIT_FINI_HEADER}"
+    DEPENDS "${AVM_CRT_INIT_FINI_HEADER}"
 )
 avm_add_runtime_object(
     OUTPUT "${AVM_CRT0_SKETCH_OBJECT}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/crt/crt0_sketch.c"
     LANGUAGE C
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} "${AVM_CRT_INIT_FINI_HEADER}"
+    DEPENDS "${AVM_CRT_INIT_FINI_HEADER}"
 )
 
 file(GLOB AVM_RUNTIME_MATH_HEADERS CONFIGURE_DEPENDS
@@ -255,40 +168,33 @@ foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
         LANGUAGE C
         COMPILE_OPTIONS ${runtime_source_options}
         INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-        DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS}
+        DEPENDS
             ${runtime_extra_dependencies}
     )
     list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
 endforeach()
 
-set(AVM_RUNTIME_CXX_ABI_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/cxxabi.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_RUNTIME_CXX_ABI_OBJECT}"
-    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/cxxabi.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_CXX_ABI_OBJECT}")
+# Keep each source in its own archive member. These declarations also supply
+# the diagnostic build; flags are never reconstructed from a filename.
+function(avm_runtime_cxx stem source)
+    if(source MATCHES "^@libcxx/")
+        string(REPLACE "@libcxx/" "${AVM_LIBCXX_SOURCE_DIR}/" source "${source}")
+    else()
+        set(source "${AVM_RUNTIME_SOURCE_DIR}/${source}")
+    endif()
+    set(object "${AVM_RUNTIME_OBJECT_DIR}/${stem}.o")
+    avm_add_runtime_object(OUTPUT "${object}" SOURCE "${source}"
+        LANGUAGE CXX INTERNAL_CXX
+        INCLUDE_DIRS "${AVM_LIBCXX_SOURCE_DIR}/src" "${AVM_RUNTIME_INCLUDE_DIR}"
+        COMPILE_OPTIONS ${ARGN}
+        DEPENDS "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+            "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler")
+    set(AVM_RUNTIME_LIBRARY_OBJECTS ${AVM_RUNTIME_LIBRARY_OBJECTS} "${object}" PARENT_SCOPE)
+endfunction()
 
-set(AVM_LIBCXX_ALGORITHM_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/libcxx_algorithm.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_LIBCXX_ALGORITHM_OBJECT}"
-    SOURCE "${AVM_LIBCXX_SOURCE_DIR}/src/algorithm.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    INCLUDE_DIRS "${AVM_LIBCXX_SOURCE_DIR}/src" "${AVM_RUNTIME_INCLUDE_DIR}"
-    COMPILE_OPTIONS -D_LIBCPP_BUILDING_LIBRARY -Wno-unused-parameter
-    DEPENDS
-        ${AVM_LIBCXX_HEADERS}
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-        "${AVM_LIBCXX_SOURCE_DIR}/include/__algorithm/sort.h"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_ALGORITHM_OBJECT}")
+avm_runtime_cxx(cxxabi lib/cxxabi.cpp)
+
+avm_runtime_cxx(libcxx_algorithm @libcxx/src/algorithm.cpp -D_LIBCPP_BUILDING_LIBRARY -Wno-unused-parameter)
 
 # Header-driven libc++ facilities with small out-of-line runtime pieces.
 foreach(LIBCXX_SOURCE
@@ -301,241 +207,62 @@ foreach(LIBCXX_SOURCE
     if(LIBCXX_SOURCE MATCHES "^(any|expected|memory|random|stdexcept|variant)$")
         list(APPEND libcxx_source_options -frtti)
     endif()
-    avm_add_runtime_object(
-        OUTPUT "${AVM_LIBCXX_OBJECT}"
-        SOURCE "${AVM_LIBCXX_SOURCE_DIR}/src/${LIBCXX_SOURCE}.cpp"
-        LANGUAGE CXX
-        INTERNAL_CXX
-        INCLUDE_DIRS "${AVM_LIBCXX_SOURCE_DIR}/src" "${AVM_RUNTIME_INCLUDE_DIR}"
-        COMPILE_OPTIONS ${libcxx_source_options}
-        DEPENDS
-            ${AVM_LIBCXX_HEADERS}
-            "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-            "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler")
-    list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_OBJECT}")
+    avm_runtime_cxx(libcxx_${LIBCXX_SOURCE} @libcxx/src/${LIBCXX_SOURCE}.cpp
+        ${libcxx_source_options})
 endforeach()
 
 # The standard freestanding hash specializations in <memory> use this helper
 # when libc++'s configured deployment version exports it from the runtime.
-set(AVM_LIBCXX_HASH_MEMORY_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/libcxx_hash_memory.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_LIBCXX_HASH_MEMORY_OBJECT}"
-    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/libcxx_hash_memory.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    INCLUDE_DIRS "${AVM_RUNTIME_SOURCE_DIR}/include"
-    COMPILE_OPTIONS -D_LIBCPP_BUILDING_LIBRARY
-    DEPENDS ${AVM_LIBCXX_HEADERS}
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_HASH_MEMORY_OBJECT}")
+avm_runtime_cxx(libcxx_hash_memory lib/libcxx_hash_memory.cpp -D_LIBCPP_BUILDING_LIBRARY)
 
 # std::function's failure exception has out-of-line ABI members in libc++. Keep
 # those members without pulling in libc++'s hash implementation, whose supported
 # word sizes do not include AVM's 16-bit size_t.
-set(AVM_LIBCXX_FUNCTIONAL_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/libcxx_functional.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_LIBCXX_FUNCTIONAL_OBJECT}"
-    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/libcxx_functional.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    INCLUDE_DIRS "${AVM_RUNTIME_SOURCE_DIR}/include"
-    COMPILE_OPTIONS -frtti
-    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler")
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_FUNCTIONAL_OBJECT}")
+avm_runtime_cxx(libcxx_functional lib/libcxx_functional.cpp -frtti)
 
 # Standard exception classes and std::bad_typeid live in their own objects, so a
 # program that does not name them links none of their RTTI or vtables. The
 # -frtti and -fexceptions options follow the SDK defaults, so they take effect.
-set(AVM_RUNTIME_EXCEPTION_BASE_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/exception_base.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_RUNTIME_EXCEPTION_BASE_OBJECT}"
-    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/exception_base.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    COMPILE_OPTIONS -frtti
-    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EXCEPTION_BASE_OBJECT}")
+avm_runtime_cxx(exception_base lib/exception_base.cpp -frtti)
 
-set(AVM_RUNTIME_EH_BAD_TYPEID_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/eh_bad_typeid.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_RUNTIME_EH_BAD_TYPEID_OBJECT}"
-    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_bad_typeid.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    COMPILE_OPTIONS -frtti -fexceptions
-    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EH_BAD_TYPEID_OBJECT}")
+avm_runtime_cxx(eh_bad_typeid lib/eh_bad_typeid.cpp -frtti -fexceptions)
 
 # std::bad_cast and __cxa_bad_cast are a separate object, so a program that never fails a
 # reference cast links none of them. It has the same flags as the bad_typeid object.
-set(AVM_RUNTIME_EH_BAD_CAST_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/eh_bad_cast.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_RUNTIME_EH_BAD_CAST_OBJECT}"
-    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_bad_cast.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    COMPILE_OPTIONS -frtti -fexceptions
-    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EH_BAD_CAST_OBJECT}")
+avm_runtime_cxx(eh_bad_cast lib/eh_bad_cast.cpp -frtti -fexceptions)
 
 # Allocation functions. Each replaceable function is weak in new.o, which needs -fexceptions
 # to throw std::bad_alloc through the AVM exception ABI. Each class and function group is in
 # its own object, so a program links only the groups that it names.
-set(AVM_RUNTIME_NEW_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/new.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_RUNTIME_NEW_OBJECT}"
-    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/new.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    COMPILE_OPTIONS -fexceptions
-    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
-        "${AVM_RUNTIME_SOURCE_DIR}/lib/new_internal.h"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_NEW_OBJECT}")
+avm_runtime_cxx(new lib/new.cpp -fexceptions)
 
 # The deallocation functions never throw, so they are a separate object. A program that only
 # deletes objects, such as one with a virtual destructor, links no exception classes.
-set(AVM_RUNTIME_DELETE_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/delete.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_RUNTIME_DELETE_OBJECT}"
-    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/delete.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
-        "${AVM_RUNTIME_SOURCE_DIR}/lib/new_internal.h"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_DELETE_OBJECT}")
+avm_runtime_cxx(delete lib/delete.cpp)
 
 # std::set_new_handler and std::get_new_handler, and std::nothrow and std::__throw_bad_alloc,
 # come from the pinned libc++ sources. The helpers throw bad_alloc, so they need -fexceptions.
-set(AVM_LIBCXX_NEW_HANDLER_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/libcxx_new_handler.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_LIBCXX_NEW_HANDLER_OBJECT}"
-    SOURCE "${AVM_LIBCXX_SOURCE_DIR}/src/new_handler.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    INCLUDE_DIRS "${AVM_LIBCXX_SOURCE_DIR}/src" "${AVM_RUNTIME_INCLUDE_DIR}"
-    COMPILE_OPTIONS -D_LIBCPP_BUILDING_LIBRARY
-    DEPENDS
-        ${AVM_LIBCXX_HEADERS}
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_NEW_HANDLER_OBJECT}")
+avm_runtime_cxx(libcxx_new_handler @libcxx/src/new_handler.cpp -D_LIBCPP_BUILDING_LIBRARY)
 
-set(AVM_LIBCXX_NEW_HELPERS_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/libcxx_new_helpers.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_LIBCXX_NEW_HELPERS_OBJECT}"
-    SOURCE "${AVM_LIBCXX_SOURCE_DIR}/src/new_helpers.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    INCLUDE_DIRS "${AVM_LIBCXX_SOURCE_DIR}/src" "${AVM_RUNTIME_INCLUDE_DIR}"
-    COMPILE_OPTIONS -D_LIBCPP_BUILDING_LIBRARY -fexceptions
-    DEPENDS
-        ${AVM_LIBCXX_HEADERS}
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_NEW_HELPERS_OBJECT}")
+avm_runtime_cxx(libcxx_new_helpers @libcxx/src/new_helpers.cpp -D_LIBCPP_BUILDING_LIBRARY -fexceptions)
 
 # The standard exception classes for allocation and dynamic-typing failures, which name the
 # RTTI and vtable of their key functions, as eh_bad_typeid.o and eh_bad_cast.o do.
-set(AVM_RUNTIME_EH_BAD_ALLOC_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/eh_bad_alloc.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_RUNTIME_EH_BAD_ALLOC_OBJECT}"
-    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_bad_alloc.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    COMPILE_OPTIONS -frtti -fexceptions
-    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EH_BAD_ALLOC_OBJECT}")
+avm_runtime_cxx(eh_bad_alloc lib/eh_bad_alloc.cpp -frtti -fexceptions)
 
-set(AVM_RUNTIME_EH_BAD_EXCEPTION_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/eh_bad_exception.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_RUNTIME_EH_BAD_EXCEPTION_OBJECT}"
-    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_bad_exception.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    COMPILE_OPTIONS -frtti
-    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EH_BAD_EXCEPTION_OBJECT}")
+avm_runtime_cxx(eh_bad_exception lib/eh_bad_exception.cpp -frtti)
 
 # std::exception_ptr and its operations. The rethrow passes its parameter's reference through
 # unwinding, so the object needs -fexceptions for the parameter's destructor.
-set(AVM_RUNTIME_EXCEPTION_PTR_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/exception_ptr.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_RUNTIME_EXCEPTION_PTR_OBJECT}"
-    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/exception_ptr.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    COMPILE_OPTIONS -frtti -fexceptions
-    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EXCEPTION_PTR_OBJECT}")
+avm_runtime_cxx(exception_ptr lib/exception_ptr.cpp -frtti -fexceptions)
 
 # std::terminate and its handler slot. A throwing handler reaches the terminate landing pad,
 # so the object needs -fexceptions.
-set(AVM_RUNTIME_EXCEPTION_TERMINATE_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/exception_terminate.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_RUNTIME_EXCEPTION_TERMINATE_OBJECT}"
-    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/exception_terminate.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    COMPILE_OPTIONS -fexceptions
-    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EXCEPTION_TERMINATE_OBJECT}")
+avm_runtime_cxx(exception_terminate lib/exception_terminate.cpp -fexceptions)
 
 # std::chrono::steady_clock, which high_resolution_clock names under the monotonic-clock setting
 # above.
-set(AVM_RUNTIME_CHRONO_STEADY_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/chrono_steady.o")
-avm_add_runtime_object(
-    OUTPUT "${AVM_RUNTIME_CHRONO_STEADY_OBJECT}"
-    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/chrono_steady.cpp"
-    LANGUAGE CXX
-    INTERNAL_CXX
-    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-)
-list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_CHRONO_STEADY_OBJECT}")
+avm_runtime_cxx(chrono_steady lib/chrono_steady.cpp)
 
 set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/framebuffer.o")
 avm_add_runtime_object(
@@ -543,7 +270,6 @@ avm_add_runtime_object(
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/framebuffer.asm"
     LANGUAGE ASM
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS}
 )
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
 
@@ -552,8 +278,7 @@ avm_add_runtime_object(
     OUTPUT "${RUNTIME_OBJECT}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/audio.asm"
     LANGUAGE ASM
-    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS})
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}")
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
 
 set(RUNTIME_OBJECT
@@ -563,7 +288,6 @@ avm_add_runtime_object(
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/setjmp.asm"
     LANGUAGE ASM
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS}
 )
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
 
@@ -575,7 +299,7 @@ foreach(eh_asm eh_context eh_cxa_throw eh_cxa_rethrow eh_cxa_rethrow_primary eh_
         SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/${eh_asm}.asm"
         LANGUAGE ASM
         INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-        DEPENDS ${AVM_RUNTIME_HEADERS} "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_unwind_internal.h"
+        DEPENDS "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_unwind_internal.h"
             "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_unwind_layout.h"
     )
     list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
@@ -588,7 +312,6 @@ avm_add_runtime_object(
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/trap_entry.asm"
     LANGUAGE ASM
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS}
 )
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
 
@@ -609,8 +332,7 @@ foreach(kernel IN LISTS AVM_MATH_KERNELS)
         SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/math/${kernel}.c"
         LANGUAGE C
         INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-        COMPILE_OPTIONS -O3 -ffp-contract=off -fwrapv -fno-jump-tables
-        DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS})
+        COMPILE_OPTIONS -O3 -ffp-contract=off -fwrapv -fno-jump-tables)
     list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${math_object}")
 endforeach()
 
@@ -625,7 +347,7 @@ foreach(kernel IN LISTS AVM_COMPLEX_KERNELS)
         LANGUAGE C
         INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
         COMPILE_OPTIONS -O3 -ffp-contract=off -fwrapv -fno-jump-tables
-        DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_COMPLEX_HEADERS})
+        DEPENDS ${AVM_RUNTIME_COMPLEX_HEADERS})
     list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${complex_object}")
 endforeach()
 
@@ -636,7 +358,7 @@ avm_add_runtime_object(
     LANGUAGE C
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
     COMPILE_OPTIONS -O3 -ffp-contract=off
-    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_COMPLEX_HEADERS})
+    DEPENDS ${AVM_RUNTIME_COMPLEX_HEADERS})
 
 set(AVM_RUNTIME_LIBRARY "${AVM_RUNTIME_BUILD_DIR}/libavm.a")
 avm_add_archive(
@@ -653,7 +375,6 @@ avm_add_runtime_object(
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/builtins/integer.c"
     LANGUAGE C
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS}
 )
 set(AVM_BUILTINS_WIDE_INTEGER_OBJECT
     "${AVM_RUNTIME_OBJECT_DIR}/builtins_wide_integer.o")
@@ -662,7 +383,6 @@ avm_add_runtime_object(
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/builtins/wide_integer.c"
     LANGUAGE C
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS}
 )
 set(AVM_BUILTINS_ATOMIC_OBJECT
     "${AVM_RUNTIME_OBJECT_DIR}/builtins_atomic.o")
@@ -671,7 +391,6 @@ avm_add_runtime_object(
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/builtins/atomic.c"
     LANGUAGE C
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS}
 )
 
 set(AVM_BUILTINS_LIBRARY "${AVM_RUNTIME_BUILD_DIR}/libavm-builtins.a")
@@ -694,8 +413,12 @@ foreach(runtime_object IN LISTS AVM_RUNTIME_DISASSEMBLY_OBJECTS)
     string(REPLACE "|" ";" runtime_object_fields "${runtime_object}")
     list(GET runtime_object_fields 0 runtime_source)
     list(GET runtime_object_fields 1 runtime_input)
-    file(RELATIVE_PATH runtime_relative
-        "${AVM_RUNTIME_SOURCE_DIR}" "${runtime_source}")
+    if(runtime_source MATCHES "^${AVM_LIBCXX_SOURCE_DIR}/")
+        file(RELATIVE_PATH relative "${AVM_LIBCXX_SOURCE_DIR}" "${runtime_source}")
+        set(runtime_relative "libcxx/${relative}")
+    else()
+        file(RELATIVE_PATH runtime_relative "${AVM_RUNTIME_SOURCE_DIR}" "${runtime_source}")
+    endif()
     string(REGEX REPLACE "\\.[^.]+$" ".asm" runtime_relative
         "${runtime_relative}")
     set(runtime_disassembly "${AVM_RUNTIME_ASM_DIR}/${runtime_relative}")
@@ -714,88 +437,39 @@ foreach(runtime_object IN LISTS AVM_RUNTIME_DISASSEMBLY_OBJECTS)
         VERBATIM)
     list(APPEND AVM_RUNTIME_ASM_OUTPUTS "${runtime_disassembly}")
 endforeach()
-add_custom_target(avm_runtime_asm ALL DEPENDS ${AVM_RUNTIME_ASM_OUTPUTS})
+add_custom_target(avm_runtime_asm DEPENDS ${AVM_RUNTIME_ASM_OUTPUTS})
 
-# Diagnostic-only duplicate compilations. Preserve each source's relative path
-# below mir/ so equal basenames in different runtime directories cannot collide.
+# Diagnostic compilations reuse the production recipe, including per-source
+# exception, RTTI and floating-point options.
 set(AVM_RUNTIME_MIR_OUTPUTS)
-foreach(AVM_RUNTIME_MIR_SOURCE IN LISTS AVM_RUNTIME_MIR_SOURCES)
-    file(RELATIVE_PATH AVM_RUNTIME_MIR_RELATIVE
-        "${AVM_RUNTIME_SOURCE_DIR}" "${AVM_RUNTIME_MIR_SOURCE}")
-    get_filename_component(AVM_RUNTIME_MIR_EXTENSION
-        "${AVM_RUNTIME_MIR_SOURCE}" LAST_EXT)
-    string(REGEX REPLACE "\\.[^.]+$" "" AVM_RUNTIME_MIR_STEM
-        "${AVM_RUNTIME_MIR_RELATIVE}")
-
-    if(AVM_RUNTIME_MIR_EXTENSION STREQUAL ".c")
-        set(AVM_RUNTIME_MIR_LANGUAGE C)
+foreach(record IN LISTS AVM_RUNTIME_DISASSEMBLY_OBJECTS)
+    string(REPLACE "|" ";" fields "${record}")
+    list(GET fields 0 source)
+    list(GET fields 1 object)
+    if(source MATCHES "\\.asm$")
+        continue()
+    endif()
+    get_filename_component(stem "${object}" NAME_WE)
+    get_property(recipe DIRECTORY PROPERTY "AVM_RUNTIME_RECIPE_${object}")
+    list(FIND recipe OUTPUT output_index)
+    math(EXPR output_index "${output_index} + 1")
+    list(REMOVE_AT recipe ${output_index})
+    list(INSERT recipe ${output_index} "${AVM_RUNTIME_MIR_BUILD_DIR}/${stem}.o")
+    # Append to the existing COMPILE_OPTIONS field by adding the dump flags
+    # before its next keyword, rather than introducing a second field.
+    list(FIND recipe COMPILE_OPTIONS options_index)
+    if(options_index EQUAL -1)
+        list(APPEND recipe COMPILE_OPTIONS)
+        list(LENGTH recipe options_index)
     else()
-        set(AVM_RUNTIME_MIR_LANGUAGE CXX)
+        math(EXPR options_index "${options_index} + 1")
     endif()
-
-    set(AVM_RUNTIME_MIR_OBJECT
-        "${AVM_RUNTIME_MIR_BUILD_DIR}/${AVM_RUNTIME_MIR_STEM}.o")
-    set(AVM_RUNTIME_MIR_OUTPUT
-        "${AVM_RUNTIME_MIR_BUILD_DIR}/${AVM_RUNTIME_MIR_STEM}.mir")
-
-    set(math_mir_options)
-    if(AVM_RUNTIME_MIR_RELATIVE MATCHES "^lib/math[/.]")
-        set(math_mir_options -O3 -ffp-contract=off -fwrapv -fno-jump-tables)
-    endif()
-    # The standard exception objects need the same RTTI and exception options as
-    # their production builds, or the diagnostic compile of their throw fails.
-    set(runtime_mir_rtti_options)
-    if(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/exception_base.cpp")
-        set(runtime_mir_rtti_options -frtti)
-    elseif(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/eh_bad_typeid.cpp")
-        set(runtime_mir_rtti_options -frtti -fexceptions)
-    elseif(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/eh_bad_cast.cpp")
-        set(runtime_mir_rtti_options -frtti -fexceptions)
-    elseif(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/eh_bad_alloc.cpp")
-        set(runtime_mir_rtti_options -frtti -fexceptions)
-    elseif(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/eh_bad_exception.cpp")
-        set(runtime_mir_rtti_options -frtti)
-    elseif(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/exception_ptr.cpp")
-        set(runtime_mir_rtti_options -frtti -fexceptions)
-    elseif(AVM_RUNTIME_MIR_RELATIVE MATCHES "^lib/(new|exception_terminate)\\.cpp$")
-        set(runtime_mir_rtti_options -fexceptions)
-    endif()
-    set(runtime_mir_cxx_options)
-    set(runtime_mir_cxx_dependencies)
-    if(AVM_RUNTIME_MIR_LANGUAGE STREQUAL "CXX")
-        list(APPEND runtime_mir_cxx_options INTERNAL_CXX)
-        list(APPEND runtime_mir_cxx_dependencies
-            ${AVM_LIBCXX_HEADERS}
-            "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-            "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler")
-    endif()
-    avm_add_object(
-        OUTPUT "${AVM_RUNTIME_MIR_OBJECT}"
-        SOURCE "${AVM_RUNTIME_MIR_SOURCE}"
-        LANGUAGE "${AVM_RUNTIME_MIR_LANGUAGE}"
-        ${runtime_mir_cxx_options}
-        INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-        COMPILE_OPTIONS
-            ${math_mir_options}
-            ${runtime_mir_rtti_options}
-            -fno-color-diagnostics
-            -mllvm -print-before-all
-            -mllvm -print-after-all
-        STDERR_OUTPUT "${AVM_RUNTIME_MIR_OUTPUT}"
-        DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS}
-            ${runtime_mir_cxx_dependencies} "${AVM_CRT_INIT_FINI_HEADER}"
-            "${AVM_RUNTIME_SOURCE_DIR}/lib/time_internal.h"
-            "${AVM_RUNTIME_SOURCE_DIR}/lib/stdio_internal.h"
-            "${AVM_RUNTIME_SOURCE_DIR}/lib/stdio_scan_internal.h"
-            "${AVM_RUNTIME_SOURCE_DIR}/lib/strtof_internal.h"
-    )
-    list(APPEND AVM_RUNTIME_MIR_OUTPUTS
-        "${AVM_RUNTIME_MIR_OBJECT}"
-        "${AVM_RUNTIME_MIR_OUTPUT}")
+    list(INSERT recipe ${options_index} -fno-color-diagnostics
+        -mllvm -print-before-all -mllvm -print-after-all)
+    avm_add_object(${recipe} STDERR_OUTPUT "${AVM_RUNTIME_MIR_BUILD_DIR}/${stem}.mir")
+    list(APPEND AVM_RUNTIME_MIR_OUTPUTS "${AVM_RUNTIME_MIR_BUILD_DIR}/${stem}.mir")
 endforeach()
-
-add_custom_target(avm_runtime_mir
-    DEPENDS ${AVM_RUNTIME_MIR_OUTPUTS})
+add_custom_target(avm_runtime_mir DEPENDS ${AVM_RUNTIME_MIR_OUTPUTS})
 
 add_custom_target(avm_runtime
     DEPENDS
@@ -805,7 +479,6 @@ add_custom_target(avm_runtime
         "${AVM_RUNTIME_LIBRARY}"
         "${AVM_BUILTINS_LIBRARY}"
 )
-add_dependencies(avm_runtime avm_runtime_mir avm_runtime_asm)
 
 # Compile-only checks verify that direct call syntax selects the macro path,
 # while address-taking and parenthesized calls still name real functions.
@@ -818,7 +491,7 @@ avm_add_object(
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/tests/header_smoke.c"
     LANGUAGE C
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
+    DEPENDS ${AVM_LIBCXX_HEADERS}
 )
 avm_add_object(
     OUTPUT "${AVM_RUNTIME_CXX_HEADER_CHECK}"
@@ -826,7 +499,7 @@ avm_add_object(
     LANGUAGE CXX
     INTERNAL_CXX
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS}
+    DEPENDS
         "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
         "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
 )
@@ -839,7 +512,6 @@ avm_add_object(
     LANGUAGE C
     COMPILE_OPTIONS -std=c99 -pedantic-errors
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS}
 )
 
 add_custom_target(avm_runtime_checks
@@ -872,69 +544,63 @@ foreach(STAGE_FILE IN LISTS AVM_SYSROOT_STAGE_FILES)
     list(APPEND AVM_SYSROOT_STAGE_BYPRODUCTS "${STAGE_DESTINATION}")
 endforeach()
 
-# Track every libc++ header as a dependency. CONFIGURE_DEPENDS causes a
-# regeneration when files are added or removed, while copy_directory keeps the
-# Windows/Ninja staging command compact and preserves the full tree.
-foreach(LIBCXX_HEADER IN LISTS AVM_LIBCXX_HEADERS)
-    get_filename_component(LIBCXX_HEADER_NAME "${LIBCXX_HEADER}" NAME)
-    if(LIBCXX_HEADER_NAME STREQUAL "CMakeLists.txt"
-       OR LIBCXX_HEADER MATCHES "\\.in$")
+# Resolve each installed header exactly once, with generated overrides winning.
+# The build-time synchronizer preserves unchanged timestamps and removes headers
+# dropped from the previous manifest.
+set(stage_header_sources)
+set(stage_header_destinations)
+foreach(source IN LISTS AVM_RUNTIME_HEADERS AVM_LIBCXX_HEADERS)
+    if(source MATCHES "CMakeLists\\.txt$|\\.in$")
         continue()
     endif()
-    list(APPEND AVM_SYSROOT_STAGE_DEPENDS "${LIBCXX_HEADER}")
+    if(source MATCHES "^${AVM_RUNTIME_INCLUDE_DIR}/")
+        file(RELATIVE_PATH relative "${AVM_RUNTIME_INCLUDE_DIR}" "${source}")
+    elseif(source MATCHES "^${AVM_LIBCXX_SOURCE_INCLUDE_DIR}/")
+        file(RELATIVE_PATH relative "${AVM_LIBCXX_SOURCE_INCLUDE_DIR}" "${source}")
+        set(relative "c++/v1/${relative}")
+    else()
+        continue()
+    endif()
+    list(APPEND stage_header_sources "${source}")
+    list(APPEND stage_header_destinations "${relative}")
 endforeach()
-
+foreach(relative __config_site __assertion_handler __atomic/atomic_sync.h
+        __memory_resource/unsynchronized_pool_resource.h)
+    set(destination "c++/v1/${relative}")
+    list(FIND stage_header_destinations "${destination}" index)
+    if(NOT index EQUAL -1)
+        list(REMOVE_AT stage_header_destinations ${index})
+        list(REMOVE_AT stage_header_sources ${index})
+    endif()
+    list(APPEND stage_header_sources "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/${relative}")
+    list(APPEND stage_header_destinations "${destination}")
+endforeach()
+set(header_plan "set(AVM_HEADER_SOURCES")
+foreach(source IN LISTS stage_header_sources)
+    string(APPEND header_plan " [==[${source}]==]")
+endforeach()
+string(APPEND header_plan ")\nset(AVM_HEADER_DESTINATIONS")
+foreach(relative IN LISTS stage_header_destinations)
+    string(APPEND header_plan " [==[${relative}]==]")
+endforeach()
+string(APPEND header_plan ")\n")
+set(AVM_HEADER_PLAN "${CMAKE_CURRENT_BINARY_DIR}/stage-headers.cmake")
+file(GENERATE OUTPUT "${AVM_HEADER_PLAN}" CONTENT "${header_plan}")
 list(APPEND AVM_SYSROOT_STAGE_COMMANDS
-    COMMAND "${CMAKE_COMMAND}" -E make_directory
-        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1"
-    COMMAND "${CMAKE_COMMAND}" -E copy_directory
-        "${AVM_LIBCXX_SOURCE_INCLUDE_DIR}"
-        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1"
-    COMMAND "${CMAKE_COMMAND}" -E rm -f
-        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/CMakeLists.txt"
-        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__config_site.in"
-        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__cxx03/__config_site.in"
-        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/module.modulemap.in"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__config_site"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__assertion_handler"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__atomic/atomic_sync.h"
-        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__atomic/atomic_sync.h"
-    COMMAND "${CMAKE_COMMAND}" -E make_directory
-        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__memory_resource"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__memory_resource/unsynchronized_pool_resource.h"
-        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__memory_resource/unsynchronized_pool_resource.h")
-list(APPEND AVM_SYSROOT_STAGE_DEPENDS
-    "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
-    "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-    "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__atomic/atomic_sync.h"
-    "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__memory_resource/unsynchronized_pool_resource.h"
-    "${AVM_LIBCXX_SOURCE_DIR}/include/__config_site.in"
-    "${AVM_LIBCXX_SOURCE_DIR}/vendor/llvm/default_assertion_handler.in")
-list(APPEND AVM_SYSROOT_STAGE_BYPRODUCTS
-    "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__config_site"
-    "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__assertion_handler"
-    "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__atomic/atomic_sync.h"
-    "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__memory_resource/unsynchronized_pool_resource.h")
+    COMMAND "${CMAKE_COMMAND}" "-DAVM_HEADER_PLAN:FILEPATH=${AVM_HEADER_PLAN}"
+        "-DAVM_INCLUDE_DIR:PATH=${AVM_SYSROOT_INCLUDE_DIR}"
+        -P "${PROJECT_SOURCE_DIR}/cmake/StageAvmHeaders.cmake")
+list(APPEND AVM_SYSROOT_STAGE_DEPENDS ${stage_header_sources}
+    "${AVM_HEADER_PLAN}" "${PROJECT_SOURCE_DIR}/cmake/StageAvmHeaders.cmake")
 
 set(AVM_SYSROOT_STAMP "${AVM_SYSROOT_DIR}/.runtime-stamp")
 add_custom_command(
     OUTPUT "${AVM_SYSROOT_STAMP}"
     BYPRODUCTS ${AVM_SYSROOT_STAGE_BYPRODUCTS}
-    COMMAND "${CMAKE_COMMAND}" -E remove_directory
-            "${AVM_SYSROOT_INCLUDE_DIR}"
     COMMAND "${CMAKE_COMMAND}" -E make_directory
             "${AVM_SYSROOT_INCLUDE_DIR}"
     COMMAND "${CMAKE_COMMAND}" -E make_directory
             "${AVM_SYSROOT_LIB_DIR}"
-    COMMAND "${CMAKE_COMMAND}" -E copy_directory
-            "${AVM_RUNTIME_INCLUDE_DIR}"
-            "${AVM_SYSROOT_INCLUDE_DIR}"
     ${AVM_SYSROOT_STAGE_COMMANDS}
     COMMAND "${CMAKE_COMMAND}" -E touch "${AVM_SYSROOT_STAMP}"
     DEPENDS
@@ -955,6 +621,9 @@ add_custom_target(avm_sdk
         avm_toolchain
         avm_sysroot
         avm_runtime_checks
-        avm_runtime_mir
-        avm_runtime_asm
 )
+
+add_custom_target(avm_runtime_asm_update
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${AVM_RUNTIME_ASM_DIR}"
+        "${AVM_RUNTIME_SOURCE_DIR}/asm"
+    DEPENDS avm_runtime_asm VERBATIM)

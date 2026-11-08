@@ -1,0 +1,33 @@
+[0/2] Re-checking globbed directories...
+[1/6] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\Brown\Documents\GitHub\avm\projects\avm_rpg\build && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/build/artifacts/rpg.arduboy C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/rpg.arduboy && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/build/artifacts/rpg.fxc.arduboy C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/rpg.fxc.arduboy && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/build/artifacts/rpg.arduboy C:/Users/Brown/Documents/GitHub/avm/rpg.arduboy"
+[2/6] Building CXX object CMakeFiles\rpg_device_tests.dir\tests\device_tests.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[3/6] Building CXX object CMakeFiles\rpg_audio_timing_tests.dir\tests\audio_timing.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[4/6] Linking CXX executable rpg_device_tests.exe
+[5/6] Linking CXX executable rpg_audio_timing_tests.exe
+Test project C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/build
+      Start  1: core
+ 1/10 Test  #1: core .............................   Passed    0.01 sec
+      Start  2: essential_npcs
+ 2/10 Test  #2: essential_npcs ...................   Passed    0.01 sec
+      Start  3: npc_lifecycle_hooks
+ 3/10 Test  #3: npc_lifecycle_hooks ..............   Passed    0.01 sec
+      Start  4: flags
+ 4/10 Test  #4: flags ............................   Passed    0.01 sec
+      Start  5: chunk_world
+ 5/10 Test  #5: chunk_world ......................   Passed    0.01 sec
+      Start  6: tiled_pipeline
+ 6/10 Test  #6: tiled_pipeline ...................   Passed    1.90 sec
+      Start  7: generated_assets
+ 7/10 Test  #7: generated_assets .................   Passed    0.40 sec
+      Start  8: content
+ 8/10 Test  #8: content ..........................   Passed    0.20 sec
+      Start  9: recorded_music
+ 9/10 Test  #9: recorded_music ...................   Passed    2.27 sec
+      Start 10: audio_timing
+10/10 Test #10: audio_timing .....................   Passed    8.60 sec
+
+100% tests passed, 0 tests failed out of 10
+
+Total Test time (real) =  13.43 sec

@@ -23,7 +23,7 @@ reuse existing native floating-point helpers.
 Confirm before adding wider native arithmetic solely for extra precision.
 
 When developing code generation functionality in the LLVM AVM backend, refer to
-`bench/cycles_instruction.txt` to help select the fastest instruction.
+`bench/reference/cycles_instruction.txt` to help select the fastest instruction.
 
 AVM code pointers are 24 bits and all types have byte alignment. Preserve
 24-bit code addresses in stored values and ABI layouts whenever possible;

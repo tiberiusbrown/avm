@@ -1,0 +1,25 @@
+{
+  "reference_sha256": "ecf0de66ccd7c05a58bca55bd820cc6c16a48688bc6997fc95413f41d1ed3f4e",
+  "frame_size": 256,
+  "beam_width": 16,
+  "steps": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    8,
+    10,
+    12,
+    15,
+    18,
+    22,
+    26,
+    31,
+    36,
+    42
+  ],
+  "bank_version": 2,
+  "baseline_stream_sha256": "386f06d28041cae1b3c8ea49983a7d5ce32494a1b38631eb434eed6b68119206"
+}

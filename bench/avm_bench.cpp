@@ -1,6 +1,6 @@
 #include <absim.hpp>
-#include "../tests/runner_selection.h"
-#include "../tests/runner_parallel.h"
+#include "runner_selection.h"
+#include "runner_parallel.h"
 #include "instruction_mix.h"
 
 #include <algorithm>
@@ -313,7 +313,7 @@ std::vector<c_benchmark_t> discover_compiled_benchmarks(
     runner_selection const& selection)
 {
     std::vector<c_benchmark_t> benchmarks;
-    for(auto const& entry : fs::directory_iterator(source_dir))
+    for(auto const& entry : fs::recursive_directory_iterator(source_dir))
     {
         if(!entry.is_regular_file() || entry.path().extension() != extension)
             continue;
@@ -554,8 +554,13 @@ void run_instruction_mix(options_t const& options)
         if(!seen.emplace(name.string(), true).second)
             throw std::runtime_error("Duplicate instruction-mix manifest entry: " + name.string());
         bool cpp = name.extension() == ".cpp";
-        benchmarks.push_back({name.string(),
-            require_file((cpp ? options.cxx_source_dir : options.c_source_dir) / name, "mix source"),
+        fs::path source;
+        for(auto const& entry : fs::recursive_directory_iterator(cpp ? options.cxx_source_dir : options.c_source_dir))
+            if(entry.is_regular_file() && entry.path().filename() == name) {
+                if(!source.empty()) throw std::runtime_error("Ambiguous mix source: " + name.string());
+                source = entry.path();
+            }
+        benchmarks.push_back({name.string(), require_file(source, "mix source"),
             require_file((cpp ? options.cxx_image_dir : options.c_image_dir) / (name.stem().string()+".bin"), "mix image")});
     }
     if(benchmarks.empty()) throw std::runtime_error("Instruction-mix manifest is empty");

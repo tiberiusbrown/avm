@@ -96,8 +96,8 @@ def validate(exe, hex_path, listing, guest, output, live=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--exe", type=Path, default=ROOT / "build/tests/avm_audio_tests.exe")
-    parser.add_argument("--hex", type=Path, default=ROOT / "interp/build/interp.hex")
-    parser.add_argument("--listing", type=Path, default=ROOT / "interp/build/interp.lst")
+    parser.add_argument("--hex", type=Path, default=ROOT / "build/interp/interp.hex")
+    parser.add_argument("--listing", type=Path, default=ROOT / "build/interp/interp.lst")
     parser.add_argument("--guest", type=Path, default=ROOT / "build/tests/interp/audio.bin")
     parser.add_argument("--output", type=Path, default=ROOT / "build/stage2/renderer-validation")
     parser.add_argument("--live", action="store_true")

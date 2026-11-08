@@ -1,0 +1,28 @@
+{
+  "saved_bytes": 24,
+  "ordinary_data_bytes": 243,
+  "static_bytes": 267,
+  "text_bytes": 11094,
+  "rodata_bytes": 618754,
+  "stack_bytes": 171,
+  "stack_bound_complete": true,
+  "sections": {
+    "": 0,
+    ".saved": 24,
+    ".data": 243,
+    ".text": 11094,
+    ".rodata": 618754,
+    ".init_array": 0,
+    ".comment": 134,
+    ".debug_loc": 13186,
+    ".debug_abbrev": 2210,
+    ".debug_info": 23631,
+    ".debug_ranges": 1842,
+    ".debug_str": 11424,
+    ".debug_frame": 2264,
+    ".debug_line": 26646,
+    ".symtab": 1184,
+    ".shstrtab": 162,
+    ".strtab": 1395
+  }
+}

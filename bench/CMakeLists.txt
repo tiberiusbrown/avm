@@ -1,16 +1,16 @@
 # Discover once for all focused listings rather than once per image.
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
+set(AVM_BENCH_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 set(AVM_BENCH_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(AVM_BENCH_SOURCE "${AVM_BENCH_DIR}/avm_bench.cpp")
 set(AVM_BENCH_INSTRUCTION_SOURCE "${AVM_BENCH_DIR}/instructions.asm")
 set(AVM_BENCH_INSTRUCTION_NAMES "${AVM_BENCH_DIR}/benchmark_names.txt")
-set(AVM_BENCH_C_DIR "${AVM_BENCH_DIR}/c")
-set(AVM_BENCH_C_DISASSEMBLY_DIR "${AVM_BENCH_C_DIR}/asm")
+set(AVM_BENCH_C_DIR "${AVM_BENCH_DIR}/workloads")
+set(AVM_BENCH_C_DISASSEMBLY_DIR "${AVM_BENCH_BUILD_DIR}/disassembly/c")
 set(AVM_BENCH_C_MIR_SOURCE_DIR "${AVM_BENCH_C_DIR}")
-set(AVM_BENCH_CXX_DIR "${AVM_BENCH_DIR}/cpp")
-set(AVM_BENCH_CXX_DISASSEMBLY_DIR "${AVM_BENCH_CXX_DIR}/asm")
-set(AVM_BENCH_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+set(AVM_BENCH_CXX_DIR "${AVM_BENCH_DIR}/workloads")
+set(AVM_BENCH_CXX_DISASSEMBLY_DIR "${AVM_BENCH_BUILD_DIR}/disassembly/cpp")
 set(AVM_BENCH_INSTRUCTION_OBJECT
     "${AVM_BENCH_BUILD_DIR}/instructions.o")
 set(AVM_BENCH_INSTRUCTION_ELF
@@ -59,15 +59,15 @@ avm_add_image(
 
 # Each source in bench/c is a complete freestanding program with exactly one
 # pair of __avm_debug_break() calls around the code being measured.
-file(GLOB AVM_BENCH_C_SOURCES CONFIGURE_DEPENDS
+file(GLOB_RECURSE AVM_BENCH_C_SOURCES CONFIGURE_DEPENDS
     "${AVM_BENCH_C_DIR}/*.c")
-file(GLOB AVM_BENCH_C_HEADERS CONFIGURE_DEPENDS
+file(GLOB_RECURSE AVM_BENCH_C_HEADERS CONFIGURE_DEPENDS
     "${AVM_BENCH_C_DIR}/*.h")
 file(GLOB AVM_BENCH_TRIG_HEADERS CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/*.h")
-file(GLOB AVM_BENCH_C_MIR_SOURCES CONFIGURE_DEPENDS
+file(GLOB_RECURSE AVM_BENCH_C_MIR_SOURCES CONFIGURE_DEPENDS
     "${AVM_BENCH_C_MIR_SOURCE_DIR}/*.c")
-file(GLOB AVM_BENCH_CXX_SOURCES CONFIGURE_DEPENDS
+file(GLOB_RECURSE AVM_BENCH_CXX_SOURCES CONFIGURE_DEPENDS
     "${AVM_BENCH_CXX_DIR}/*.cpp")
 
 set(AVM_BENCH_IMAGE_OUTPUTS
@@ -100,48 +100,30 @@ avm_add_image(
     DEPENDS avm_sysroot
 )
 
-foreach(AVM_BENCH_C_SOURCE IN LISTS AVM_BENCH_C_SOURCES)
-    get_filename_component(AVM_BENCH_NAME
-        "${AVM_BENCH_C_SOURCE}" NAME_WE)
-    set(AVM_BENCH_OBJECT
-        "${AVM_BENCH_C_BINARY_DIR}/${AVM_BENCH_NAME}.o")
-    set(AVM_BENCH_ELF
-        "${AVM_BENCH_C_BINARY_DIR}/${AVM_BENCH_NAME}.elf")
-    set(AVM_BENCH_IMAGE
-        "${AVM_BENCH_C_BINARY_DIR}/${AVM_BENCH_NAME}.bin")
-    set(AVM_BENCH_DISASSEMBLY
-        "${AVM_BENCH_C_DISASSEMBLY_DIR}/${AVM_BENCH_NAME}.asm")
-
-    avm_add_object(
-        OUTPUT "${AVM_BENCH_OBJECT}"
-        SOURCE "${AVM_BENCH_C_SOURCE}"
-        LANGUAGE C
-        INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
-        DEPENDS avm_sysroot ${AVM_BENCH_C_HEADERS} ${AVM_BENCH_TRIG_HEADERS}
-    )
-    avm_add_image(
-        OBJECTS "${AVM_BENCH_OBJECT}"
-        OUTPUT_ELF "${AVM_BENCH_ELF}"
-        OUTPUT_IMAGE "${AVM_BENCH_IMAGE}"
-        ENTRY _start
-        STARTUP "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
-        LIBRARIES
-            "${AVM_SYSROOT_DIR}/lib/libavm.a"
-            "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
-        DISASSEMBLY "${AVM_BENCH_DISASSEMBLY}"
-        FOCUSED_DISASSEMBLY
-        GC_SECTIONS
-        DEPENDS avm_sysroot
-    )
-    list(APPEND AVM_BENCH_IMAGE_OUTPUTS "${AVM_BENCH_IMAGE}")
-    list(APPEND AVM_BENCH_DISASSEMBLY_OUTPUTS
-        "${AVM_BENCH_DISASSEMBLY}")
-    if(AVM_BENCH_NAME MATCHES "^math_")
-        list(APPEND AVM_MATH_BENCH_OUTPUTS "${AVM_BENCH_IMAGE}" "${AVM_BENCH_DISASSEMBLY}")
-    endif()
-    if(AVM_BENCH_NAME MATCHES "^math_(trig_|sin|cos|tan)")
-        list(APPEND AVM_TRIG_BENCH_OUTPUTS "${AVM_BENCH_IMAGE}" "${AVM_BENCH_DISASSEMBLY}")
-    endif()
+# One compilation recipe serves both languages and every workload group.
+foreach(language C CXX)
+    foreach(source IN LISTS AVM_BENCH_${language}_SOURCES)
+        get_filename_component(name "${source}" NAME_WE)
+        get_filename_component(filename "${source}" NAME)
+        set_property(GLOBAL PROPERTY "AVM_BENCH_SOURCE_${filename}" "${source}")
+        set(binary "${AVM_BENCH_${language}_BINARY_DIR}/${name}")
+        set(listing "${AVM_BENCH_${language}_DISASSEMBLY_DIR}/${name}.asm")
+        avm_add_object(OUTPUT "${binary}.o" SOURCE "${source}" LANGUAGE ${language}
+            DEPENDS avm_sysroot)
+        avm_add_image(OBJECTS "${binary}.o" OUTPUT_ELF "${binary}.elf"
+            OUTPUT_IMAGE "${binary}.bin" ENTRY _start
+            STARTUP "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
+            LIBRARIES "${AVM_SYSROOT_DIR}/lib/libavm.a" "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+            DISASSEMBLY "${listing}" FOCUSED_DISASSEMBLY GC_SECTIONS DEPENDS avm_sysroot)
+        list(APPEND AVM_BENCH_IMAGE_OUTPUTS "${binary}.bin")
+        list(APPEND AVM_BENCH_DISASSEMBLY_OUTPUTS "${listing}")
+        if(name MATCHES "^math_")
+            list(APPEND AVM_MATH_BENCH_OUTPUTS "${binary}.bin" "${listing}")
+        endif()
+        if(name MATCHES "^math_(trig_|sin|cos|tan)")
+            list(APPEND AVM_TRIG_BENCH_OUTPUTS "${binary}.bin" "${listing}")
+        endif()
+    endforeach()
 endforeach()
 
 # Fast iteration on runtime math without compiling every diagnostic MIR dump.
@@ -153,45 +135,6 @@ add_custom_target(avm_trig_bench_run
     COMMAND "$<TARGET_FILE:avm_bench>" --c-only --filter "^math_(trig_|sin|cos|tan)"
         --c-output "${CMAKE_CURRENT_BINARY_DIR}/trig-cycles.txt"
     DEPENDS avm_bench avm_trig_bench_images USES_TERMINAL VERBATIM)
-
-# C++ benchmarks use the same startup and baseline as C, but exercise C++
-# calls, object layout, and lifetime code generation.
-foreach(AVM_BENCH_CXX_SOURCE IN LISTS AVM_BENCH_CXX_SOURCES)
-    get_filename_component(AVM_BENCH_NAME
-        "${AVM_BENCH_CXX_SOURCE}" NAME_WE)
-    set(AVM_BENCH_OBJECT
-        "${AVM_BENCH_CXX_BINARY_DIR}/${AVM_BENCH_NAME}.o")
-    set(AVM_BENCH_ELF
-        "${AVM_BENCH_CXX_BINARY_DIR}/${AVM_BENCH_NAME}.elf")
-    set(AVM_BENCH_IMAGE
-        "${AVM_BENCH_CXX_BINARY_DIR}/${AVM_BENCH_NAME}.bin")
-    set(AVM_BENCH_DISASSEMBLY
-        "${AVM_BENCH_CXX_DISASSEMBLY_DIR}/${AVM_BENCH_NAME}.asm")
-
-    avm_add_object(
-        OUTPUT "${AVM_BENCH_OBJECT}"
-        SOURCE "${AVM_BENCH_CXX_SOURCE}"
-        LANGUAGE CXX
-        DEPENDS avm_sysroot
-    )
-    avm_add_image(
-        OBJECTS "${AVM_BENCH_OBJECT}"
-        OUTPUT_ELF "${AVM_BENCH_ELF}"
-        OUTPUT_IMAGE "${AVM_BENCH_IMAGE}"
-        ENTRY _start
-        STARTUP "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
-        LIBRARIES
-            "${AVM_SYSROOT_DIR}/lib/libavm.a"
-            "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
-        DISASSEMBLY "${AVM_BENCH_DISASSEMBLY}"
-        FOCUSED_DISASSEMBLY
-        GC_SECTIONS
-        DEPENDS avm_sysroot
-    )
-    list(APPEND AVM_BENCH_IMAGE_OUTPUTS "${AVM_BENCH_IMAGE}")
-    list(APPEND AVM_BENCH_DISASSEMBLY_OUTPUTS
-        "${AVM_BENCH_DISASSEMBLY}")
-endforeach()
 
 # Sources under bench/c/mir are diagnostic-only. Compile them with the regular
 # AVM C pipeline while capturing LLVM's pass-by-pass MIR dump in the build tree.
@@ -258,7 +201,8 @@ foreach(line IN LISTS AVM_BENCH_MIX_LINES)
     else()
         message(FATAL_ERROR "Invalid instruction-mix workload: ${line}")
     endif()
-    if(NOT EXISTS "${source_dir}/${line}")
+    get_property(workload GLOBAL PROPERTY "AVM_BENCH_SOURCE_${line}")
+    if(NOT workload OR NOT EXISTS "${workload}")
         message(FATAL_ERROR "Missing instruction-mix workload: ${line}")
     endif()
     get_filename_component(stem "${line}" NAME_WE)
@@ -283,25 +227,25 @@ set_target_properties(avm_bench PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 target_compile_features(avm_bench PRIVATE cxx_std_17)
 find_package(Threads REQUIRED)
-target_link_libraries(avm_bench PRIVATE avm_instruction_mix_lib Threads::Threads)
+target_link_libraries(avm_bench PRIVATE avm_instruction_mix_lib Threads::Threads avm_runner_support)
 string(REGEX REPLACE "^-" "" AVM_BENCH_DISPLAY_OPT "${AVM_OPT_LEVEL}")
 target_compile_definitions(avm_bench PRIVATE
     AVM_BENCH_OPT_LEVEL="${AVM_BENCH_DISPLAY_OPT}"
     AVM_BENCH_COMPILER_BIN="$<TARGET_FILE:clang>"
     AVM_BENCH_MIX_MANIFEST="${AVM_BENCH_MIX_MANIFEST}"
-    AVM_BENCH_MIX_OUTPUT="${AVM_BENCH_DIR}/instruction_mix.txt"
+    AVM_BENCH_MIX_OUTPUT="${AVM_BENCH_BUILD_DIR}/results/instruction_mix.txt"
     AVM_BENCH_BOUNDARY_METADATA="${AVM_INTERPRETER_BOUNDARY_METADATA}"
     AVM_BENCH_INSTRUCTIONS_BIN="${AVM_BENCH_INSTRUCTION_IMAGE}"
     AVM_BENCH_INSTRUCTION_NAMES="${AVM_BENCH_INSTRUCTION_NAMES}"
-    AVM_BENCH_INSTRUCTION_OUTPUT="${AVM_BENCH_DIR}/cycles_instruction.txt"
+    AVM_BENCH_INSTRUCTION_OUTPUT="${AVM_BENCH_BUILD_DIR}/results/cycles_instruction.txt"
     AVM_BENCH_C_DIR="${AVM_BENCH_C_DIR}"
     AVM_BENCH_C_BIN_DIR="${AVM_BENCH_C_BINARY_DIR}"
     AVM_BENCH_CXX_DIR="${AVM_BENCH_CXX_DIR}"
     AVM_BENCH_CXX_BIN_DIR="${AVM_BENCH_CXX_BINARY_DIR}"
     AVM_BENCH_BASELINE_BIN="${AVM_BENCH_BASELINE_IMAGE}"
     AVM_BENCH_INTERPRETER_HEX="${AVM_INTERPRETER_HEX}"
-    AVM_BENCH_C_OUTPUT="${AVM_BENCH_DIR}/cycles_c.txt"
-    AVM_BENCH_CXX_OUTPUT="${AVM_BENCH_DIR}/cycles_cpp.txt"
+    AVM_BENCH_C_OUTPUT="${AVM_BENCH_BUILD_DIR}/results/cycles_c.txt"
+    AVM_BENCH_CXX_OUTPUT="${AVM_BENCH_BUILD_DIR}/results/cycles_cpp.txt"
 )
 add_dependencies(avm_bench
     avm_interpreter
@@ -314,6 +258,7 @@ add_custom_target(avm_instruction_mix
     COMMENT "Profiling representative AVM instruction mix"
     USES_TERMINAL VERBATIM)
 
+if(AVM_BUILD_TESTS)
 avm_add_object(OUTPUT "${AVM_BENCH_BUILD_DIR}/mix_fixture.o"
     SOURCE "${PROJECT_SOURCE_DIR}/tests/instruction_mix_fixture.asm" LANGUAGE ASM)
 avm_add_image(OBJECTS "${AVM_BENCH_BUILD_DIR}/mix_fixture.o"
@@ -321,34 +266,38 @@ avm_add_image(OBJECTS "${AVM_BENCH_BUILD_DIR}/mix_fixture.o"
     OUTPUT_IMAGE "${AVM_BENCH_BUILD_DIR}/mix_fixture.bin" ENTRY _start)
 add_executable(avm_instruction_mix_tests "${PROJECT_SOURCE_DIR}/tests/instruction_mix_test.cpp")
 target_link_libraries(avm_instruction_mix_tests PRIVATE avm_instruction_mix_lib)
-add_custom_target(avm_instruction_mix_tests_run
+avm_add_check(avm_instruction_mix_tests_run
     COMMAND "$<TARGET_FILE:avm_instruction_mix_tests>" "${AVM_INTERPRETER_HEX}"
         "${AVM_INTERPRETER_BOUNDARY_METADATA}" "${AVM_BENCH_BASELINE_IMAGE}"
         "${AVM_BENCH_BUILD_DIR}/mix_fixture.bin"
     DEPENDS avm_instruction_mix_tests avm_interpreter_boundary
         "${AVM_BENCH_BASELINE_IMAGE}" "${AVM_BENCH_BUILD_DIR}/mix_fixture.bin"
     USES_TERMINAL VERBATIM)
-add_dependencies(avm_validation_full avm_instruction_mix_tests_run)
+
+
+endif()
 
 # avm_bench itself is a normal build target; this target additionally runs the
 # test suite, instruction benchmark image, and every C and C++ benchmark.
 add_custom_target(avm_bench_run
     COMMAND "$<TARGET_FILE:avm_bench>"
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/benchmark_metadata.py"
+        --compiler "$<TARGET_FILE:clang>" --interpreter "${AVM_INTERPRETER_HEX}"
+        --workloads "${AVM_BENCH_DIR}/workloads" "--optimization=${AVM_OPT_LEVEL}"
+        --output "${AVM_BENCH_BUILD_DIR}/results/metadata.json"
     DEPENDS
-        avm_tests_run
         avm_bench
         avm_bench_images
-        avm_bench_mir
         avm_instruction_mix
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMENT "Running AVM tests, instruction benchmarks, and compiled benchmarks"
+    COMMENT "Measuring AVM instruction timing and compiled workloads"
     USES_TERMINAL
     VERBATIM
 )
 
 find_package(Python3 COMPONENTS Interpreter QUIET)
-if(Python3_FOUND)
-    add_custom_target(avm_disassembly_tests_run
+if(AVM_BUILD_TESTS AND Python3_FOUND)
+    avm_add_check(avm_disassembly_tests_run
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/disassembly_test.py"
             --build "${CMAKE_BINARY_DIR}"
             --startup "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
@@ -356,8 +305,8 @@ if(Python3_FOUND)
             "${AVM_BENCH_C_BINARY_DIR}/complex_cacosh.bin"
             "${AVM_BENCH_CXX_BINARY_DIR}/aggregate_byte_dispatch.bin"
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" USES_TERMINAL VERBATIM)
-    add_dependencies(avm_validation_full avm_disassembly_tests_run)
-    add_custom_target(avm_runner_cli_tests_run
+
+    avm_add_check(avm_runner_cli_tests_run
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/runner_cli_test.py"
             --build "${CMAKE_BINARY_DIR}"
         DEPENDS avm_tests avm_bench "${AVM_BENCH_C_BINARY_DIR}/math_sin.bin"
@@ -365,5 +314,13 @@ if(Python3_FOUND)
             "${AVM_BENCH_BASELINE_IMAGE}"
             "${PROJECT_BINARY_DIR}/tests/c/O2/affine_store_values.bin"
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" USES_TERMINAL VERBATIM)
-    add_dependencies(avm_validation_full avm_runner_cli_tests_run)
+
 endif()
+
+# Reference updates are explicit and retain the committed benchmark listings.
+add_custom_target(avm_bench_update
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${AVM_BENCH_BUILD_DIR}/disassembly"
+        "${AVM_BENCH_DIR}/reference/disassembly"
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${AVM_BENCH_BUILD_DIR}/results"
+        "${AVM_BENCH_DIR}/reference"
+    DEPENDS avm_bench_run VERBATIM)

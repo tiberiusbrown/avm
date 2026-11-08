@@ -106,4 +106,4 @@ lines += ['    for (unsigned i=0;i<sizeof(quotient_cases)/sizeof(quotient_cases[
           '    float (*volatile make_nan)(const char *)=nanf;',
           '    if (!isnan(make_nan("")) || !isnan(make_nan("123")) || !isnan(make_nan("runtime"))) return 5;',
           '    return 0;', '}', '']
-Path('tests/c/math_misc.c').write_text('\n'.join(lines),encoding='utf-8')
+Path('tests/runtime/math/c/math_misc.c').write_text('\n'.join(lines),encoding='utf-8')

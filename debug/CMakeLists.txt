@@ -25,7 +25,7 @@ add_custom_target(avm_lldb DEPENDS
     "${AVM_DEBUG_RUNTIME_BOUNDARY}")
 add_dependencies(avm_toolchain avm_lldb)
 
-add_executable(avm_prof AvmProf.cpp)
+add_executable(avm_prof EXCLUDE_FROM_ALL AvmProf.cpp)
 set_target_properties(avm_prof PROPERTIES
     OUTPUT_NAME "avm-prof"
     RUNTIME_OUTPUT_DIRECTORY "${AVM_SDK_BUILD_BIN}")

@@ -38,7 +38,7 @@ s+='__extension__ int avm_test_main(void) {\n    errno=37;\n'
 for typ,suf in [('float','f'),('double',''),('long double','l')]:
  for idx,n in enumerate(names):
   s+=f'    if(test_{n}{suf}()) return 1;\n' 
-s+='    return errno!=37;\n}\n';Path('tests/c/complex_functions.c').write_text(s)
+s+='    return errno!=37;\n}\n';Path('tests/runtime/math/c/complex_functions.c').write_text(s)
 
 # Optional regeneration of the compact exceptional-value grid from the C host
 # reference's --generate CSV. Keep glibc as the reference: older MinGW complex
@@ -68,4 +68,4 @@ if args.reference_csv:
   # zero/nonfinite cases; the finite principal values remain reference tested.
   out+=f'    {{{k},0x{x}UL,0x{y}UL,0x{r}UL,0x{i}UL}},\n'
  out+='};\n'
- Path('tests/c/complex_golden.h').write_text(out)
+ Path('tests/runtime/math/c/complex_golden.h').write_text(out)

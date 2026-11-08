@@ -1,0 +1,101 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "dev",
+      "displayName": "AVM development",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "AVM_WITH_ARDENS": "ON",
+        "AVM_BUILD_TESTS": "ON",
+        "AVM_BUILD_BENCHMARKS": "ON",
+        "AVM_BUILD_DEBUGGER": "ON",
+        "AVM_BUILD_EXAMPLES": "OFF"
+      }
+    },
+    {
+      "name": "core",
+      "inherits": "dev",
+      "binaryDir": "${sourceDir}/build/core",
+      "cacheVariables": {
+        "AVM_WITH_ARDENS": "OFF"
+      }
+    },
+    {
+      "name": "headless",
+      "inherits": "dev",
+      "binaryDir": "${sourceDir}/build/headless",
+      "cacheVariables": {
+        "AVM_BUILD_DEBUGGER": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "sdk",
+      "configurePreset": "dev",
+      "configuration": "RelWithDebInfo",
+      "targets": [
+        "avm_sdk"
+      ]
+    },
+    {
+      "name": "check-fast",
+      "configurePreset": "dev",
+      "configuration": "RelWithDebInfo",
+      "targets": [
+        "avm_validation_fast"
+      ]
+    },
+    {
+      "name": "check-full",
+      "configurePreset": "dev",
+      "configuration": "RelWithDebInfo",
+      "targets": [
+        "avm_validation_full"
+      ]
+    },
+    {
+      "name": "bench",
+      "configurePreset": "dev",
+      "configuration": "RelWithDebInfo",
+      "targets": [
+        "avm_bench_run"
+      ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "fast",
+      "configurePreset": "dev",
+      "configuration": "RelWithDebInfo",
+      "filter": {
+        "include": {
+          "label": "^fast$"
+        }
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "full",
+      "configurePreset": "dev",
+      "configuration": "RelWithDebInfo",
+      "filter": {
+        "include": {
+          "label": "^full$"
+        }
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

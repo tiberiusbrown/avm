@@ -42,12 +42,15 @@ int avm_test_main(void) {
     avm_audio_music_volume(0);
     avm_audio_sfx_volume(255);
     if(avm_audio_status()!=1) return 11;
-    avm_audio_tone(2,69,31);
+    avm_audio_tone(69,31);
     if(avm_audio_status()!=5) return 10;
-    /* Exercise the guest program-space MIDI table, bounds, and unchanged ABI. */
-    for(unsigned channel=0;channel<4;++channel)
-        for(unsigned note=0;note<256;++note)
-            avm_audio_tone((uint8_t)channel,(uint8_t)note,17);
+    /* Exercise the guest program-space MIDI table and its bounds. */
+    for(unsigned note=0;note<256;++note)
+        avm_audio_tone((uint8_t)note,17);
+    avm_audio_tone_triangle(69,20);
+    if(avm_audio_status()!=5) return 12;
+    avm_audio_tone_pulse(69,20,64);
+    if(avm_audio_status()!=5) return 13;
     avm_audio_stop_sfx();
     avm_audio_stop();
     if(avm_audio_status()!=0) return 9;

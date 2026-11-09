@@ -31,8 +31,8 @@ audio_api avm_audio_enable, 6
 audio_api avm_audio_disable, 7
 audio_api avm_audio_stop_sfx, 8
 audio_api avm_audio_status, 9
-; Internal raw-pitch entry used by the MIDI-compatible C wrapper.
-audio_api __avm_audio_tone_increment, 10
+; Internal raw-pitch entry used by the tone C wrappers.
+audio_api __avm_audio_tone_raw, 10
 audio_api avm_audio_music_volume, 11
 audio_api avm_audio_sfx_volume, 12
 audio_api avm_audio_rate, 13

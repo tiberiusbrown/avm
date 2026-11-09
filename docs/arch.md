@@ -3871,7 +3871,7 @@ or concurrent execution of a text or formatted-output service is unsupported.
 | 7 | Disable output and stop both streams | None |
 | 8 | Stop SFX | None |
 | 9 | Query status | `r4 = bit 0 playing, bit 1 paused, bit 2 SFX` |
-| 10 | Direct SFX tone | `low8(r4) = channel`, `low8(r5) = MIDI note`, `low8(r6) = amplitude` |
+| 10 | Direct SFX tone | `low8(r4) = channel`, `high8(r4) = pulse duty`, `r5 = raw 15625 Hz increment`, `low8(r6) = amplitude 0..31` with bit 5 selecting triangle (clear selects pulse) |
 | 11 | Shared gain compatibility alias | Same as command 5; also affects SFX/direct tones |
 | 12 | Shared gain compatibility alias | Same as command 5; also affects music |
 | 13 | Set synthesis rate | `low8(r4) = 0` (7812.5 Hz) or `1` (15625 Hz); other values ignored |

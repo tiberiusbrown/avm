@@ -967,12 +967,19 @@ Undeclared slots remain available to music. Music advances underneath SFX;
 End/stop restores its current pitch, volume, waveform, and duty atomically. Oscillators
 and phases are shared: there is no hidden fifth oscillator or saved music phase.
 
-`avm_audio_tone(channel, MIDI_note, amplitude)` remains explicitly addressed:
-it can override any physical channel 0..3 until `avm_audio_stop_sfx()`. Tonal
-direct tones use pulse with duty 128. Channel/amplitude arguments are masked to 0..3/0..31;
-MIDI outside 24..95 mutes that channel. Its MIDI lookup table lives in guest
-program storage and is linked only if this API is used. The underlying SYS
-command accepts a raw uint16 phase increment; conversion is outside the firmware.
+`avm_audio_tone(MIDI_note, amplitude)` plays a latched tone on the default tonal
+sound-effect channel, physical channel 1, until `avm_audio_stop_sfx()`. It uses
+pulse with duty 128. Amplitude is masked to 0..31, and MIDI outside 24..95
+mutes the tone. Its MIDI lookup table lives in guest program storage and is
+linked only if this API is used.
+
+`avm_audio_tone_pulse(MIDI_note, amplitude, duty)` is the same latched tone with
+a pulse duty threshold; 128 is 50%. `avm_audio_tone_triangle(MIDI_note,
+amplitude)` selects a triangle waveform with no duty. All three share SYS
+command 10, which takes the channel explicitly and a raw uint16 phase increment;
+the guest runtime converts MIDI notes to increments and always passes channel 1.
+Command 10 reads the pulse duty from the high byte of `r4` and the waveform from
+bit 5 of `r6`.
 
 `avm_audio_stop`, `avm_audio_pause`, `avm_audio_resume`, `avm_audio_stop_sfx`,
 `avm_audio_enable`, `avm_audio_disable`, and `avm_audio_rate` retain their APIs.

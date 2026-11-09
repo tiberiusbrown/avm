@@ -63,12 +63,14 @@ void avm_audio_lowpass(uint8_t alpha);
 void avm_audio_stop_sfx(void);
 /* bit 0=music playing, bit 1=music paused, bit 2=SFX playing. */
 uint8_t avm_audio_status(void);
-/* Replaces SFX with a latched tone until stop_sfx; channel 0..3 (3=noise),
-   MIDI 24..95, amplitude 0..31. Out-of-range MIDI mutes the selected voice.
-   MIDI conversion is in the guest runtime; explicit channel overrides remain
-   available independently of sequenced SFX routing. Tonal direct tones default
-   to pulse with duty 128. Phase is preserved. */
-void avm_audio_tone(uint8_t channel, uint8_t note, uint8_t amplitude);
+/* Replaces SFX with a latched pulse tone on the default tonal sound-effect
+   channel until stop_sfx; MIDI 24..95, amplitude 0..31, duty 128 (50%).
+   Out-of-range MIDI mutes the tone. Phase is preserved. */
+void avm_audio_tone(uint8_t note, uint8_t amplitude);
+/* Same latched tone with a triangle waveform; triangle ignores duty. */
+void avm_audio_tone_triangle(uint8_t note, uint8_t amplitude);
+/* Same latched tone with pulse duty threshold 0..255 (128 = 50%). */
+void avm_audio_tone_pulse(uint8_t note, uint8_t amplitude, uint8_t duty);
 #ifdef __cplusplus
 }
 #endif

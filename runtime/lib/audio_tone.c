@@ -10,10 +10,27 @@ static const uint16_t AVM_PROGMEM note_increments[72] = {
     4389,4650,4927,5220,5530,5859,6207,6577,6968,7382,7821,8286
 };
 
-void __avm_audio_tone_increment(uint8_t channel, uint16_t increment, uint8_t amplitude);
+/* Command 10: r4 low byte channel, r4 high byte pulse duty, r5 raw increment,
+   r6 amplitude 0..31 with bit 5 selecting triangle. */
+void __avm_audio_tone_raw(uint16_t channel_duty, uint16_t increment, uint16_t amplitude_wave);
 
-void avm_audio_tone(uint8_t channel, uint8_t note, uint8_t amplitude) {
+static uint16_t tone_increment(uint8_t note) {
     uint8_t index = note - 24;
-    uint16_t increment = index < 72 ? note_increments[index] : 0;
-    __avm_audio_tone_increment(channel, increment, amplitude);
+    return index < 72 ? note_increments[index] : 0;
+}
+
+/* Direct tones always use the tonal sound-effect channel, physical channel 1. */
+#define AVM_TONE_CHANNEL 1
+
+void avm_audio_tone_pulse(uint8_t note, uint8_t amplitude, uint8_t duty) {
+    __avm_audio_tone_raw(AVM_TONE_CHANNEL | ((uint16_t)duty << 8), tone_increment(note),
+                         amplitude & 31);
+}
+
+void avm_audio_tone_triangle(uint8_t note, uint8_t amplitude) {
+    __avm_audio_tone_raw(AVM_TONE_CHANNEL, tone_increment(note), (amplitude & 31) | 32);
+}
+
+void avm_audio_tone(uint8_t note, uint8_t amplitude) {
+    avm_audio_tone_pulse(note, amplitude, 128);
 }

@@ -15627,7 +15627,7 @@ sys_audio_impl:
     brne 1f
     rjmp .Laudio_lowpass
 1:
-    cpi  r24, 10 ; direct SFX tone: r4 channel, r5 raw increment, r6 amplitude
+    cpi  r24, 10 ; direct SFX tone: r4 channel and pulse duty, r5 raw increment, r6 amplitude and waveform
     brne 1f
     rjmp .Laudio_tone
 1:
@@ -15821,10 +15821,12 @@ audio_enable_phase:
 1:
     st   Z, VM_R5L
     std  Z+1, r0
+    ; Amplitude 0..31 in bits 0..4; bit 5 selects triangle, clear selects pulse.
     mov  r24, VM_R6L
-    andi r24, 31
+    andi r24, 63
     std  Z+2, r24
-    ldi  r24, 128
+    ; Pulse duty threshold; triangle and noise ignore it.
+    mov  r24, VM_R4H
     std  Z+3, r24
     ldi  r24, 1
 1:

@@ -357,8 +357,13 @@ void sequence(harness& h) {
             h.command(13,1); require(h.c().data[waveform]==15,"rate change lost restored waveform");
             h.command(3); h.command(4);
             require(h.c().data[waveform]==15,"pause/resume lost restored waveform");
-            h.tone((69u<<16)|0,12);
+            h.tone((69u<<16)|(128u<<8)|0,12);
             require(!(h.c().data[waveform]&9),"direct pulse tone inherited saw bits");
+            // The tone's own waveform and duty come from r6 bit 5 and r4 high byte.
+            h.tone((69u<<16)|(200u<<8)|1,12);
+            require(!(h.c().data[waveform]&2) && h.c().data[duties+1]==200,"direct pulse tone wrong waveform or duty");
+            h.tone((69u<<16)|(200u<<8)|1,12|32);
+            require((h.c().data[waveform]&2) && !(h.c().data[waveform]&16),"direct triangle tone did not select triangle");
             h.command(8); require(h.c().data[waveform]==15,"direct tone release lost saw music");
         }
     });
@@ -420,7 +425,7 @@ void sequence(harness& h) {
         h.command(3); require(h.c().data[waveform]==7 && h.amplitude(1)==15,"pause changed SFX waveform");
         h.command(4);
         for(unsigned ch=0;ch<3;++ch) {
-            h.tone((69u<<16)|ch,12);
+            h.tone((69u<<16)|(128u<<8)|ch,12);
             require(!(h.c().data[waveform]&(1u<<ch)),"direct tone inherited triangle");
             h.command(8);
             require(h.c().data[waveform]==7,"direct-tone release lost music waveform");
@@ -480,7 +485,7 @@ void sequence(harness& h) {
         require(h.word(controls+3)==0x1200 && h.amplitude(1)==13 && h.c().data[duties+1]==192,
             "SFX release lost current music pitch/volume/duty/gain");
         for(unsigned ch=0;ch<4;++ch) {
-            h.tone((69u<<16)|ch,17);
+            h.tone((69u<<16)|(128u<<8)|ch,17);
             require(h.c().data[sfx+6]==(1u<<ch) && h.amplitude(ch)==17,"direct tone routing or shared gain wrong");
             h.command(12,32);
             require(h.amplitude(ch)==17,"direct tone did not retain physical channel");
@@ -674,7 +679,7 @@ void sequence(harness& h) {
         h.command(2); require(h.amplitude(0)==255,"stop wrong");
         h.command(4); require(h.c().data[music+5]==0,"resume resurrected stopped stream");
         h.command(5,32); h.play_midi({1,0,1,70,9,0,1}); require(h.note_index(0)==46,"song change wrong");
-        h.tone( (69u<<16)|2u, 31); // r4 channel, r5 note, r6 amplitude
+        h.tone( (69u<<16)|(128u<<8)|2u, 31); // r4 duty and channel, r5 note, r6 amplitude
         require(h.c().data[sfx+6]==4 && h.amplitude(2)==31,"direct tone ownership/amplitude wrong");
         require(h.word(controls+6)==2*h.increment(69),"direct tone tuning wrong");
         h.elapsed(255); require(h.word(controls+6)==2*h.increment(69),"direct tone advanced a stream");
@@ -885,7 +890,7 @@ void synthesis(harness& h) {
             require(h.c().data[held_sample]==output(mix,value),
                 "gain did not apply to combined music and SFX");
         }
-        h.command(5,0); h.tone(69u<<16,31);
+        h.command(5,0); h.tone((69u<<16)|(128u<<8),31);
         h.synth_sample();
         require(h.amplitude(0)==31 && h.c().data[sfxnotes+2]==31 && h.c().data[held_sample]==128,
             "zero global gain failed to mute direct tone");
@@ -2078,13 +2083,26 @@ void formatter(char** args) {
             // An interrupt can return to this entry before its first instruction.
             audio_entry_seen=true;
             if(h.c().data[22]!=10) { h.tick(true); continue; }
-            auto note=tone_calls ? (tone_calls-1)%256 : 69u;
-            auto channel=tone_calls ? (tone_calls-1)/256 : 2u;
+            // Call 0 is the initial pulse tone, calls 1..256 cover every MIDI note,
+            // then the triangle and explicit-duty pulse wrappers follow. Every direct
+            // tone uses the default tonal SFX channel, physical channel 1.
+            unsigned note=69, amplitude=31, duty=128, channel=1;
+            bool triangle=false;
+            if(tone_calls>=1 && tone_calls<=256) {
+                note=(tone_calls-1)%256;
+                amplitude=17;
+            } else if(tone_calls==257) {
+                amplitude=20|32; triangle=true;
+            } else if(tone_calls==258) {
+                amplitude=20; duty=64;
+            }
             auto pitch=note>=24 && note<=95 ? h.increment(note) : 0;
-            if(h.c().data[16]!=channel || h.word(18)!=pitch || h.c().data[20]!=(tone_calls ? 17 : 31)) {
+            if(h.c().data[16]!=channel || h.word(18)!=pitch || h.c().data[20]!=amplitude
+                || (!triangle && h.c().data[17]!=duty)) {
                 std::ostringstream error;
-                error<<"guest MIDI wrapper call "<<tone_calls<<": channel="<<h.word(16)
-                    <<", pitch="<<h.word(18)<<" (expected "<<pitch<<"), amplitude="<<h.word(20);
+                error<<"guest tone wrapper call "<<tone_calls<<": channel="<<h.word(16)
+                    <<", pitch="<<h.word(18)<<" (expected "<<pitch<<"), amplitude="<<h.word(20)
+                    <<", duty="<<h.c().data[17]<<" (expected "<<duty<<")";
                 throw std::runtime_error(error.str());
             }
             ++tone_calls;
@@ -2092,7 +2110,7 @@ void formatter(char** args) {
         h.tick(true);
     }
     require(h.c().autobreaks.test(AB_BREAK),"audio formatter workload did not finish");
-    require(tone_calls==1025,"guest MIDI wrapper did not cover all notes and channels");
+    require(tone_calls==259,"guest tone wrappers did not cover all notes and waveforms");
     require(minsp>=scratch_end,"formatter/audio interrupts collided with private workspace");
     std::cout<<"libm/formatter with sample interrupts: native stack "<<0xb00-minsp<<" bytes\n";
 }

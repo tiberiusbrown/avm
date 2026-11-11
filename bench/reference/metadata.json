@@ -1,9 +1,10 @@
 {
-  "compiler_sha256": "09a419dba918ac35bcea78861e00b696a32314613851a0e22d5ea8849bcec4c6",
-  "compiler_version": "clang version 24.0.0git (https://github.com/tiberiusbrown/llvm-project.git 30472dbfc78a5f33e50cd35d05bdf7ea83e9d970)\nTarget: unknown\nThread model: posix\nInstalledDir: /home/brown/avm/build/llvm-build/bin",
+  "compiler_sha256": "57390e6390cef321b3d94ecc377326fb6e8e90e89f406a8d7a51b26f81826a35",
+  "compiler_version": "clang version 24.0.0git (https://github.com/tiberiusbrown/llvm-project.git 4607fe055c669c738a6a03ce7d6e33e60907f4ed)",
   "configuration": "RelWithDebInfo",
-  "interpreter_sha256": "82719c72e63de4009f174fa789efda6676752d2c19fb75f6afd0f82adb57dbab",
+  "interpreter_sha256": "c1a78d5e7a66c2f52065394a81ca12eed8f6341d04878b094034ef3fc2c265f8",
   "optimization": "-O2",
+  "target_triple": "avm-unknown-arduboyfx",
   "workloads": {
     "codegen/c/aggregate_args.c": "1660101b14f0e5b2284fc271b582d6939c79807895c8269c10382bac247951e7",
     "codegen/c/aggregate_return.c": "c4ca0a5d159c3e98ed3d6b08c3b5877b339f718f9f7e6a74ad092fc5d80b2239",

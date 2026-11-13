@@ -62,15 +62,15 @@ syntax is documented in [audio.md](../../docs/audio.md#asset-compiler-and-notati
 `effects.avms` demonstrates tracker arpeggios, glissando, slides, simultaneous
 LFO targets, reusable effects, cuts and noise retriggering in one short score.
 
-`avm_audio_volume` sets both music and SFX masters: 32 is 100%, 64 is 200%,
-and 255 is 796.875%. `avm_audio_music_volume` and `avm_audio_sfx_volume` set
-them independently; direct tones use the SFX master. For example,
-`avm_audio_music_volume(16)` makes the music quieter while effects keep their
-own gain. Gain 0 mutes its stream while playback and ownership continue.
-The demo uses the default gain 128 (400%) for both. Volume 31 therefore
-produces amplitude 124, close to the full signed pin range. The interpreter prepares each
-channel amplitude as `floor(volume * master / 32)`, retaining the song's
-volume and duty, and saturates the complete mix at the PWM limits.
+`avm_audio_volume` sets the shared output gain: 32 is 100%, 64 is 200%,
+and 255 is 796.875%. `avm_audio_music_volume` and `avm_audio_sfx_volume`
+independently attenuate their streams from 0 (mute) to 255 (full volume,
+the default); direct tones use SFX attenuation. For example,
+`avm_audio_music_volume(128)` halves the music while effects keep their
+own volume. Muting preserves playback and ownership. Foreground preparation
+rounds each attenuated channel amplitude to 0..31 before mixing and filtering,
+so quiet fades have coarse steps. The demo uses the default shared gain 128
+(400%), applied to the complete mix before saturation at the PWM limits.
 
 Build from the repository root:
 

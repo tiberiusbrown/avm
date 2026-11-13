@@ -132,7 +132,7 @@ directly to the playback API:
 #include "pickup.h"
 
 void start_music(void) {
-    avm_audio_music_volume(128);
+    avm_audio_music_volume(255);
     avm_audio_music_loop(1);
     avm_audio_play(song);
 }
@@ -995,14 +995,24 @@ looping after music ends does not restart it. The setting persists across play,
 stop, pause, and disable/enable. SFX always stops at End. Set this option before
 `avm_audio_play` when starting a song with a particular playback policy.
 
-`avm_audio_volume` sets one shared output gain. `avm_audio_music_volume` and
-`avm_audio_sfx_volume` remain compatibility aliases for that same control;
-the last call wins. Balance music and SFX with their channel/score volumes.
-Gain accepts 0..255, defaults to 128, and persists across stop/pause/disable:
-32 is unity, 128 is 400%, 255 is 796.875%. Channels keep their original 0..31
-volumes at every master setting, including mute. The ISR applies gain once,
+`avm_audio_volume` sets one shared output gain. Gain accepts 0..255, defaults
+to 128, and persists across stop/pause/disable: 32 is unity, 128 is 400%,
+255 is 796.875%. Master changes leave individual attenuation and prepared
+channel amplitudes intact, including at mute. The ISR applies gain once,
 after tonal filtering and noise addition, rounds to the nearest output sample
 (ties toward positive), then saturates. Muting preserves phase and ownership.
+
+`avm_audio_music_volume` and `avm_audio_sfx_volume` independently attenuate
+their streams: 0 mutes, 255 is full volume (the default), and 128 is approximately
+half volume. SFX attenuation includes direct tones. These settings persist
+across play, stop, pause and disable/enable without changing the master gain.
+Foreground preparation rounds `channel_volume * attenuation / 255` to the
+existing 0..31 amplitude range before mixing and tonal filtering. Quiet
+channels therefore have coarse fade steps. Desired channel volumes, phase,
+playback timing and ownership are preserved; muted SFX still owns its slots,
+and release restores the current attenuated music. Changes affect already
+playing notes through the usual atomic control publication. An enabled tonal
+filter can leave a brief decay after muting.
 
 ### Global tonal low-pass
 
@@ -1054,8 +1064,8 @@ filter history through its skipped prefix, so excerpts match a full render.
 ## Pulse, triangle, sawtooth, and noise synthesis
 
 Each tonal oscillator has a uint16 phase, uint16 increment, uint8 duty, and
-uint8 amplitude 0..31. Foreground publishes the selected owner's channel
-volume directly; master gain is applied after mixing. Reserved amplitude
+uint8 amplitude 0..31. Foreground publishes the selected owner's attenuated
+channel volume; master gain is applied after mixing. Reserved amplitude
 `0xFF` means stopped with increment zero:
 the ISR skips the oscillator and preserves phase. Inactive owners and zero
 increments use this sentinel. Channel volume zero prepares amplitude **zero**;
@@ -1310,10 +1320,11 @@ phase; stop silences the owner. Direct tones initialize pulse and duty 128.
 | Held sample, rate and music loop setting | 3 |
 | Tonal low-pass level / byte history | 1 / 1 |
 | Prepared low-pass coefficient | 1 |
-| Total | 92 |
+| Music / SFX attenuation | 2 |
+| Total | 94 |
 
-Audio occupies 0A15..0A70, private end 0A71. Existing 72-byte formatter/text
-scratch ends at 0AB9, leaving 71 bytes for native stack. Audio aliases 20 scratch
+Audio occupies 0A15..0A72, private end 0A73. Existing 72-byte formatter/text
+scratch ends at 0ABB, leaving 69 bytes for native stack. Audio aliases 20 scratch
 bytes: dirty, transient reseed and 18-byte event buffer; persistent state and
 the pending packet never alias scratch. Guest memory addresses are unchanged.
 Assembler assertions retain the single-SRAM-page and minimum-stack constraints.
@@ -1325,7 +1336,11 @@ cycles; all-stopped output takes 79 cycles. At default gain, measured all-active
 ordinary/pending maxima are 205/282 cycles with filtering off and 219/296
 with any named filter preset at either sample rate. Other gains have different output paths.
 PWM writes remain at 21 cycles at both rates and all levels. FX, FX-C and Mini
-firmware is 29364 bytes, leaving 332 bytes below the 29696-byte boundary.
+firmware is 28920 bytes, leaving 776 bytes below the 29696-byte boundary.
+Independent attenuation adds 44 flash bytes and two SRAM bytes. Preparing a
+four-active-voice packet adds at most 44 cycles (2.75 us at 16 MHz), with no
+additional sample-interrupt work. At 250 packets/s this adds 0.069 percentage
+points of CPU utilization.
 See [audio-benchmarks.md](../bench/README.md) for gain/filter timings.
 
 The compact FX reader performs one interruptible burst per due event with

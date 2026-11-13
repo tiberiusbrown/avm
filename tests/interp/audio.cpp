@@ -18,11 +18,12 @@
 using namespace absim;
 namespace {
 constexpr unsigned pending=0xa15, volume=0xa17, controls=0xa18, duties=0xa24,
-    waveform=0xa27, sfxvolume=volume, phases=0xa28, noise=0xa30, notes=0xa31, sfxnotes=0xa41,
+    waveform=0xa27, phases=0xa28, noise=0xa30, notes=0xa31, sfxnotes=0xa41,
     music=0xa49, sfx=0xa53, update_controls=0xa5a, update_waveform=0xa69, update=0xa6a,
     held_sample=0xa6b, rate=held_sample+1,
     music_loop=rate+1, lowpass=music_loop+1, lowpass_state=lowpass+1,
-    lowpass_coefficient=lowpass_state+1, private_end=lowpass_coefficient+1,
+    lowpass_coefficient=lowpass_state+1, musicvolume=lowpass_coefficient+1,
+    sfxvolume=musicvolume+1, private_end=sfxvolume+1,
     event_buffer=private_end+2, scratch_end=private_end+72;
 void require(bool c, char const* m) { if(!c) throw std::runtime_error(m); }
 // Ordered byte positions, shared by directed boundary and full-phase sweeps.
@@ -133,7 +134,8 @@ struct harness {
         require(!(c().data[reg::addr::PRR0] & (reg::bit::PRR0::PRTIM0 | reg::bit::PRR0::PRTIM1)),
             "Timer0/Timer1 power gates were not cleared");
         require(c().timer4.ocrNc==255,"Timer4 TOP wrong");
-        require(c().data[volume]==128 && c().data[sfxvolume]==128,"default audio masters wrong");
+        require(c().data[volume]==128 && c().data[musicvolume]==255 && c().data[sfxvolume]==255,
+            "default audio gains wrong");
         require(c().data[waveform]==0 && c().data[update_waveform]==0,"waveform must default to pulse");
         if(isolated) {
             c().st(reg::addr::TIMSK0,0); c().st(reg::addr::TCCR0B,0);
@@ -250,7 +252,8 @@ struct harness {
         if(initial_ticks) elapsed(initial_ticks);
     }
     template<class F> void test(char const* name,F f) {
-        command(7); command(14,0); command(15,0); command(13,0); command(5,32); quiet();
+        command(7); command(14,0); command(15,0); command(13,0); command(5,32);
+        command(11,255); command(12,255); quiet();
         try { f(); } catch(std::exception const& e2) { throw std::runtime_error(std::string(name)+": "+e2.what()); }
         ++cases;
     }
@@ -474,21 +477,21 @@ void sequence(harness& h) {
             7,0x88,64,9,10,2,0x22,0x00,0x09,0x8d,192,99,0,1});
         h.play({2,0,34,0x00,0x10,0x9f,32,7,0,1},0x21000,true);
         h.command(11,64); h.command(12,96);
-        require(h.amplitude(1)==31 && h.amplitude(2)==9 && h.c().data[volume]==96,
-            "gain aliases changed channel volumes or lost the last shared setting");
+        require(h.amplitude(1)==12 && h.amplitude(2)==2 && h.c().data[volume]==32,
+            "individual attenuation changed the wrong owner or master gain");
         h.elapsed(2);
         require(h.word(notes+4)==0x900 && h.c().data[notes+7]==192,"hidden harmony stopped advancing");
         require(h.c().data[duties+1]==32 && h.word(controls+3)==0x2000,"hidden music leaked into SFX");
         h.command(12,0);
-        require(h.amplitude(1)==31 && h.c().data[sfx+6]==2 && h.c().data[volume]==0,"muting output released the harmony");
+        require(h.amplitude(1)==0 && h.c().data[sfx+6]==2 && h.c().data[volume]==32,"muting SFX released the harmony or changed master gain");
         h.elapsed(6);
-        require(h.word(controls+3)==0x1200 && h.amplitude(1)==13 && h.c().data[duties+1]==192,
+        require(h.word(controls+3)==0x1200 && h.amplitude(1)==3 && h.c().data[duties+1]==192,
             "SFX release lost current music pitch/volume/duty/gain");
         for(unsigned ch=0;ch<4;++ch) {
             h.tone((69u<<16)|(128u<<8)|ch,17);
-            require(h.c().data[sfx+6]==(1u<<ch) && h.amplitude(ch)==17,"direct tone routing or shared gain wrong");
+            require(h.c().data[sfx+6]==(1u<<ch) && h.amplitude(ch)==0,"direct tone routing or SFX mute wrong");
             h.command(12,32);
-            require(h.amplitude(ch)==17,"direct tone did not retain physical channel");
+            require(h.amplitude(ch)==2,"direct tone did not retain SFX attenuation");
             if(ch<3) require(h.c().data[duties+ch]==128,"direct tone did not default to 50 percent");
             h.command(12,0);
         }
@@ -585,6 +588,36 @@ void sequence(harness& h) {
             "internal direct-tone entry lost the increment high byte or channel");
     });
 
+    h.test("independent music and SFX fades preserve master gain and ownership",[&]{
+        h.play_midi({15,0,255,60,64,67,36,7,11,15,19,255,0,1});
+        h.play_midi({12,0,0xcc,69,36,21,13,255,0,1},0x21000,true);
+        auto musicwait=h.word(music+3), effectwait=h.word(sfx+3);
+        for(unsigned ch=0;ch<4;++ch) h.word(phases+2*ch,1234+ch);
+        h.command(11,128);
+        require(h.amplitude(0)==4 && h.amplitude(1)==21 && h.amplitude(2)==8 && h.amplitude(3)==13,
+            "music fade changed SFX or rounded incorrectly");
+        h.command(11,0); h.command(12,0);
+        for(unsigned ch=0;ch<4;++ch) {
+            require(h.amplitude(ch)==0 && h.word(phases+2*ch)==1234+ch,
+                "mute stopped or reset an oscillator");
+            require(h.c().data[notes+4*ch+2]==7+4*ch,"fade changed desired music volume");
+        }
+        require(h.c().data[sfx+6]==10 && h.word(music+3)==musicwait && h.word(sfx+3)==effectwait,
+            "fade changed SFX ownership or playback time");
+        h.command(11,255); h.command(12,128);
+        require(h.amplitude(0)==7 && h.amplitude(1)==11 && h.amplitude(2)==15 && h.amplitude(3)==7,
+            "independent fade restoration wrong");
+        require(h.c().data[volume]==32,"individual fade changed the master gain");
+        h.command(5,128);
+        require(h.amplitude(1)==11 && h.c().data[musicvolume]==255 && h.c().data[sfxvolume]==128,
+            "master gain changed individual attenuation");
+        h.command(8);
+        require(h.amplitude(1)==11 && h.amplitude(3)==19,"SFX release restored the wrong music volume");
+        h.command(7);
+        h.tone((69u<<16)|(128u<<8)|1u,17);
+        require(h.amplitude(1)==9 && h.c().data[volume]==128,
+            "direct tone did not retain SFX attenuation across disable");
+    });
     h.test("default gain uses nearly the complete pin amplitude",[&]{
         h.command(5,128);
         h.play_midi({1,0,0x11,60,31,255,0,1});
@@ -866,8 +899,8 @@ void synthesis(harness& h) {
             for(unsigned ch=0;ch<4;++ch) h.word(phases+2*ch,0);
             h.c().data[noise]=2; // positive noise, no phase overflow
             h.command(5,value);
-            require(h.c().data[volume]==value && h.c().data[sfxvolume]==value,
-                "global gain did not set both full-byte masters");
+            require(h.c().data[volume]==value && h.c().data[musicvolume]==255 && h.c().data[sfxvolume]==255,
+                "global gain changed individual attenuation");
             int mix=0;
             for(unsigned ch=0;ch<4;++ch) {
                 unsigned desired=ch==1 ? 31 : 7+4*ch;
@@ -897,7 +930,7 @@ void synthesis(harness& h) {
         h.command(5,32);
     });
 
-    h.test("prepared amplitudes for every volume and both masters",[&]{
+    h.test("prepared amplitudes for every volume and both owners",[&]{
         unsigned cases=0;
         h.c().data[music+5]=1;
         for(bool effect : {false,true}) {
@@ -916,7 +949,7 @@ void synthesis(harness& h) {
                     ++cases;
                     for(unsigned channel=0;channel<4;++channel) {
                         if(effect && channel!=1 && channel!=3) continue;
-                        require(h.amplitude(channel)==volume,"prepared owner gain wrong");
+                        require(h.amplitude(channel)==(volume*master+127)/255,"prepared owner attenuation wrong");
                         if(channel<3) require(h.c().data[duties+channel]==32+(effect ? 0 : channel)*32,
                             "prepared duty wrong");
                     }
@@ -1471,7 +1504,9 @@ void rates(harness& h) {
                 require(h.word(controls+3*ch)==h.word(source)*(selected ? 1 : 2),
                     "rate scaling used the wrong owner or accumulated rounding");
                 require(h.word(phases+2*ch)==0xf321+ch,"rate switch reset oscillator phase");
-                require(h.amplitude(ch)==(ch==1 ? 12 : ch==3 ? 13 : 7+ch),
+                auto amp=h.c().data[source+2]&31;
+                auto gain=ch==1 || ch==3 ? 96 : 64;
+                require(h.amplitude(ch)==(amp*gain+127)/255,
                     "rate switch changed owner gain");
             }
             require(std::equal(desired.begin()+notes,desired.begin()+update_controls,h.c().data.begin()+notes),
@@ -2184,7 +2219,7 @@ void capture(char** args, bool select_rate, bool loop) {
     require(bool(song_file),"capture song unavailable");
     std::vector<uint8_t> song((std::istreambuf_iterator<char>(song_file)),{});
     if(select_rate) h.command(13,std::stoul(args[8]));
-    h.command(11,64);
+    h.command(5,64);
     h.command(14,unsigned(loop));
     h.play(song,0x20000,false,0);
     h.command(6);
@@ -2243,7 +2278,7 @@ void render_logical(char** args, bool loop, unsigned filter) {
     unsigned samples=std::stoul(args[7]);
     require(samples && samples<=1000000,"logical sample count must be 1..1000000");
     h.command(13,selected);
-    h.command(11,128);
+    h.command(5,128);
     h.command(14,unsigned(loop));
     h.command(15,filter);
     h.play(song,0x20000,false,0);

@@ -16,9 +16,9 @@ void require(bool condition, const char *message) {
     if(!condition) throw std::runtime_error(message);
 }
 
-// Deliberately assert the original concrete workspace layout, independently
-// of the new aliases. The first byte outside it is still 0xAB9.
-constexpr unsigned workspace = 0xa71, source = workspace + 16;
+// Assert the concrete workspace layout independently of the assembler aliases.
+// The first byte outside it is 0xABB.
+constexpr unsigned workspace = 0xa73, source = workspace + 16;
 constexpr unsigned digits = workspace + 21, args = workspace + 43;
 constexpr unsigned count = workspace + 49, nonzero = workspace + 52;
 constexpr unsigned mode = workspace + 53, integer_value = workspace + 58;

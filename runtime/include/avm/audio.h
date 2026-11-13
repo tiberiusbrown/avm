@@ -27,12 +27,15 @@ void avm_audio_stop(void);
 void avm_audio_pause(void);
 void avm_audio_resume(void);
 /* Shared music/SFX output gain: default 128, 0=mute, 32=unity, 255=796.875%.
-   Channels retain their full 0..31 volumes. Gain applies after the tonal
+   Gain applies after individual music/SFX attenuation, the tonal
    low-pass and noise addition; the result rounds and saturates at PWM limits.
    Gain edits preserve phase, filter history and timing. */
 void avm_audio_volume(uint8_t volume);
-/* Compatibility aliases for avm_audio_volume: both set the same shared gain.
-   Use channel volumes to balance music/SFX; muted SFX still owns its slots. */
+/* Independent music/SFX attenuation: default 255, 0=mute, 255=full volume.
+   Rounded to each channel's 0..31 amplitude before mixing/filtering; low
+   volumes have coarse fade steps. SFX includes direct tones and retains its
+   slots while muted. Edits preserve phase, timing and desired channel volumes.
+   Settings persist across play, stop, pause and disable/enable. */
 void avm_audio_music_volume(uint8_t volume);
 void avm_audio_sfx_volume(uint8_t volume);
 void avm_audio_enable(void);

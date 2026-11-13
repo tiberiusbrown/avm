@@ -54,8 +54,8 @@
 ;;     0x0A09–0x0A0B  selected raw sprite pointer (little-endian uint24)
 ;;     0x0A0C–0x0A0D  selected sprite width and height
 ;;     0x0A0E–0x0A14  selected text glyph-table base/header/mode
-;;     0x0A15–0x0A70  persistent timer/audio state (92 bytes)
-;;     0x0A71–0x0AB8  aliased formatter/text or audio service workspace
+;;     0x0A15–0x0A72  persistent timer/audio state (94 bytes)
+;;     0x0A73–0x0ABA  aliased formatter/text or audio service workspace
 ;;     ...–0x0AFF       remaining interpreter-private / native hardware stack
 
 #define data_globals    0x0100
@@ -102,7 +102,10 @@
 ; Biased uint8 tonal history: 128 means silence, matching the accumulator.
 #define data_audio_lowpass_state     (data_audio_lowpass+1)
 #define data_audio_lowpass_coefficient (data_audio_lowpass_state+1)
-#define data_audio_end               (data_audio_lowpass_coefficient+1)
+; Independent owner attenuation, 0=mute / 255=full volume.
+#define data_audio_music_volume      (data_audio_lowpass_coefficient+1)
+#define data_audio_sfx_volume        (data_audio_music_volume+1)
+#define data_audio_end               (data_audio_sfx_volume+1)
 
 ; Stream records share cursor/wait/status/mask; only music has a loop start.
 ; All program pointers are image-relative, little-endian uint24.
@@ -112,8 +115,8 @@
 #define AUDIO_MASK    6
 #define AUDIO_START   7
 
-.if (data_audio_end - data_audio_begin) != 92
-    .error "audio persistent SRAM must occupy 92 bytes"
+.if (data_audio_end - data_audio_begin) != 94
+    .error "audio persistent SRAM must occupy 94 bytes"
 .endif
 .if (data_audio_begin >> 8) != ((data_audio_end-1) >> 8)
     .error "audio compact pointers must fit in one SRAM page"
@@ -15438,6 +15441,7 @@ audio_commit_prepare:
     ldi  r26, lo8(data_audio_update_controls)
     ldi  r27, hi8(data_audio_update_controls)
 .Laudio_stage:
+    lds  r20, data_audio_music_volume
     ldi  r30, lo8(data_audio_music_notes)
     mov  r25, r18
     lsl  r25
@@ -15447,6 +15451,7 @@ audio_commit_prepare:
     sbrs r23, 0
     rjmp 1f
     ldi  r30, lo8(data_audio_sfx_notes) ; one tonal slot, one noise slot
+    lds  r20, data_audio_sfx_volume
     cpi  r18, 3
     brne 2f
     subi r30, -4
@@ -15493,8 +15498,17 @@ audio_commit_prepare:
     st   X+, r24
     st   X+, r0
     andi r21, 31
+    ; Round volume * owner_gain / 255 to the existing five-bit amplitude.
+    ; For this bounded product, (p+128+((p+128)>>8))>>8 is exact.
+    mul  r21, r20
+    ldi  r25, 128
+    add  r0, r25
+    adc  r1, ZERO
+    add  r0, r1
+    adc  r1, ZERO
+    mov  r21, r1
 .Laudio_stage_amplitude:
-    st   X+, r21 ; unscaled 0..31; one shared gain follows the complete mix
+    st   X+, r21 ; attenuated 0..31; shared gain follows the complete mix
     rjmp .Laudio_stage_next
 .Laudio_stage_silent:
     st   X+, ZERO
@@ -15592,7 +15606,7 @@ sys_audio_impl:
     breq .Laudio_pause
     cpi  r24, 4 ; resume
     breq .Laudio_resume
-    cpi  r24, 5 ; set both masters, 0..255 (32=unity)
+    cpi  r24, 5 ; shared output gain, 0..255 (32=unity)
     breq .Laudio_master
     cpi  r24, 6 ; enable output
     breq .Laudio_enable_command
@@ -15652,11 +15666,14 @@ sys_audio_impl:
     sts  data_audio_music+AUDIO_STATUS, r24
     rjmp .Laudio_command_commit
 .Laudio_master:
-.Laudio_music_master:
-.Laudio_sfx_master:
-    ; Legacy music/SFX controls alias the shared post-mix output gain.
     sts  data_audio_volume, VM_R4L
     rjmp .Laudio_command_done
+.Laudio_music_master:
+    sts  data_audio_music_volume, VM_R4L
+    rjmp .Laudio_command_commit
+.Laudio_sfx_master:
+    sts  data_audio_sfx_volume, VM_R4L
+    rjmp .Laudio_command_commit
 .Laudio_enable_command:
     rcall audio_enable
     rjmp .Laudio_command_done
@@ -16177,6 +16194,9 @@ audio_init_func:
     sts  data_audio_duty, r24
     sts  data_audio_duty+1, r24
     sts  data_audio_duty+2, r24
+    ldi  r24, 255
+    sts  data_audio_music_volume, r24
+    sts  data_audio_sfx_volume, r24
     ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

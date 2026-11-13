@@ -3872,11 +3872,12 @@ or concurrent execution of a text or formatted-output service is unsupported.
 | 8 | Stop SFX | None |
 | 9 | Query status | `r4 = bit 0 playing, bit 1 paused, bit 2 SFX` |
 | 10 | Direct SFX tone | `low8(r4) = channel`, `high8(r4) = pulse duty`, `r5 = raw 15625 Hz increment`, `low8(r6) = amplitude 0..31` with bit 5 selecting triangle (clear selects pulse) |
-| 11 | Shared gain compatibility alias | Same as command 5; also affects SFX/direct tones |
-| 12 | Shared gain compatibility alias | Same as command 5; also affects music |
+| 11 | Set music attenuation | `low8(r4) = 0..255`; 0=mute, 255=full volume (default) |
+| 12 | Set SFX attenuation | Same range as command 11; includes direct tones |
 | 13 | Set synthesis rate | `low8(r4) = 0` (7812.5 Hz) or `1` (15625 Hz); other values ignored |
 | 14 | Set music looping | `low8(r4) = 0` disables, nonzero enables; default disabled; persists across playback controls |
 | 15 | Set global tonal low-pass | `low8(r4) = alpha`: 0 bypass (default), 1..255 coefficient; 128 mild, 64 medium, 32 strong |
+| 16 | Queue music with a fade | `q2[23:0] = program pointer`; saves the current music attenuation, reduces it by one per 4 ms, then restores it and uses the normal music PLAY path |
 
 All inputs and architectural flags are preserved except the status result.
 Reserved commands have no command effect, but may service pending elapsed time.
@@ -3884,12 +3885,19 @@ Pointers retain the existing packed 24-bit program-space representation.
 At End, music stops or rewinds according to command 14; SFX always stops.
 Loop-setting changes preserve position, and enabling stopped music does not
 restart it. Compiled streams contain no terminal Loop command.
-Each channel retains its original 0..31 amplitude, or 255 for a stopped voice.
-There is one shared output gain, default 128; commands 5/11/12 all set it.
+Desired channel volumes remain 0..31. Foreground preparation rounds each
+owner's volume times its attenuation divided by 255 into a 0..31 amplitude,
+or uses 255 for a stopped voice. Commands 11/12 preserve phase and ownership,
+including when muted. Command 5 sets the shared output gain, default 128.
 Mixing and tonal filtering use biased bytes (128 means silence); four voices
 fit in 4..252. Gain applies after filtering and noise addition. The hardware
 multiply product is rounded, divided by 32, biased and saturated to PWM limits.
 Gain changes preserve phases, filter history, ownership and stream timing.
+Runtime getters read existing interpreter RAM directly: `avm_audio_get_music`
+returns the original packed 24-bit music asset pointer while playing or paused,
+or null when stopped. `avm_audio_get_volume`, `avm_audio_get_music_volume` and
+`avm_audio_get_sfx_volume` return the current gain/attenuation bytes. They do
+not issue SYS commands or allocate persistent state.
 Command 15 filters the unclipped sum of channels 0..2 before adding noise
 channel 3. The level persists across playback controls. Startup, output restart,
 and OFF-to-enabled transitions initialize the biased byte filter history to
@@ -6656,6 +6664,9 @@ rewriting the context, or recopying the stack. The interpreter reads `trapEntry`
 from the image header when the trap is taken, so startup keeps no copy of it. A
 zero `trapEntry` retains the native fail-stop behavior. The context PC is the raw
 interpreter VM_PC at the trap site, not normalized to an opcode start.
+Trap entry follows the interpreter's enabled-interrupt foreground contract.
+Its atomic header read uses `CLI`/`SEI`; native arithmetic flags are scratch,
+while the architectural flags saved in the context come from `GPIOR0`.
 
 `headerCrc32` uses CRC-32/ISO-HDLC and is stored little-endian.
 

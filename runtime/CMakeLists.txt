@@ -68,7 +68,7 @@ function(avm_add_runtime_object)
 endfunction()
 
 set(RUNTIME_SOURCES
-    assert atexit audio_tone avm wctype wchar_string wchar_numeric wchar_time wchar_stream
+    assert atexit audio_state audio_tone avm wctype wchar_string wchar_numeric wchar_time wchar_stream
     wchar_format wchar_scan ctype exit fenv font_5x7 font_br4 font_br5 font_br5d_x5 font_br5n
     local_dtor immediate_exit inttypes locale malloc eh_cxa eh_unwind rtti_dynamic dynamic_cast
     dynamic_cast_void multibyte math math_standard math_c23 complex_standard pgmspace qsort

@@ -18,6 +18,7 @@ SYMBOL TABLE:
 00000041 g     F .text	00000005 avm_audio_rate
 00000046 g     F .text	00000005 avm_audio_music_loop
 0000004b g     F .text	00000005 avm_audio_lowpass
+00000050 g     F .text	00000005 avm_audio_play_fade
 
 Disassembly of section .text:
 
@@ -98,5 +99,10 @@ Disassembly of section .text:
 
 <avm_audio_lowpass>:
  c3 0f                 ldi8	r7, 0xf
+ d7 38                 sys	audio
+ ef                    ret
+
+<avm_audio_play_fade>:
+ c3 10                 ldi8	r7, 0x10
  d7 38                 sys	audio
  ef                    ret

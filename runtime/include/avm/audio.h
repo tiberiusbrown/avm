@@ -17,6 +17,15 @@ extern "C" {
    The reader trusts compiler output, uses 24-bit cursors, and may read ahead
    past the terminator. Recompile older assets for this format. */
 void avm_audio_play(void const AVM_PROGMEM *song);
+/* Queue music without blocking. Save the current music attenuation and fade it
+   down by one each 4 ms, then restore the saved attenuation and play song.
+   At 255 this takes 1020 ms; zero starts immediately. Another fade replaces
+   the queue and saves the then-current attenuation. Play/stop/disable cancels
+   a pending music fade. Master gain and SFX attenuation are unchanged. */
+void avm_audio_play_fade(void const AVM_PROGMEM *song);
+/* Original 24-bit asset pointer while music is playing or paused; null when
+   stopped. Reads the interpreter's current RAM state directly. */
+void const AVM_PROGMEM *avm_audio_get_music(void);
 /* Repeat music at End when enabled (any nonzero value). Default disabled.
    Changes preserve position; disabling finishes the current pass. Enabling
    stopped music does not restart it. The setting persists across play, stop,
@@ -38,6 +47,10 @@ void avm_audio_volume(uint8_t volume);
    Settings persist across play, stop, pause and disable/enable. */
 void avm_audio_music_volume(uint8_t volume);
 void avm_audio_sfx_volume(uint8_t volume);
+/* Current shared output gain and independent music/SFX attenuation. */
+uint8_t avm_audio_get_volume(void);
+uint8_t avm_audio_get_music_volume(void);
+uint8_t avm_audio_get_sfx_volume(void);
 void avm_audio_enable(void);
 void avm_audio_disable(void);
 enum { AVM_AUDIO_RATE_8KHZ = 0, AVM_AUDIO_RATE_16KHZ = 1 };

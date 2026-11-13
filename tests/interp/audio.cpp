@@ -23,7 +23,8 @@ constexpr unsigned pending=0xa15, volume=0xa17, controls=0xa18, duties=0xa24,
     held_sample=0xa6b, rate=held_sample+1,
     music_loop=rate+1, lowpass=music_loop+1, lowpass_state=lowpass+1,
     lowpass_coefficient=lowpass_state+1, musicvolume=lowpass_coefficient+1,
-    sfxvolume=musicvolume+1, private_end=sfxvolume+1,
+    sfxvolume=musicvolume+1, fade_volume=sfxvolume+1, fade_song=fade_volume+1,
+    private_end=fade_song+3,
     event_buffer=private_end+2, scratch_end=private_end+72;
 void require(bool c, char const* m) { if(!c) throw std::runtime_error(m); }
 // Ordered byte positions, shared by directed boundary and full-phase sweeps.
@@ -184,6 +185,7 @@ struct harness {
         require(c().data[28]==regs[28] && c().data[29]==regs[29],"audio SYS corrupted guest SP");
         require(c().data[reg::addr::GPIOR0]==flags,"audio SYS corrupted guest flags");
         require(c().sp()==sp,"audio SYS leaked native stack");
+        require(c().data[reg::addr::SREG]&128,"audio SYS returned with interrupts disabled");
         return t;
     }
     uint64_t elapsed(unsigned n) {
@@ -617,6 +619,48 @@ void sequence(harness& h) {
         h.tone((69u<<16)|(128u<<8)|1u,17);
         require(h.amplitude(1)==9 && h.c().data[volume]==128,
             "direct tone did not retain SFX attenuation across disable");
+    });
+    h.test("asynchronous music fade saves gain, catches up and preserves SFX",[&]{
+        auto start=[&] { return h.word(music+7)|(unsigned(h.c().data[music+9])<<16); };
+        constexpr unsigned queued=0x12fffd;
+        h.asset(queued,{1,0,0x11,0x35,0x07,31,255,0,1});
+        for(unsigned gain : {0u,7u,255u}) {
+            h.command(11,gain);
+            h.play_midi({1,0,0x11,60,31,255,0,1});
+            h.tone((69u<<16)|(128u<<8)|1u,17);
+            h.word(phases,1234);
+            h.command(16,queued);
+            require(h.c().data[fade_volume]==gain && h.word(fade_song)==0xfffd &&
+                h.c().data[fade_song+2]==0x12,"fade did not save gain and full 24-bit song pointer");
+            if(gain) {
+                require(start()==0x20000 && h.c().data[musicvolume]==gain,"fade blocked or started the song immediately");
+                h.elapsed(0);
+                require(h.c().data[musicvolume]==gain,"zero elapsed time advanced a fade");
+                h.elapsed(1);
+                require(h.c().data[musicvolume]==gain-1 && h.amplitude(0)==(31*(gain-1)+127)/255,
+                    "fade did not decrement one gain step per control tick");
+                h.elapsed(gain-2);
+                require(h.c().data[musicvolume]==1 && start()==0x20000,"fade catch-up changed its slope");
+                h.elapsed(1);
+            }
+            require(!h.c().data[fade_volume] && start()==queued && h.c().data[musicvolume]==gain,
+                "fade did not restore gain and start the queued song");
+            h.elapsed(1);
+            require(h.amplitude(0)==(31*gain+127)/255 && h.word(phases)==1234,
+                "queued play lost gain or reset phase");
+            require(h.amplitude(1)==17 && h.c().data[sfx+6]==2 && h.c().data[volume]==32 &&
+                h.c().data[sfxvolume]==255,"music fade changed SFX or master gain");
+        }
+        h.command(11,7); h.command(16,0x20000); h.elapsed(2);
+        h.command(16,queued);
+        require(h.c().data[fade_volume]==5,"replacement queue did not capture the current gain");
+        h.elapsed(7);
+        require(start()==queued && h.c().data[musicvolume]==5 && h.word(music+3)==255,
+            "queued song did not consume remaining catch-up time");
+        for(unsigned cancel : {0u,2u,7u}) {
+            h.command(16,0x20000); h.command(cancel,queued);
+            require(!h.c().data[fade_volume],"play/stop/disable did not cancel the queued song");
+        }
     });
     h.test("default gain uses nearly the complete pin amplitude",[&]{
         h.command(5,128);
@@ -1563,17 +1607,6 @@ void rates(harness& h) {
             require(h.c().sp()==sp,"rate SYS leaked native stack");
             h.quiet();
         }
-        // A running timer with global interrupts masked must not deadlock or enable IRQs.
-        h.c().st(reg::addr::TIMSK1,2); h.routine("audio_commit");
-        h.c().data[reg::addr::SREG]&=0x7f; h.c().prev_sreg&=0x7f;
-        h.word(16,1); h.word(22,13);
-        h.c().pc=uint16_t(h.sym("sys_audio_impl")); h.tick();
-        h.until([&]{return h.c().pc==h.sym("seek_and_dispatch_func_disabled");});
-        require(h.c().data[update]==0 && h.c().timer1.ocrNa==127 && !(h.c().data[reg::addr::SREG]&128),
-            "IRQ-disabled rate switch did not drain controls or preserve IRQ state");
-        h.tick(); h.until([&]{return h.boundary();});
-        h.quiet();
-        h.c().data[reg::addr::SREG]|=128; h.c().prev_sreg|=128;
     });
 }
 void handoff(harness& h) {

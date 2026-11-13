@@ -129,6 +129,7 @@ The allocation is valid subject to these rules:
 
 5. `MUL16` preserves its original destination in native `Z`, because native `r4:r5` hold the PC.
 6. Interrupt handlers must preserve any interpreter registers they clobber and must preserve `GPIOR0`. All ISRs must save exactly the native state they use.
+7. Normal interpreter execution, SYS services and fatal-trap entry run with interrupts enabled. Foreground atomic sections use `CLI` followed by `SEI`; they do not save native `SREG` merely to restore its interrupt-enable bit. Startup and ISR bodies have separate interrupt-state requirements. Save native flags when they carry a live arithmetic or T-bit value, and restore interrupted `SREG` in ISRs. Architectural flags remain in `GPIOR0` independently of these foreground critical sections.
 
 The permanent-one register materially shortens `INC16`, `DEC16`, and `BOOL`. The permanent-four register is essential to dispatch and is also useful for known four-byte PC advances. It does not justify a separate width-four page decoder, because duplicating the decoder tail would cost more code than the saved multiplier load.
 

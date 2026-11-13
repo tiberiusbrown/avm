@@ -17,8 +17,8 @@ void require(bool condition, const char *message) {
 }
 
 // Assert the concrete workspace layout independently of the assembler aliases.
-// The first byte outside it is 0xABB.
-constexpr unsigned workspace = 0xa73, source = workspace + 16;
+// The first byte outside it is 0xABF.
+constexpr unsigned workspace = 0xa77, source = workspace + 16;
 constexpr unsigned digits = workspace + 21, args = workspace + 43;
 constexpr unsigned count = workspace + 49, nonzero = workspace + 52;
 constexpr unsigned mode = workspace + 53, integer_value = workspace + 58;

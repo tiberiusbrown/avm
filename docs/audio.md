@@ -1014,6 +1014,32 @@ and release restores the current attenuated music. Changes affect already
 playing notes through the usual atomic control publication. An enabled tonal
 filter can leave a brief decay after muting.
 
+`avm_audio_get_music()` returns the original 24-bit music asset pointer while
+playing or paused, or null when stopped. `avm_audio_get_volume()`,
+`avm_audio_get_music_volume()` and `avm_audio_get_sfx_volume()` read the current
+shared gain and independent attenuations. These runtime getters read existing
+audio RAM directly without additional interpreter code or persistent SRAM.
+
+`avm_audio_play_fade(song)` returns after saving the current music attenuation
+in `fade_volume` and the requested 24-bit asset pointer in `fade_song`. While
+`fade_volume` is nonzero, each elapsed 4 ms control tick lowers music
+attenuation by one and prepares updated channel gains. Reaching zero restores
+the saved attenuation, clears `fade_volume` and starts the queued asset through
+the normal PLAY initialization path. The slope is always 250 gain steps/second:
+255 takes 1020 ms, 128 takes 512 ms, and zero starts immediately at zero gain.
+The game and display continue updating, with no guest-side fade loop. The
+master gain, SFX gain and SFX ownership are unaffected.
+
+A new fade request replaces the queued song and captures the then-current
+music attenuation. Immediate music PLAY, stop and disable cancel the queue
+without restoring its saved gain. Pause freezes music sequencing but does not
+freeze the fade clock. If the current song ends, a pending fade still runs.
+Queueing while stopped also uses the current attenuation as its fade interval;
+use ordinary PLAY for an immediate initial start. Normal elapsed-time catch-up
+subtracts all due gain steps, commits the resulting state, and advances a newly
+started song only by ticks remaining after the handoff. No per-sample ISR work
+is added, and there is one queued pointer rather than an allocated playlist.
+
 ### Global tonal low-pass
 
 `avm_audio_lowpass(level)` smooths the combined tonal channels 0..2 before
@@ -1305,26 +1331,103 @@ bit 6 is unused. Timer1 copies all controls then reseeds before the next sample.
 Transient commands are not retained with desired state. Foreground never
 writes live noise while Timer1 can run. IRQ-disabled/stopped output applies
 packets directly; rate switching explicitly carries no reseed command.
+Public SYS audio operations and normal audio service enter with interrupts
+enabled. Their foreground atomic sections use `CLI`/`SEI` for tick draining,
+output enable/disable, filter updates and rate changes. Native `SREG` is not
+saved just to retain its I bit. The low-level packet commit helpers still
+support direct application with interrupts disabled, without enabling them;
+this does not extend the public SYS entry contract.
 SFX release restores the current music waveform, including changes made while
 music was hidden. Pause/resume and rate changes retain waveform state and
 phase; stop silences the owner. Direct tones initialize pulse and duty 128.
 
-| Persistent state | Bytes |
-| --- | ---: |
-| Pending ticks, boot-hold byte, shared master | 3 |
-| Live increments/amplitudes, duty and waveform | 16 |
-| Phases and noise LFSR | 9 |
-| Desired music voices / SFX slots | 16 / 8 |
-| Music / SFX stream records | 10 / 7 |
-| Pending latch and descriptor | 17 |
-| Held sample, rate and music loop setting | 3 |
-| Tonal low-pass level / byte history | 1 / 1 |
-| Prepared low-pass coefficient | 1 |
-| Music / SFX attenuation | 2 |
-| Total | 94 |
+The following is the complete interpreter-private timer/audio RAM layout from
+`interp/interp.asm`. Addresses are hexadecimal AVR data-space addresses;
+all multi-byte integers and 24-bit image-relative program pointers are
+little-endian and byte-aligned. Persistent state occupies 98 bytes. Startup
+clears it before `audio_init_func` sets the nonzero defaults noted below.
 
-Audio occupies 0A15..0A72, private end 0A73. Existing 72-byte formatter/text
-scratch ends at 0ABB, leaving 69 bytes for native stack. Audio aliases 20 scratch
+| Address(es) | Assembler symbol | Bytes | Encoding / purpose |
+| --- | --- | ---: | --- |
+| `0A15` | `data_audio_ticks_pending` / `data_audio_begin` | 1 | Pending elapsed 4 ms ticks, saturating at 255; Timer0 increments and foreground atomically drains it. |
+| `0A16` | `data_boot_hold` | 1 | Timer0's bootloader-chord hold count, sampled every 32 ms; release clears it, count 48 triggers reset. |
+| `0A17` | `data_audio_volume` | 1 | Shared post-mix gain 0..255, 32=unity; default 128. |
+| `0A18..0A23` | `data_audio_controls` | 12 | Four live three-byte `(uint16 increment, uint8 amplitude)` records in physical channel order. Amplitudes 0..31, or 255 for stopped. |
+| `0A24..0A26` | `data_audio_duty` | 3 | Live pulse thresholds for channels 0..2, each 0..255; default 128. |
+| `0A27` | `data_audio_waveform` | 1 | Live waveform flags: bits 0..2 non-pulse, bits 3..5 saw, bits 6..7 reserved. Defaults to pulse on all channels. |
+| `0A28..0A2F` | `data_audio_phases` | 8 | Four uint16 oscillator phases, physical channel order; advance modulo 65536, initially zero. |
+| `0A30` | `data_audio_noise` | 1 | Noise Galois LFSR state; default seed 1, feedback B8. |
+| `0A31..0A40` | `data_audio_music_notes` | 16 | Four desired four-byte voice records, physical channel order; format below. |
+| `0A41..0A48` | `data_audio_sfx_notes` | 8 | Two desired four-byte voice records: tonal slot then noise slot; direct tonal commands can route the tonal slot to channels 0..2. |
+| `0A49..0A52` | `data_audio_music` | 10 | Music stream record; all fields below. |
+| `0A53..0A59` | `data_audio_sfx` | 7 | SFX stream record; all fields below. |
+| `0A5A..0A68` | `data_audio_update_controls` | 15 | Unpublished staging records: four live-format triples followed by three pulse thresholds. |
+| `0A69` | `data_audio_update_waveform` | 1 | Staged waveform flags in the same format as `data_audio_waveform`; the sixteenth latch byte. |
+| `0A6A` | `data_audio_update` | 1 | Publication descriptor: bit 7 ready, bits 0..5 optional noise seed 1..63 (zero means no reseed), bit 6 unused; zero acknowledges consumption. |
+| `0A6B` | `data_audio_sample` | 1 | Held biased PWM sample 0..255; 128 is silence. Primed to 128 when enabling output, then replaced by Timer1 synthesis. |
+| `0A6C` | `data_audio_rate` | 1 | Synthesis rate selector: 0=7812.5 Hz, 1=15625 Hz (default). |
+| `0A6D` | `data_audio_music_loop` | 1 | Zero stops music at End; any nonzero value rewinds. Default zero. |
+| `0A6E` | `data_audio_lowpass` | 1 | Requested tonal low-pass coefficient: zero bypasses, 1..255 enables; default zero. |
+| `0A6F` | `data_audio_lowpass_state` | 1 | Biased tonal filter history 0..255, initialized to silent 128. |
+| `0A70` | `data_audio_lowpass_coefficient` | 1 | Effective filter coefficient for the selected synthesis rate, prepared in foreground; default zero. |
+| `0A71` | `data_audio_music_volume` | 1 | Independent music attenuation: 0=mute, 255=full volume (default). |
+| `0A72` | `data_audio_sfx_volume` | 1 | Independent SFX/direct-tone attenuation, same range and default. |
+| `0A73` | `data_audio_fade_volume` | 1 | Saved music attenuation; nonzero arms the fade. Zero means no queued fade. Cleared at startup, handoff or cancellation. |
+| `0A74..0A76` | `data_audio_fade_song` | 3 | Queued image-relative music asset pointer, little-endian uint24; meaningful only while the fade is armed. Retained after handoff/cancellation. |
+| `0A77` | `data_audio_end` / `data_end_private` | 0 | Exclusive persistent-state end and beginning of aliased call-lifetime workspace. |
+
+Desired voice records have a canonical 15625 Hz uint16 increment at offsets
+0..1 (zero means note-off), a volume/wave byte at offset 2 and pulse duty at
+offset 3. The volume/wave byte uses bits 0..4 for volume 0..31 and bits 5..6
+for pulse `00`, triangle `20`, or saw `60`; bit 7 is clear after parsing the
+stream's optional extension. Noise does not use waveform or duty. PLAY
+initializes its bank to pitch off, volume 24, pulse and duty 128; these desired
+values remain separate from rate-scaled live increments and attenuated live
+amplitudes. Hidden music continues updating its desired bank while SFX owns a
+voice. Phase, LFSR and filter history belong to synthesis, not to either stream.
+
+Both stream records use these fields; only music has `AUDIO_START`:
+
+| Offset / symbol | Music address(es) | SFX address(es) | Bytes | Encoding / purpose |
+| --- | --- | --- | ---: | --- |
+| 0 / `AUDIO_CURSOR` | `0A49..0A4B` | `0A53..0A55` | 3 | Image-relative cursor to the next event payload; advances only by consumed bytes. |
+| 3 / `AUDIO_WAIT` | `0A4C..0A4D` | `0A56..0A57` | 2 | Remaining 4 ms ticks before the event, 1..256 while waiting; paused music freezes it. |
+| 5 / `AUDIO_STATUS` | `0A4E` | `0A58` | 1 | Music: 0 stopped, 1 playing, 2 paused. SFX: 0 stopped, 1 sequencing, 2 latched direct tone with no event advancement. |
+| 6 / `AUDIO_MASK` | `0A4F` | `0A59` | 1 | Physical ownership bits 0..3. Sequenced SFX uses bits 1 and/or 3; direct tones select one channel. Muting retains ownership. |
+| 7 / `AUDIO_START` | `0A50..0A52` | — | 3 | Original image-relative music asset pointer, including its ownership header; retained across pause/stop and used to rewind past the header. |
+
+The audio service's complete transient workspace aliases the formatter/text
+workspace. It is valid only during nonnested foreground audio work; no timer
+ISR accesses these scratch bytes:
+
+| Address(es) | Assembler symbol | Bytes | Encoding / purpose |
+| --- | --- | ---: | --- |
+| `0A77` | `data_audio_dirty` | 1 | Nonzero if sequencing or a fade changed desired controls/gains and needs a commit; cleared on service entry. |
+| `0A78` | `data_audio_reseed` | 1 | Transient pending audible noise seed 1..63, or zero for no retrigger; cleared on service/command entry and when preparing publication. |
+| `0A79..0A8A` | `data_audio_event` | 18 | Maximum music event read-ahead (`AUDIO_EVENT_BYTES`): mask, eight pitch bytes, eight extended-control bytes and next delta. SFX reads at most ten bytes. Only consumed bytes advance the cursor. |
+
+Foreground owns desired banks, stream records, gains, rate/loop/filter settings,
+fade volume/song and staging bytes. It waits for acknowledgement before reusing staging and
+publishes the descriptor in one byte store. `audio_apply_update` copies all 16
+staged bytes into the live latch before acknowledging, and applies any seed
+and noise-phase reset. Timer1 normally applies packets after the fixed PWM
+store; foreground applies them directly only with synthesis unavailable or
+interrupts disabled. Timer1 updates phases, LFSR, held sample and filter
+history. Initialization, output restart and explicit control operations also
+write the state described above under their documented synchronization rules.
+
+The runtime getters in `runtime/lib/audio_state.c` depend on this layout.
+`avm_audio_get_music()` reads status and returns that start pointer when playing
+or paused, or null when stopped, even if the retained start bytes are nonzero.
+The volume getters read `0A17`, `0A71` and `0A72` as unsigned bytes. These are
+volatile reads of existing state, with no SYS service or duplicated storage.
+Only foreground sequencing/control changes the stream status and start pointer;
+timer ISRs do not write them. A layout change must update these runtime getters
+and their tests together with the interpreter. The runtime and interpreter in
+a packaged SDK must agree on these addresses.
+
+Audio occupies 0A15..0A76, private end 0A77. Existing 72-byte formatter/text
+scratch ends at 0ABF, leaving 65 bytes for native stack. Audio aliases 20 scratch
 bytes: dirty, transient reseed and 18-byte event buffer; persistent state and
 the pending packet never alias scratch. Guest memory addresses are unchanged.
 Assembler assertions retain the single-SRAM-page and minimum-stack constraints.
@@ -1336,7 +1439,7 @@ cycles; all-stopped output takes 79 cycles. At default gain, measured all-active
 ordinary/pending maxima are 205/282 cycles with filtering off and 219/296
 with any named filter preset at either sample rate. Other gains have different output paths.
 PWM writes remain at 21 cycles at both rates and all levels. FX, FX-C and Mini
-firmware is 28920 bytes, leaving 776 bytes below the 29696-byte boundary.
+firmware is 29036 bytes, leaving 660 bytes below the 29696-byte boundary.
 Independent attenuation adds 44 flash bytes and two SRAM bytes. Preparing a
 four-active-voice packet adds at most 44 cycles (2.75 us at 16 MHz), with no
 additional sample-interrupt work. At 250 packets/s this adds 0.069 percentage

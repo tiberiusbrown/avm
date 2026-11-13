@@ -16,6 +16,8 @@ int avm_test_main(void) {
     avm_audio_music_loop(1);
     avm_audio_play(song);
     if(avm_audio_status()!=1) return 1;
+    if(avm_audio_get_music()!=song || avm_audio_get_volume()!=128 ||
+       avm_audio_get_music_volume()!=255 || avm_audio_get_sfx_volume()!=255) return 14;
     uint16_t start=avm_millis();
     for(unsigned i=0;i<100;++i) {
         /* Native libm borrows the usual zero register. Timer ISRs must work
@@ -33,6 +35,7 @@ int avm_test_main(void) {
     if(avm_audio_status()!=5) return 5;
     avm_audio_pause();
     if(avm_audio_status()!=6) return 6;
+    if(avm_audio_get_music()!=song) return 15;
     avm_audio_stop_sfx();
     if(avm_audio_status()!=2) return 7;
     avm_audio_rate(AVM_AUDIO_RATE_8KHZ);
@@ -41,6 +44,10 @@ int avm_test_main(void) {
     avm_audio_volume(16);
     avm_audio_music_volume(0);
     avm_audio_sfx_volume(255);
+    if(avm_audio_get_volume()!=16 || avm_audio_get_music_volume()!=0 ||
+       avm_audio_get_sfx_volume()!=255) return 16;
+    avm_audio_play_fade(song); /* Zero gain starts immediately, through the public ABI. */
+    if(avm_audio_get_music()!=song || avm_audio_get_music_volume()!=0) return 18;
     if(avm_audio_status()!=1) return 11;
     avm_audio_tone(69,31);
     if(avm_audio_status()!=5) return 10;
@@ -54,6 +61,7 @@ int avm_test_main(void) {
     avm_audio_stop_sfx();
     avm_audio_stop();
     if(avm_audio_status()!=0) return 9;
+    if(avm_audio_get_music()!=0) return 17;
     avm_audio_disable();
     avm_audio_lowpass(AVM_AUDIO_LOWPASS_DEFAULT);
     return 0;

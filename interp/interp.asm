@@ -54,8 +54,8 @@
 ;;     0x0A09–0x0A0B  selected raw sprite pointer (little-endian uint24)
 ;;     0x0A0C–0x0A0D  selected sprite width and height
 ;;     0x0A0E–0x0A14  selected text glyph-table base/header/mode
-;;     0x0A15–0x0A72  persistent timer/audio state (94 bytes)
-;;     0x0A73–0x0ABA  aliased formatter/text or audio service workspace
+;;     0x0A15–0x0A76  persistent timer/audio state (98 bytes)
+;;     0x0A77–0x0ABE  aliased formatter/text or audio service workspace
 ;;     ...–0x0AFF       remaining interpreter-private / native hardware stack
 
 #define data_globals    0x0100
@@ -105,7 +105,10 @@
 ; Independent owner attenuation, 0=mute / 255=full volume.
 #define data_audio_music_volume      (data_audio_lowpass_coefficient+1)
 #define data_audio_sfx_volume        (data_audio_music_volume+1)
-#define data_audio_end               (data_audio_sfx_volume+1)
+; Nonzero saved gain arms the asynchronous fade; the queued pointer stays 24-bit.
+#define data_audio_fade_volume       (data_audio_sfx_volume+1)
+#define data_audio_fade_song         (data_audio_fade_volume+1)
+#define data_audio_end               (data_audio_fade_song+3)
 
 ; Stream records share cursor/wait/status/mask; only music has a loop start.
 ; All program pointers are image-relative, little-endian uint24.
@@ -115,8 +118,8 @@
 #define AUDIO_MASK    6
 #define AUDIO_START   7
 
-.if (data_audio_end - data_audio_begin) != 94
-    .error "audio persistent SRAM must occupy 94 bytes"
+.if (data_audio_end - data_audio_begin) != 98
+    .error "audio persistent SRAM must occupy 98 bytes"
 .endif
 .if (data_audio_begin >> 8) != ((data_audio_end-1) >> 8)
     .error "audio compact pointers must fit in one SRAM page"
@@ -15186,23 +15189,28 @@ format_ftoa_base10:
 .endm
 
 audio_service_func:
-    in   r31, SREG
+    ; Normal-context entry: interrupts are enabled outside this atomic drain.
     cli
     lds  r30, data_audio_ticks_pending
     sts  data_audio_ticks_pending, ZERO
-    out  SREG, r31
+    sei
     lds  r24, data_audio_music+AUDIO_STATUS
     lds  r25, data_audio_sfx+AUDIO_STATUS
+    or   r24, r25
+    lds  r25, data_audio_fade_volume
     or   r24, r25
     breq .Laudio_service_done
     audio_save
     mov  r21, r30
     sts  data_audio_dirty, ZERO
     sts  data_audio_reseed, ZERO
+    push r21 ; SFX always consumes the complete elapsed interval
+    rcall audio_fade_advance
     ldi  r16, lo8(data_audio_music)
     ldi  r17, hi8(data_audio_music)
     ldi  r18, lo8(data_audio_music_notes)
     rcall audio_advance
+    pop  r21
     ldi  r16, lo8(data_audio_sfx)
     ldi  r18, lo8(data_audio_sfx_notes) ; compact slots map to physical voices 1/3
     rcall audio_advance
@@ -15214,6 +15222,72 @@ audio_service_func:
     audio_restore
 .Laudio_service_done:
     ret
+
+; r21 = elapsed 4 ms ticks. Catch-up fades have the same slope as single ticks.
+; On handoff, only the remaining interval belongs to the newly started music.
+audio_fade_advance:
+    lds  r25, data_audio_fade_volume
+    tst  r25
+    breq 1f
+    tst  r21
+    breq 1f
+    sts  data_audio_dirty, ONE
+    lds  r24, data_audio_music_volume
+    cp   r21, r24
+    brsh 2f
+    sub  r24, r21
+    sts  data_audio_music_volume, r24
+1:
+    ret
+2:
+    sub  r21, r24
+    sts  data_audio_music_volume, r25
+    sts  data_audio_fade_volume, ZERO
+    lds  r24, data_audio_fade_song
+    lds  r25, data_audio_fade_song+1
+    lds  r26, data_audio_fade_song+2
+audio_play_music:
+    ldi  r16, lo8(data_audio_music)
+    ldi  r17, hi8(data_audio_music)
+    ldi  r18, lo8(data_audio_music_notes)
+; r24:r25:r26 = asset pointer, r16:r17 = stream, r18 = desired bank.
+; Both immediate PLAY and a completed fade use this initialization path.
+; r21 is preserved for elapsed-time catch-up after a queued start.
+audio_play_stream:
+    movw r30, r16
+    cpi  r16, lo8(data_audio_music)
+    brne 1f
+    sts  data_audio_fade_volume, ZERO ; immediate music PLAY cancels its queue
+    std  Z+AUDIO_START, r24
+    std  Z+AUDIO_START+1, r25
+    std  Z+AUDIO_START+2, r26
+1:
+    std  Z+AUDIO_CURSOR, r24
+    std  Z+AUDIO_CURSOR+1, r25
+    std  Z+AUDIO_CURSOR+2, r26
+    std  Z+AUDIO_STATUS, ONE
+    std  Z+AUDIO_MASK, ZERO
+    mov  r30, r18
+    ldi  r19, 4
+    cpi  r16, lo8(data_audio_sfx)
+    brne 1f
+    ldi  r19, 2
+1:
+    ldi  r25, 24
+    ldi  r20, 128
+2:
+    st   Z+, ZERO
+    st   Z+, ZERO
+    st   Z+, r25
+    st   Z+, r20
+    dec  r19
+    brne 2b
+    rcall audio_read_event
+    ld   r24, X+
+    movw r30, r16
+    std  Z+AUDIO_MASK, r24
+    rcall audio_event_finish
+    rjmp audio_enable
 
 ; Fetch a complete maximum-size event in one interruptible FX transaction.
 ; Also used for the initial header/delta and the first delta after rewind.
@@ -15564,40 +15638,12 @@ sys_audio_impl:
 1:
     cpi  r24, 2
     brsh .Laudio_command
-    ; PLAY: q2[23:0] pointer to a stream ending with End. r6 is unused.
-    tst  r24
-    brne 1f
-    std  Z+AUDIO_START, VM_R4L
-    std  Z+AUDIO_START+1, VM_R4H
-    std  Z+AUDIO_START+2, VM_R5L
-1:
-    std  Z+AUDIO_CURSOR, VM_R4L
-    std  Z+AUDIO_CURSOR+1, VM_R4H
-    std  Z+AUDIO_CURSOR+2, VM_R5L
-    std  Z+AUDIO_STATUS, ONE
-    std  Z+AUDIO_MASK, ZERO
+    ; Copy arguments before borrowing the VM registers for stream preparation.
+    movw r24, VM_R4L
+    mov  r26, VM_R5L
     movw r16, r30
     mov  r18, r19
-    mov  r30, r19
-    ldi  r24, 4
-    sbrc VM_R7L, 0
-    ldi  r24, 2
-    ldi  r25, 24
-1:
-    st   Z+, ZERO
-    st   Z+, ZERO
-    st   Z+, r25
-    ldi  r20, 128
-    st   Z+, r20
-    dec  r24
-    brne 1b
-    rcall audio_read_event
-    ld   r24, X+
-    ; Music and SFX begin with the same physical ownership mask, no magic.
-    movw r30, r16
-    std  Z+AUDIO_MASK, r24
-    rcall audio_event_finish
-    rcall audio_enable
+    rcall audio_play_stream
     rjmp .Laudio_command_commit
 .Laudio_command:
     cpi  r24, 2 ; stop music
@@ -15645,8 +15691,13 @@ sys_audio_impl:
     brne 1f
     rjmp .Laudio_tone
 1:
+    cpi  r24, 16 ; queue music with asynchronous fade
+    brne 1f
+    rjmp .Laudio_play_fade
+1:
     rjmp .Laudio_command_done ; reserved commands ignored
 .Laudio_stop_music:
+    sts  data_audio_fade_volume, ZERO
     sts  data_audio_music+AUDIO_STATUS, ZERO
     rjmp .Laudio_command_commit
 .Laudio_pause:
@@ -15678,10 +15729,10 @@ sys_audio_impl:
     rcall audio_enable
     rjmp .Laudio_command_done
 .Laudio_disable_command:
+    sts  data_audio_fade_volume, ZERO
     sts  data_audio_music+AUDIO_STATUS, ZERO
     sts  data_audio_sfx+AUDIO_STATUS, ZERO
     sts  data_audio_sfx+AUDIO_MASK, ZERO
-    in   r25, SREG
     cli
     sts  TIMSK1, ZERO
     sts  TCCR1B, ZERO
@@ -15689,7 +15740,7 @@ sys_audio_impl:
     sts  TCCR4B, ZERO
     cbi  PORTC, 6
     cbi  PORTC, 7
-    out  SREG, r25
+    sei
     ; Consume any pending packet and publish silence with the reader stopped.
     rcall audio_commit
     rjmp .Laudio_command_done
@@ -15715,7 +15766,6 @@ sys_audio_impl:
     jmp seek_and_dispatch_func_disabled
 
 .Laudio_lowpass:
-    in   r25, SREG
     cli
     lds  r24, data_audio_lowpass
     tst  r24
@@ -15726,10 +15776,10 @@ sys_audio_impl:
 1:
     sts  data_audio_lowpass, VM_R4L
     rcall audio_lowpass_prepare
-    out  SREG, r25
+    sei
     rjmp .Laudio_command_done
 
-; Foreground only, under CLI. Preserve r25 (saved SREG). At half the rate,
+; Foreground only, under CLI. At half the rate,
 ; alpha8 = min(255, 2*alpha16 - floor(alpha16^2/256)) squares the decay pole.
 audio_lowpass_prepare:
     lds  r24, data_audio_lowpass
@@ -15761,7 +15811,6 @@ audio_lowpass_prepare:
     rcall audio_commit_wait
     sts  data_audio_rate, VM_R4L
     rcall audio_commit_prepare
-    in   r25, SREG
     cli
     clr  r20 ; rate changes preserve noise state; no transient retrigger command
     rcall audio_apply_update
@@ -15776,14 +15825,13 @@ audio_lowpass_prepare:
     lds  r24, TIMSK1
     sbrc r24, OCIE1A
     rcall audio_timer1_start
-    out  SREG, r25
+    sei
     rjmp .Laudio_command_done
 
 audio_enable:
     lds  r24, TIMSK1
     tst  r24
     brne 1f
-    in   r25, SREG
     cli
     sts  TC4H, ZERO
     ldi  r24, 128
@@ -15797,11 +15845,11 @@ audio_enable:
     ldi  r24, _BV(CS40)
     sts  TCCR4B, r24
     rcall audio_timer1_start
-    out  SREG, r25
+    sei
 1:
     ret
 
-; Called with interrupts disabled; preserves r25 (saved SREG).
+; Called with interrupts disabled; caller re-enables them after timer setup.
 audio_timer1_start:
     ldi  r24, (_BV(WGM12) | _BV(CS11))
     sts  TCCR1B, r24
@@ -15857,6 +15905,22 @@ audio_enable_phase:
     ldi  r24, 2 ; latched direct tone, no event advancement
     sts  data_audio_sfx+AUDIO_STATUS, r24
     rcall audio_enable
+    rjmp .Laudio_command_commit
+
+.Laudio_play_fade:
+    sts  data_audio_fade_song, VM_R4L
+    sts  data_audio_fade_song+1, VM_R4H
+    sts  data_audio_fade_song+2, VM_R5L
+    lds  r24, data_audio_music_volume
+    sts  data_audio_fade_volume, r24
+    tst  r24
+    breq 1f
+    rjmp .Laudio_command_done
+1:
+    ; A zero starting volume has no fade interval and cannot arm the sentinel.
+    movw r24, VM_R4L
+    mov  r26, VM_R5L
+    rcall audio_play_music
     rjmp .Laudio_command_commit
 
 ; Timer0 compare-A fires once per millisecond. Preserve the interrupted native
@@ -16217,11 +16281,10 @@ trap_dispatch_func:
 
     ; B. Read trapEntry from header offset 0x0C now, not at startup. The
     ; header stream is the same one the startup code uses, and the image base
-    ; is in data_page_data. Native r22 and the caller's SREG are restored
-    ; before anything else, and interrupts are masked only for this read.
+    ; is in data_page_data. Restore native r22 after the read. Trap entry follows
+    ; the normal enabled-interrupt contract; native flags are scratch, while
+    ; architectural flags remain in GPIOR0 throughout.
     push r22
-    in   r30, SREG
-    push r30
     cli
     ; The interrupted fetch may still be shifting its last byte. Let that
     ; transfer finish before the first SPDR write, which is otherwise lost.
@@ -16241,12 +16304,11 @@ trap_dispatch_func:
     call  fx_startup_read_byte
     mov  r27, r30
     fx_disable
-    pop  r30
-    out  SREG, r30
+    sei
     pop  r22
 
     ; A zero handler address preserves the original fail-stop behavior. The
-    ; caller's registers, SREG, and interrupt state are already restored.
+    ; caller's registers and enabled-interrupt state are already restored.
     mov  r30, r24
     or   r30, r26
     or   r30, r27

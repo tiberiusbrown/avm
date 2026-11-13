@@ -652,10 +652,24 @@ void sequence(harness& h) {
                 h.c().data[sfxvolume]==255,"music fade changed SFX or master gain");
         }
         h.command(11,7); h.command(16,0x20000); h.elapsed(2);
-        h.command(16,queued);
-        require(h.c().data[fade_volume]==5,"replacement queue did not capture the current gain");
+        h.word(16,uint16_t(queued)); h.word(18,uint16_t(queued>>16)); h.word(22,16);
+        h.c().pc=uint16_t(h.sym("sys_audio_impl")); h.tick();
+        h.until([&]{return h.c().pc==h.sym("audio_queue_fade");});
+        h.tick(); // Replace just the low byte, then interrupt before the rest.
+        require(h.c().data[fade_song]==0xfd && h.word(fade_song+1)==0x0200,
+            "queue fixture did not expose a partially written 24-bit pointer");
+        auto resume=h.c().pc;
+        h.c().push(uint8_t(resume)); h.c().push(uint8_t(resume>>8));
+        h.c().data[reg::addr::SREG]&=0x7f; h.c().prev_sreg&=0x7f;
+        h.c().pc=uint16_t(h.sym("timer1_compa_isr"));
+        h.until([&]{return h.c().pc==resume;});
+        require(start()==queued && h.c().data[fade_volume]==7 && h.c().data[musicvolume]==5,
+            "sample ISR consumed a partially replaced fade queue");
+        h.until([&]{return h.boundary();});
+        require(h.c().data[fade_volume]==7 && h.c().data[musicvolume]==5,
+            "replacement queue changed the original gain or fade progress");
         h.elapsed(7);
-        require(start()==queued && h.c().data[musicvolume]==5 && h.word(music+3)==255,
+        require(start()==queued && h.c().data[musicvolume]==7 && h.word(music+3)==255,
             "queued song did not consume remaining catch-up time");
         for(unsigned cancel : {0u,2u,7u}) {
             h.command(16,0x20000); h.command(cancel,queued);

@@ -1020,8 +1020,20 @@ playing or paused, or null when stopped. `avm_audio_get_volume()`,
 shared gain and independent attenuations. These runtime getters read existing
 audio RAM directly without additional interpreter code or persistent SRAM.
 
-`avm_audio_play_fade(song)` returns after saving the current music attenuation
-in `fade_volume` and the requested 24-bit asset pointer in `fade_song`. While
+Additional RAM-backed getters expose the remaining playback settings and fade
+queue:
+
+| Getter | Result |
+| --- | --- |
+| `avm_audio_get_rate()` | Rate selector, `AVM_AUDIO_RATE_8KHZ` or `AVM_AUDIO_RATE_16KHZ`. |
+| `avm_audio_get_music_loop()` | Raw music loop byte; any nonzero value means enabled. |
+| `avm_audio_get_lowpass()` | Requested low-pass coefficient, before rate-dependent preparation. |
+| `avm_audio_get_fade_volume()` | Saved attenuation for the pending fade; zero means no fade is active. |
+| `avm_audio_get_fade_song()` | Queued 24-bit music pointer while a fade is active; null otherwise, even if stale pointer bytes remain. |
+
+With no fade active, `avm_audio_play_fade(song)` calls ordinary PLAY immediately
+if music is stopped. For playing or paused music, it saves the current music
+attenuation in `fade_volume` and the requested 24-bit asset pointer in `fade_song`. While
 `fade_volume` is nonzero, each elapsed 4 ms control tick lowers music
 attenuation by one and prepares updated channel gains. Reaching zero restores
 the saved attenuation, clears `fade_volume` and starts the queued asset through
@@ -1030,12 +1042,17 @@ the normal PLAY initialization path. The slope is always 250 gain steps/second:
 The game and display continue updating, with no guest-side fade loop. The
 master gain, SFX gain and SFX ownership are unaffected.
 
-A new fade request replaces the queued song and captures the then-current
-music attenuation. Immediate music PLAY, stop and disable cancel the queue
+A new request during a fade replaces only the queued song. It keeps the
+original saved attenuation and the current fade progress, so repeated calls
+neither lower the eventual restore gain nor restart the fade. An active fade
+takes priority over the runtime's stopped-music check: if the current song
+ends before handoff, a replacement request still updates that pending fade.
+Immediate music PLAY, stop and disable cancel the queue
 without restoring its saved gain. Pause freezes music sequencing but does not
 freeze the fade clock. If the current song ends, a pending fade still runs.
-Queueing while stopped also uses the current attenuation as its fade interval;
-use ordinary PLAY for an immediate initial start. Normal elapsed-time catch-up
+The raw interpreter queue command (SYS audio command 16) also queues while
+stopped; the public runtime wrapper checks the current RAM status and uses
+ordinary PLAY for an immediate initial start. Normal elapsed-time catch-up
 subtracts all due gain steps, commits the resulting state, and advances a newly
 started song only by ticks remaining after the handoff. No per-sample ISR work
 is added, and there is one queued pointer rather than an allocated playlist.
@@ -1416,11 +1433,23 @@ interrupts disabled. Timer1 updates phases, LFSR, held sample and filter
 history. Initialization, output restart and explicit control operations also
 write the state described above under their documented synchronization rules.
 
+Replacing `fade_song` is a foreground SYS transaction, not a guest-side
+multi-instruction pointer store. Audio service runs before the queue handler;
+it cannot consume the queue again until that handler finishes and dispatch
+resumes. Timer ISRs do not read or modify `fade_song` or `fade_volume`. They
+may therefore interrupt its three byte stores without consuming a torn
+24-bit pointer, and no additional interrupt mask is needed. The runtime wrapper
+always uses this SYS path for an active fade, even if the old song has ended.
+
 The runtime getters in `runtime/lib/audio_state.c` depend on this layout.
 `avm_audio_get_music()` reads status and returns that start pointer when playing
 or paused, or null when stopped, even if the retained start bytes are nonzero.
 The volume getters read `0A17`, `0A71` and `0A72` as unsigned bytes. These are
 volatile reads of existing state, with no SYS service or duplicated storage.
+Rate, looping and requested low-pass getters read `0A6C`, `0A6D` and `0A6E`;
+the fade getters read its saved gain at `0A73` and guarded 24-bit pointer at
+`0A74..0A76`. The effective coefficient at `0A70` is an internal prepared value
+and is not returned by `avm_audio_get_lowpass()`.
 Only foreground sequencing/control changes the stream status and start pointer;
 timer ISRs do not write them. A layout change must update these runtime getters
 and their tests together with the interpreter. The runtime and interpreter in
@@ -1439,7 +1468,7 @@ cycles; all-stopped output takes 79 cycles. At default gain, measured all-active
 ordinary/pending maxima are 205/282 cycles with filtering off and 219/296
 with any named filter preset at either sample rate. Other gains have different output paths.
 PWM writes remain at 21 cycles at both rates and all levels. FX, FX-C and Mini
-firmware is 29036 bytes, leaving 660 bytes below the 29696-byte boundary.
+firmware is 29044 bytes, leaving 652 bytes below the 29696-byte boundary.
 Independent attenuation adds 44 flash bytes and two SRAM bytes. Preparing a
 four-active-voice packet adds at most 44 cycles (2.75 us at 16 MHz), with no
 additional sample-interrupt work. At 250 packets/s this adds 0.069 percentage

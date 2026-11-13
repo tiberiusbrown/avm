@@ -15693,7 +15693,7 @@ sys_audio_impl:
 1:
     cpi  r24, 16 ; queue music with asynchronous fade
     brne 1f
-    rjmp .Laudio_play_fade
+    rjmp audio_queue_fade
 1:
     rjmp .Laudio_command_done ; reserved commands ignored
 .Laudio_stop_music:
@@ -15907,14 +15907,22 @@ audio_enable_phase:
     rcall audio_enable
     rjmp .Laudio_command_commit
 
-.Laudio_play_fade:
+audio_queue_fade:
+    ; Only foreground service consumes this pointer, before SYS handling or
+    ; after dispatch resumes. Timer ISRs never read it, so an interrupt between
+    ; these three byte stores cannot consume a partly replaced queue entry.
     sts  data_audio_fade_song, VM_R4L
     sts  data_audio_fade_song+1, VM_R4H
     sts  data_audio_fade_song+2, VM_R5L
+    ; Replacing the queued song must retain the original restore gain and slope.
+    lds  r24, data_audio_fade_volume
+    tst  r24
+    brne 2f
     lds  r24, data_audio_music_volume
     sts  data_audio_fade_volume, r24
     tst  r24
     breq 1f
+2:
     rjmp .Laudio_command_done
 1:
     ; A zero starting volume has no fade interval and cannot arm the sentinel.

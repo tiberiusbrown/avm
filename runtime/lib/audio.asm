@@ -38,4 +38,5 @@ audio_api avm_audio_sfx_volume, 12
 audio_api avm_audio_rate, 13
 audio_api avm_audio_music_loop, 14
 audio_api avm_audio_lowpass, 15
-audio_api avm_audio_play_fade, 16
+; Internal queue command; the public C wrapper handles an inactive music stream.
+audio_api __avm_audio_play_fade, 16

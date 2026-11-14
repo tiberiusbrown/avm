@@ -49,7 +49,15 @@ produce the short articulations without manually writing note-off events.
 
 Instruments select `volume` (0..31), pulse `duty` (0..255, default 128),
 an optional envelope and gate. Channels 0, 1, and 2 are identical pulse voices.
-Channel 3 produces LFSR noise; its note controls the noise update rate.
+Channel 3 uses 16-bit LFSR recurrence, clocked once per active sample.
+Its note is a sounding gate; pitch magnitude does not change noise timbre.
+Stopped noise freezes, while active volume zero keeps advancing. Explicit
+`noise_retrigger` seeds 1..63 select deterministic states using a table-free
+nibble-swap mapping, including while stopped. Use envelopes, volume, gates and
+retriggers for different drum sounds. Existing kick, snare, clap, tom, hat,
+open-hat and cymbal pitches remain valid gates; their former pitch-dependent
+noise textures now depend on those controls. Cymbal and roll retriggers remain
+in the generated scores. Binary assets and note choices are unchanged.
 
 For example, `instrument low { wave pulse duty 50% volume 9 }` followed by
 `channel 2 low octave 2 { c4 g }` plays two low quarter notes. The compiler

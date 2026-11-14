@@ -537,7 +537,8 @@ def harmony(notes, analysis, settings, preset, foundations=()):
     return result
 
 
-# Noise pitches are chosen for character/rate, never copied from GM drum keys.
+# Retained noise pitches are note-on gates, never copied from GM drum keys.
+# Drum character comes from amplitude, envelope, gate and explicit retriggers.
 DRUMS = {
     "kick": (43, 0.052, 5.0, 1.0), "snare": (67, 0.100, 4.6, 1.0),
     "clap": (72, 0.084, 4.4, 0.85), "hat": (90, 0.024, 1.0, 0.35),

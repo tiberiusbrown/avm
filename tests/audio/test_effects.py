@@ -255,6 +255,18 @@ class EffectTests(unittest.TestCase):
         self.assertEqual(at(states,20,3)["control"],0)
         self.assertNotEqual(at(states,32,3)["note"],0)
 
+    def test_noise_pitch_effects_still_emit_increment_updates(self):
+        # Increment magnitudes remain legal stream data even though synthesis
+        # treats them as gates. Preserve compiler behavior for existing scores.
+        for effect in ("frequency_slide { to g4 over 24ms }",
+                       "lfo { target pitch depth 120cents period 16ms }",
+                       "arpeggio { offsets 0,4,7 step 4ms }",
+                       "glissando { direction up step 1semitone every 4ms }"):
+            _, events = resolved(f"automation 4ms channel 3 {{ {effect} c:32ms }}")
+            pitches = [u[3]["note"] for _, u in events if "note" in u.get(3, {})]
+            self.assertGreater(len(set(pitches)), 1)
+            self.assertFalse(any("seed" in u.get(3, {}) for _, u in events))
+
     def test_seed_only_updates_are_never_deduplicated(self):
         source="sfx channel 3 { noise_retrigger { every 4ms seed 63 } c:16ms }"
         _, events=resolved(source)

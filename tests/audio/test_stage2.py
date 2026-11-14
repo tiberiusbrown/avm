@@ -33,6 +33,15 @@ if HAS_AUDIO:
     from avm_audio_render import decode, render
 
 
+def noise_next(state):
+    # Independent old-state expression of shifted-word feedback.
+    return ((state << 1) & 65535) | (((state >> 14) ^ (state >> 13)) & 1)
+
+
+def noise_seed(seed):
+    return seed | ((((seed << 4) | (seed >> 4)) & 255) << 8)
+
+
 def fixture(channels=(0,), duration=1.2):
     voices, instruments = {ch: [] for ch in range(4)}, {}
     for ch in channels:
@@ -135,7 +144,7 @@ class RenderTests(unittest.TestCase):
                                 if ch < 3:
                                     duties[ch] = ext
                                 else:
-                                    state, phases[3] = ext, 0
+                                    state = noise_seed(ext)
                         index += 1
                         if event.command == 1:
                             base += event.tick
@@ -146,9 +155,9 @@ class RenderTests(unittest.TestCase):
                         phases[ch] = total & 65535
                         amp = (controls[ch] & 31) if incs[ch] else 0
                         if ch == 3:
-                            if total > 65535:
-                                state = (state >> 1) ^ (0xb8 if state & 1 else 0)
-                            mix += -amp if state & 1 else amp
+                            if incs[ch]:
+                                state = noise_next(state)
+                            mix += -amp if state & 0x8000 else amp
                         else:
                             high = phases[ch] >> 8
                             sample = high-128 if controls[ch] & 64 else 2*min(high, 255-high)-127 if controls[ch] & 32 else (127 if high < duties[ch] else -127)
@@ -193,30 +202,100 @@ class RenderTests(unittest.TestCase):
             r = render(data, master=255)
             self.assertTrue(set(r.mix.tolist()).issubset({0, (31*255+16)//32, (-31*255+16)//32}))
 
-    def test_noise_scalar_lfsr_and_reseeding(self):
-        data = avm_music.compile_source("channel 3 { wave noise volume 8 noise_retrigger { every 32ms seed 37 } c:200ms }")
-        actual = render(data, rate=15625)
+    def check_noise_scalar(self, data, rate, duration=None, loop=False, master=32):
+        actual = render(data, rate=rate, duration=duration, loop=loop, master=master)
         events = decode(data)
-        phase, state, inc, amp, index = 0, 1, 0, 0, 0
+        state, inc, amp, index, base = 1, 0, 24, 0, 0
         expected = []
         for n in range(len(actual.pcm)):
-            if index < len(events) and n >= np.ceil(events[index].tick*15625/250):
-                e = events[index]
-                for _, value in e.pitches:
-                    inc = value
-                for _, volume, seed in e.controls:
-                    amp = volume*4
+            while index < len(events) and n >= np.ceil((base+events[index].tick)*rate/250):
+                event = events[index]
+                for _, value in event.pitches:
+                    inc = value  # its magnitude does not affect noise evolution
+                for _, volume, seed in event.controls:
+                    amp = volume & 31
                     if seed >= 0:
-                        phase, state = 0, seed
-                if e.command == 1:
-                    inc = 0
+                        state = noise_seed(seed)
                 index += 1
-            total = phase+inc
-            phase = total & 65535
-            if total > 65535:
-                state = (state >> 1) ^ (0xb8 if state & 1 else 0)
-            expected.append(128+((-amp if state & 1 else amp) if inc else 0))
-        np.testing.assert_array_equal(actual.pcm, expected)
+                if event.command == 1:
+                    if loop:
+                        index, base = 0, base+event.tick
+                    else:
+                        inc = 0
+            if inc:
+                state = noise_next(state)
+            value = (-amp if state & 0x8000 else amp) if inc else 0
+            expected.append((value*master+16)//32)
+        np.testing.assert_array_equal(actual.mix, expected)
+        np.testing.assert_array_equal(actual.pcm, np.clip(np.array(expected)+128, 0, 255))
+        return actual
+
+    def test_noise_scalar_lfsr_and_reseeding(self):
+        data = avm_music.compile_source("channel 3 { wave noise volume 8 noise_retrigger { every 32ms seed 37 } c:200ms }")
+        for rate in (7812.5, 15625):
+            self.check_noise_scalar(data, rate)
+
+    def test_noise_period_startup_and_all_63_seed_mappings(self):
+        from avm_audio_render import _cycle, _indices, noise_next as renderer_next, seed_state
+        cycle, state = [], 2
+        seen = set()
+        while state not in seen:
+            seen.add(state)
+            cycle.append(state)
+            state = noise_next(state)
+        self.assertEqual((len(cycle), state), (32767, 2))
+        np.testing.assert_array_equal(_cycle, cycle)
+        self.assertEqual(len(_indices), 32767)
+        self.assertEqual(noise_next(1), 2)
+        state = 1
+        for expected in (2, 4, 8, 16, 32, 64, 128, 256):
+            state = noise_next(state)
+            self.assertEqual(state, expected)
+        examples = {1: 0x1001, 2: 0x2002, 8: 0x8008, 16: 0x0110, 37: 0x5225, 63: 0xf33f}
+        self.assertEqual({s: noise_seed(s) for s in examples}, examples)
+        self.assertEqual(len({noise_seed(s) for s in range(1, 64)}), 63)
+        for seed in range(1, 64):
+            self.assertEqual(seed_state(seed), noise_seed(seed))
+            self.assertIn(noise_next(noise_seed(seed)), seen)
+            self.assertEqual(renderer_next(noise_seed(seed)), noise_next(noise_seed(seed)))
+            data = avm_music._encode_events(8, [(1, {3: {"increment": 1234, "volume": 17, "seed": seed}})], 20)
+            for rate in (7812.5, 15625):
+                self.check_noise_scalar(data, rate)
+        state, result = noise_seed(37), []
+        for _ in range(8):
+            state = noise_next(state)
+            result.append(state)
+        self.assertEqual(result, [0xa44b, 0x4897, 0x912f, 0x225e, 0x44bd, 0x897b, 0x12f6, 0x25ec])
+        self.assertEqual([s >> 15 for s in result], [1, 0, 1, 0, 0, 1, 0, 0])
+
+    def test_noise_pitch_changes_do_not_change_samples(self):
+        steady = "channel 3 { volume 31 noise_retrigger { every 16ms seed 37 } c:64ms }"
+        varied = "channel 3 { volume 31 noise_retrigger { every 16ms seed 37 } c:16ms octave 6 b:16ms octave 1 c:16ms octave 4 a:16ms }"
+        for rate in (7812.5, 15625):
+            a, b = (render(avm_music.compile_source(s), rate=rate) for s in (steady, varied))
+            np.testing.assert_array_equal(a.pcm, b.pcm)
+
+    def test_noise_stopped_muted_retrigger_loops_and_skipped_prefix(self):
+        # Seed-only commands are accepted while stopped; volume zero is active.
+        events = [(1, {3: {"increment": 0, "volume": 31, "seed": 37}}),
+                  (10, {3: {"increment": 1234}}), (18, {3: {"volume": 0}}),
+                  (24, {3: {"volume": 31}}), (32, {3: {"increment": 0}}),
+                  (40, {3: {"seed": 8}}), (50, {3: {"increment": 60000}}),
+                  (60, {3: {"seed": 37}})]
+        data = avm_music._encode_events(8, events, 72)
+        for rate in (7812.5, 15625):
+            actual = self.check_noise_scalar(data, rate, duration=2.1, loop=True)
+            for start in (.037, .091, .159, .211, 1.831):
+                partial = render(data, rate=rate, master=32, start=start, duration=.12, loop=True)
+                lo, hi = int(np.ceil(start*rate)), int(np.ceil((start+.12)*rate))
+                np.testing.assert_array_equal(partial.pcm, actual.pcm[lo:hi])
+        # Several minutes of silence must be skipped by event spans, not samples.
+        data = avm_music._encode_events(8, [(1, {3: {"seed": 37, "increment": 0}}),
+                                           (75000, {3: {"increment": 333, "volume": 31}})], 75020)
+        for rate in (7812.5, 15625):
+            full = render(data, rate=rate, master=32, duration=300.06)
+            partial = render(data, rate=rate, master=32, start=299.99, duration=.07)
+            np.testing.assert_array_equal(partial.pcm, full.pcm[int(np.ceil(299.99*rate)):])
 
     def test_phase_and_noise_state_are_preserved_across_skipped_prefix(self):
         data = avm_music.compile_source("channel 0 { duty 32 c:80ms duty 96 e:120ms } channel 3 { wave noise c:200ms }")

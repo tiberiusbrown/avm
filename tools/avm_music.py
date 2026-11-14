@@ -983,6 +983,8 @@ def compile_source(source, filename="<score>", automation_ms=None, max_updates=2
                 if channel != 3:
                     update["duty"] = max(0, min(255, math.floor(float(duty) + 0.5)))
                     update["wave"] = sound["wave"]
+                # Channel 3 retains full pitch/effect updates as note gates.
+                # Only the runtime/renderer map this one-byte seed to 16 bits.
                 retrigger = sound.get("noise_retrigger")
                 if retrigger and elapsed % retrigger["every"] == 0 and (elapsed or retrigger.get("onset", "yes") == "yes"):
                     update["seed"] = retrigger["seed"]

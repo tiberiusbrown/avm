@@ -86,8 +86,9 @@
 #define data_audio_duty              (data_audio_controls+12)
 #define data_audio_waveform          (data_audio_duty+3)
 #define data_audio_phases            (data_audio_waveform+1)
-#define data_audio_noise             (data_audio_phases+8)
-#define data_audio_music_notes       (data_audio_noise+1)
+#define data_audio_noise             (data_audio_phases+6)
+#define data_audio_noise_spare       (data_audio_noise+2)
+#define data_audio_music_notes       (data_audio_noise_spare+1)
 #define data_audio_sfx_notes         (data_audio_music_notes+16)
 #define data_audio_music             (data_audio_sfx_notes+8)
 #define data_audio_sfx               (data_audio_music+10)
@@ -118,6 +119,9 @@
 #define AUDIO_MASK    6
 #define AUDIO_START   7
 
+.if (data_audio_noise != 0x0a2e) || (data_audio_noise_spare != 0x0a30) || (data_audio_music_notes != 0x0a31)
+    .error "noise replacement must preserve the existing audio RAM layout"
+.endif
 .if (data_audio_end - data_audio_begin) != 98
     .error "audio persistent SRAM must occupy 98 bytes"
 .endif
@@ -15611,9 +15615,8 @@ audio_apply_update:
     andi r20, 63
     breq 1f
     sts  data_audio_noise, r20
-    clr  r0
-    sts  data_audio_phases+6, r0
-    sts  data_audio_phases+7, r0
+    swap r20
+    sts  data_audio_noise+1, r20
 1:
     clr  r0
     sts  data_audio_update, r0
@@ -16123,30 +16126,25 @@ audio_lowpass_begin:
 audio_lowpass_end:
 
 audio_noise_begin:
-    ; Active: 25 hold / 29 shift / 30 feedback cycles; stopped: 5.
+    ; Active: 24 cycles; stopped: 5. Muted active voices still advance.
     lds  r20, data_audio_controls+11
     cpi  r20, 255
     breq audio_noise_end
-    lds  r0, data_audio_phases+6
-    lds  r21, data_audio_phases+7
-    lds  r1, data_audio_controls+9
-    add  r0, r1
-    lds  r1, data_audio_controls+10
-    adc  r21, r1
-    sts  data_audio_phases+6, r0
-    sts  data_audio_phases+7, r21
-    ; LDS/STS preserve phase carry. Reuse r0 for the LFSR and r21 for
-    ; feedback/sign extension, keeping amplitude in r20 without a MOV.
+    ; recurrence: feedback from shifted bits 15/14, once per active sample.
     lds  r0, data_audio_noise
-    brcc .Laudio_noise_hold
-    lsr  r0
-    brcc .Laudio_noise_store
-    ldi  r21, 0xb8
-    eor  r0, r21
-.Laudio_noise_store:
+    lds  r21, data_audio_noise+1
+    lsl  r0
+    rol  r21
+    ldi  r20, 1
+    sbrc r21, 7
+    eor  r0, r20
+    sbrc r21, 6
+    eor  r0, r20
     sts  data_audio_noise, r0
-.Laudio_noise_hold:
-    sbrc r0, 0
+    sts  data_audio_noise+1, r21
+
+    lds  r20, data_audio_controls+11
+    sbrc r21, 7
     neg  r20
     add  r26, r20
 audio_noise_end:
@@ -16260,6 +16258,7 @@ audio_init_func:
     sts  data_audio_lowpass_state, r24
     ldi  r24, 1
     sts  data_audio_noise, r24
+    sts  data_audio_noise+1, ZERO
     sts  data_audio_rate, r24
     ldi  r24, 128 ; default shared post-mix gain is four times unity
     sts  data_audio_volume, r24

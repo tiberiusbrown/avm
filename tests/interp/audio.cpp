@@ -18,7 +18,7 @@
 using namespace absim;
 namespace {
 constexpr unsigned pending=0xa15, volume=0xa17, controls=0xa18, duties=0xa24,
-    waveform=0xa27, phases=0xa28, noise=0xa30, notes=0xa31, sfxnotes=0xa41,
+    waveform=0xa27, phases=0xa28, noise=0xa2e, noise_spare=0xa30, notes=0xa31, sfxnotes=0xa41,
     music=0xa49, sfx=0xa53, update_controls=0xa5a, update_waveform=0xa69, update=0xa6a,
     held_sample=0xa6b, rate=held_sample+1,
     music_loop=rate+1, lowpass=music_loop+1, lowpass_state=lowpass+1,
@@ -38,6 +38,14 @@ std::vector<unsigned> positions(std::initializer_list<unsigned> values) {
 std::vector<unsigned> threshold_positions(unsigned duty) {
     return positions({0,1,63,64,127,128,191,192,254,255,
         duty==0 ? 0 : duty-1,duty,std::min(duty+1,255u)});
+}
+uint16_t noise_next(uint16_t state) {
+    auto shifted=uint16_t(state<<1);
+    return uint16_t(shifted ^ (((shifted>>15) ^ (shifted>>14)) & 1));
+}
+uint16_t seed_state(unsigned seed) {
+    auto high=uint8_t((seed<<4)|(seed>>4));
+    return uint16_t(seed|(unsigned(high)<<8));
 }
 int output(int mix, unsigned master=32) {
     return std::clamp(128+int(std::floor((mix*int(master)+16)/32.)),0,255);
@@ -138,6 +146,8 @@ struct harness {
         require(c().data[volume]==128 && c().data[musicvolume]==255 && c().data[sfxvolume]==255,
             "default audio gains wrong");
         require(c().data[waveform]==0 && c().data[update_waveform]==0,"waveform must default to pulse");
+        require(word(noise)==1,"startup noise state must be 0x0001");
+        require(private_end==0xa77 && scratch_end==0xabf,"audio SRAM boundaries changed");
         if(isolated) {
             c().st(reg::addr::TIMSK0,0); c().st(reg::addr::TCCR0B,0);
             quiet();
@@ -467,7 +477,7 @@ void sequence(harness& h) {
             require(h.word(controls+3)==(owner&1 ? (flags&1 ? 7434 : 0) : harmony),"tonal slot must steal voice 1");
             require(h.word(controls+9)==(owner&2 ? (flags&2 ? 9320 : 0) : percussion),"noise slot route wrong");
             if(flags&4) require(h.c().data[duties+1]==32,"SFX duty extension lost");
-            if(flags&8) require(h.c().data[noise]==37 && h.word(phases+6)==0,"SFX seed extension lost");
+            if(flags&8) require(h.word(noise)==seed_state(37),"SFX seed extension lost");
             h.elapsed(4);
             require(h.c().data[sfx+6]==0 && h.word(controls+3)==harmony && h.word(controls+9)==percussion,
                 "SFX End did not restore current music");
@@ -520,7 +530,7 @@ void sequence(harness& h) {
         std::cout<<"maximum extended music service: "<<h.elapsed(1)<<" cycles\n";
         require(h.word(music)==12 && h.c().data[music+2]==3 && h.word(music+3)==1,
             "18-byte music read-ahead or 24-bit cursor wrong");
-        require(h.c().data[duties]==0 && h.c().data[duties+1]==255 && h.c().data[noise]==63,
+        require(h.c().data[duties]==0 && h.c().data[duties+1]==255 && h.word(noise)==seed_state(63),
             "simultaneous duty/seed controls lost");
         h.elapsed(1);
         require(h.c().data[duties]==32 && h.c().data[duties+2]==192,"multiple duty controls lost");
@@ -547,33 +557,33 @@ void sequence(harness& h) {
         std::array<uint8_t,32> expected;
         for(auto& value : expected) { h.synth_sample(); value=h.c().data[held_sample]; }
         h.elapsed(1);
-        require(h.c().data[noise]==37 && h.word(phases+6)==0,"seed-only update was lost");
+        require(h.word(noise)==seed_state(37),"seed-only update was lost");
         for(auto value : expected) { h.synth_sample(); require(h.c().data[held_sample]==value,"noise retrigger is not reproducible"); }
-        auto phase=h.word(phases+6);
+        auto state=h.word(noise);
         h.elapsed(1);
-        require(h.word(phases+6)==phase && h.word(controls+9)==0x8002,"ordinary noise pitch reset phase");
+        require(h.word(noise)==state && h.word(controls+9)==0x8002,"ordinary noise pitch reseeded state");
     });
     h.test("hidden music seeds never disturb SFX or replay on release",[&]{
         h.command(14,1);
         h.play({8,0,0x88,0x00,0x20,0x8a,37,1,0x80,0x87,41,1,0x80,0x86,43,1,0x80,0x85,47,255,0,1});
         h.play({8,0,136,0x00,0x40,0x8f,11,3,0,1},0x21000,true);
-        h.word(phases+6,0x1234);
+        h.word(noise,0x1234);
         h.elapsed(1);
-        require(h.c().data[noise]==11 && h.word(phases+6)==0x1234 && h.amplitude(3)==15,
+        require(h.word(noise)==0x1234 && h.amplitude(3)==15,
             "hidden music reseeded audible noise SFX");
         h.elapsed(3);
-        require(h.c().data[sfx+6]==0 && h.amplitude(3)==6 && h.c().data[noise]==11 && h.word(phases+6)==0x1234,
+        require(h.c().data[sfx+6]==0 && h.amplitude(3)==6 && h.word(noise)==0x1234,
             "SFX release replayed a stale music reseed");
         h.elapsed(2);
-        require(h.c().data[noise]==47 && h.word(phases+6)==0 && h.amplitude(3)==5,
+        require(h.word(noise)==seed_state(47) && h.amplitude(3)==5,
             "future music reseed did not resume");
     });
     h.test("tonal-only SFX End preserves simultaneous audible music reseed",[&]{
         h.play({8,0,0x88,0x00,0x20,0x8a,37,1,0x80,0x87,41,255,0,1});
         h.play({2,0,2,0x00,0x10,0,0,1},0x21000,true);
-        h.c().data[noise]=11;
+        h.word(noise,seed_state(11));
         h.elapsed(1);
-        require(h.c().data[sfx+6]==0 && h.c().data[noise]==41 && h.amplitude(3)==7,
+        require(h.c().data[sfx+6]==0 && h.word(noise)==seed_state(41) && h.amplitude(3)==7,
             "tonal-only SFX End discarded music retrigger");
     });
     h.test("raw pitch precision and phase-preserving modulation",[&]{
@@ -594,13 +604,13 @@ void sequence(harness& h) {
         h.play_midi({15,0,255,60,64,67,36,7,11,15,19,255,0,1});
         h.play_midi({12,0,0xcc,69,36,21,13,255,0,1},0x21000,true);
         auto musicwait=h.word(music+3), effectwait=h.word(sfx+3);
-        for(unsigned ch=0;ch<4;++ch) h.word(phases+2*ch,1234+ch);
+        for(unsigned ch=0;ch<4;++ch) h.word(ch==3 ? noise : phases+2*ch,1234+ch);
         h.command(11,128);
         require(h.amplitude(0)==4 && h.amplitude(1)==21 && h.amplitude(2)==8 && h.amplitude(3)==13,
             "music fade changed SFX or rounded incorrectly");
         h.command(11,0); h.command(12,0);
         for(unsigned ch=0;ch<4;++ch) {
-            require(h.amplitude(ch)==0 && h.word(phases+2*ch)==1234+ch,
+            require(h.amplitude(ch)==0 && h.word(ch==3 ? noise : phases+2*ch)==1234+ch,
                 "mute stopped or reset an oscillator");
             require(h.c().data[notes+4*ch+2]==7+4*ch,"fade changed desired music volume");
         }
@@ -702,10 +712,10 @@ void sequence(harness& h) {
     });
     h.test("volume-only and continue timing",[&]{
         h.play_midi({15,0,15,60,64,67,36,3,0xf0,7,8,9,10,9,0,1});
-        for(unsigned ch=0;ch<4;++ch) h.word(phases+2*ch,uint16_t(1234+ch));
+        for(unsigned ch=0;ch<4;++ch) h.word(ch==3 ? noise : phases+2*ch,uint16_t(1234+ch));
         auto cycles=h.elapsed(4);
         for(unsigned ch=0;ch<4;++ch)
-            require(h.word(phases+2*ch)==1234+ch && h.amplitude(ch)==7+ch,
+            require(h.word(ch==3 ? noise : phases+2*ch)==1234+ch && h.amplitude(ch)==7+ch,
                 "volume-only update changed phase or lost amplitude");
         std::cout<<"4-channel volume-only service: "<<cycles<<" cycles\n";
         h.play_midi({1,0,1,60,3,0,0,9,0,1});
@@ -937,7 +947,7 @@ void synthesis(harness& h) {
                 h.word(controls+3*ch,0); h.control(ch,0);
             }
             h.control(3,unsigned(std::abs(int(next)-128)));
-            h.c().data[noise]=next<128 ? 1 : 2;
+            h.word(noise,next<128 ? 0x4000 : 1);
             h.synth_sample();
             require(h.c().data[held_sample]==next,"sample construction wrong");
             for(unsigned r=0;r<32;++r)
@@ -954,8 +964,8 @@ void synthesis(harness& h) {
         auto latch=h.c().data;
         auto musicwait=h.word(music+3), effectwait=h.word(sfx+3);
         for(unsigned value=0;value<256;++value) {
-            for(unsigned ch=0;ch<4;++ch) h.word(phases+2*ch,0);
-            h.c().data[noise]=2; // positive noise, no phase overflow
+            for(unsigned ch=0;ch<3;++ch) h.word(phases+2*ch,0);
+            h.word(noise,1); // positive post-update noise
             h.command(5,value);
             require(h.c().data[volume]==value && h.c().data[musicvolume]==255 && h.c().data[sfxvolume]==255,
                 "global gain changed individual attenuation");
@@ -964,7 +974,7 @@ void synthesis(harness& h) {
                 unsigned desired=ch==1 ? 31 : 7+4*ch;
                 auto amp=desired;
                 require(h.amplitude(ch)==amp,"master gain did not prepare owner amplitude");
-                require(h.word(phases+2*ch)==0,"master gain reset phase");
+                require(ch==3 ? h.word(noise)==1 : h.word(phases+2*ch)==0,"master gain reset oscillator");
                 for(unsigned byte=0;byte<2;++byte)
                     require(h.c().data[controls+3*ch+byte]==latch[controls+3*ch+byte],
                         "master gain changed note increment");
@@ -1036,10 +1046,10 @@ void synthesis(harness& h) {
                 auto contribution=std::min(left,31u); left-=contribution;
                 auto amp=ch==3 ? contribution : amplitude_for[mix<0][contribution];
                 h.word(controls+3*ch,0); h.control(ch,amp);
-                h.word(phases+2*ch,ch<3 && mix<0 ? 0x8000 : 0);
+                if(ch<3) h.word(phases+2*ch,mix<0 ? 0x8000 : 0);
             }
             require(left==0,"mix construction exceeded capacity");
-            h.c().data[noise]=mix<0 ? 1 : 2;
+            h.word(noise,mix<0 ? 0x4000 : 1);
             auto duty=output(mix,128);
             clippedlow+=mix < -32; clippedhigh+=mix > 31;
             h.c().data[reg::addr::TC4H]=3; // ISR must clear the shared high latch
@@ -1053,16 +1063,16 @@ void synthesis(harness& h) {
         require(clippedlow && clippedhigh,"gain test missed a saturation polarity");
         // Two loud positive tones must cancel against tone 2 and noise before clipping.
         for(unsigned ch=0;ch<4;++ch) {
-            h.control(ch,31); h.word(phases+2*ch,ch==2 ? 0x8000 : 0);
+            h.control(ch,31); if(ch<3) h.word(phases+2*ch,ch==2 ? 0x8000 : 0);
         }
-        h.c().data[noise]=1;
+        h.word(noise,0x4000);
         h.synth_sample();
         require(h.c().data[held_sample]==128,"mix clipped before contributions cancelled");
         h.c().data[2]=zero;
         std::cout<<"saturation reference: 249 signed byte mixes, "<<clippedlow
             <<" low and "<<clippedhigh<<" high saturations passed\n";
     });
-    h.test("mixed pulse gains noise overflow and clipping",[&]{
+    h.test("mixed pulse gains noise polarity and clipping",[&]{
         auto zero=h.c().data[2]; h.c().data[2]=0x5a;
         auto regs=h.c().data; auto sp=h.c().sp();
         for(unsigned amp=0;amp<=31; amp+=3) for(unsigned duty : {0u,1u,32u,64u,128u,192u,255u})
@@ -1076,13 +1086,13 @@ void synthesis(harness& h) {
                 mix+=int(std::floor(sample(threshold,position)*int(a)/128.+0.5));
             }
             auto noiseamp=(amp+87)%32;
-            h.word(phases+6,path ? 65535 : 0); h.word(controls+9,path ? 1 : 0); h.control(3,noiseamp);
-            uint8_t seed=path==2 ? 2 : 1; h.c().data[noise]=seed;
-            if(path) seed=uint8_t((seed>>1)^((seed&1)?0xb8:0));
-            mix+=(seed&1) ? -int(noiseamp) : int(noiseamp);
+            h.word(controls+9,path ? 1 : 0); h.control(3,noiseamp);
+            auto seed=uint16_t(path==2 ? 0x6000 : path==1 ? 0x4000 : 1);
+            h.word(noise,seed); seed=noise_next(seed);
+            mix+=(seed&0x8000) ? -int(noiseamp) : int(noiseamp);
             h.synth_sample();
             require(h.c().data[held_sample]==std::clamp(128+mix,0,255),"mixed pulse/noise gain incorrect");
-            require(h.c().data[noise]==seed,"noise LFSR path changed");
+            require(h.word(noise)==seed,"noise LFSR path changed");
             for(unsigned r=0;r<32;++r) require(h.c().data[r]==regs[r],"mixed ISR corrupted registers");
             require(h.c().sp()==sp,"mixed ISR leaked stack");
         }
@@ -1161,14 +1171,13 @@ void synthesis(harness& h) {
                 h.word(controls+3*ch,1097); h.word(phases+2*ch,uint16_t((p<<8)-1097));
                 mix+=int(std::floor(value*int(amp)/128.+0.5));
             }
-            uint8_t seed=path==2 ? 2 : 1;
-            h.control(3,amp); h.word(controls+9,path ? 1 : 0); h.word(phases+6,path ? 65535 : 0);
-            h.c().data[noise]=seed;
-            if(path) seed=uint8_t((seed>>1)^((seed&1)?0xb8:0));
-            mix+=(seed&1) ? -int(amp) : int(amp);
+            auto seed=uint16_t(path==2 ? 0x6000 : path==1 ? 0x4000 : 1);
+            h.control(3,amp); h.word(controls+9,path ? 1 : 0);
+            h.word(noise,seed); seed=noise_next(seed);
+            mix+=(seed&0x8000) ? -int(amp) : int(amp);
             h.synth_sample();
             require(h.c().data[held_sample]==std::clamp(128+mix,0,255),"mixed waveform/noise sample mismatch");
-            require(h.c().data[noise]==seed,"tonal waveform altered noise behavior");
+            require(h.word(noise)==seed,"tonal waveform altered noise behavior");
             ++cases;
         }
         std::cout<<"waveform mixtures: "<<cases<<" combinations passed\n";
@@ -1199,35 +1208,72 @@ void synthesis(harness& h) {
         std::cout<<"tonal synthesis: "<<cases<<" directed/full-phase cases; pulse 33, triangle 34, sawtooth 32 cycles on all channels and phases\n";
         std::cout<<"stopped tonal synthesis: 5 cycles on all channels and waveforms\n";
     });
-    h.test("noise instruction paths, every LFSR byte and reachable amplitude",[&]{
-        require(h.sym("audio_noise_end")-h.sym("audio_noise_begin")-4<=63,"noise sentinel branch out of range");
-        uint64_t minimum=1000,maximum=0;
+    h.test("noise states, amplitudes, gates and exact instruction timing",[&]{
         unsigned cases=0;
-        for(unsigned index=0;index<=32;++index) for(unsigned seed=0;seed<256;++seed)
-        for(bool overflow : {false,true}) {
-            ++cases;
-            unsigned amp=index==32 ? 255u : index;
-            auto phase=uint16_t(overflow ? 65535 : 0x1234);
-            h.control(3,amp); h.word(controls+9,amp==255 ? 0 : 1); h.word(phases+6,phase);
-            h.c().data[noise]=uint8_t(seed); h.word(26,0x1234);
-            h.c().pc=uint16_t(h.sym("audio_noise_begin"));
-            auto cycles=h.until([&]{return h.c().pc==h.sym("audio_noise_end");});
-            auto next=amp==255 || !overflow ? seed : (seed>>1)^((seed&1) ? 0xb8 : 0);
-            auto contribution=amp==255 ? 0 : (next&1) ? -int(amp) : int(amp);
-            require(h.c().data[26]==uint8_t(0x34+contribution) && h.c().data[27]==0x12,"noise byte accumulation changed");
-            require(h.word(phases+6)==uint16_t(phase+(amp==255 ? 0 : 1)),"noise phase carry changed");
-            require(h.c().data[noise]==next,"noise Galois feedback changed");
-            require(cycles==(amp==255 ? 5 : !overflow ? 25 : (seed&1) ? 30 : 29),"noise synthesis cycle target changed");
-            if(amp!=255) { minimum=std::min(minimum,cycles); maximum=std::max(maximum,cycles); }
+        std::vector<uint16_t> states{0,1,0x8000,0x2000,0x4000,0x6000,0xffff,0xaaaa,0x5555};
+        for(unsigned seed=1;seed<=63;++seed) states.push_back(seed_state(seed));
+        bool feedback[4]{}, polarity[2]{};
+        for(unsigned selected=0;selected<2;++selected) {
+            h.command(13,selected);
+            for(unsigned index=0;index<=32;++index) for(auto state : states) {
+                unsigned amp=index==32 ? 255u : index;
+                h.control(3,amp); h.word(controls+9,amp==255 ? 0 : 1);
+                h.word(noise,state); h.word(26,0x1234); h.c().data[noise_spare]=0xa5;
+                h.c().pc=uint16_t(h.sym("audio_noise_begin"));
+                auto cycles=h.until([&]{return h.c().pc==h.sym("audio_noise_end");});
+                auto next=amp==255 ? state : noise_next(state);
+                auto contribution=amp==255 ? 0 : (next&0x8000) ? -int(amp) : int(amp);
+                require(h.c().data[26]==uint8_t(0x34+contribution) && h.c().data[27]==0x12,"noise byte accumulation changed");
+                require(h.word(noise)==next,"recurrence or stopped gate changed");
+                require(h.c().data[noise_spare]==0xa5,"reserved old noise byte used by synthesis");
+                require(cycles==(amp==255 ? 5u : 24u),"noise synthesis cycle target changed");
+                feedback[(uint16_t(state<<1)>>14)&3]=true;
+                polarity[(next>>15)&1]=true;
+                ++cases;
+            }
         }
-        std::cout<<"noise synthesis: "<<cases<<" cases; "<<minimum<<".."<<maximum<<" active, 5 stopped cycles\n";
+        for(bool seen : feedback) require(seen,"missing shifted feedback combination");
+        for(bool seen : polarity) require(seen,"missing noise polarity");
+        std::cout<<"noise synthesis: "<<cases<<" cases; 24 active, 5 stopped cycles at both rates\n";
+    });
+    h.test("all AVMS seed publications and fixed regression vectors",[&]{
+        constexpr uint16_t expected[]{0xa44b,0x4897,0x912f,0x225e,0x44bd,0x897b,0x12f6,0x25ec};
+        constexpr unsigned negative[]{1,0,1,0,0,1,0,0};
+        for(unsigned selected=0;selected<2;++selected) {
+            h.command(13,selected);
+            for(unsigned seed=1;seed<=63;++seed) {
+                std::array<uint16_t,32> sequence;
+                for(unsigned repeat=0;repeat<2;++repeat) {
+                    h.play({8,0,0x88,0,0,0x9f,uint8_t(seed),0,8,0x34,0x12,255,0,1});
+                    require(h.word(noise)==seed_state(seed),"16-bit stopped seed mapping failed");
+                    h.synth_sample();
+                    require(h.word(noise)==seed_state(seed) && h.amplitude(3)==255,"stopped seed advanced");
+                    h.elapsed(1);
+                    require(h.word(noise)==seed_state(seed) && h.amplitude(3)==31,"pitch-only activation reseeded");
+                    auto state=seed_state(seed);
+                    for(unsigned n=0;n<sequence.size();++n) {
+                        state=noise_next(state); h.synth_sample();
+                        require(h.word(noise)==state,"seed sample recurrence failed");
+                        if(repeat) require(sequence[n]==state,"repeated seed sequence differs");
+                        else sequence[n]=state;
+                    }
+                }
+            }
+            h.word(noise,seed_state(37)); h.control(3,31);
+            for(unsigned n=0;n<8;++n) {
+                h.synth_sample();
+                require(h.word(noise)==expected[n],"seed 37 fixed state vector failed");
+                require((h.word(noise)>>15)==negative[n],"seed 37 polarity vector failed");
+            }
+        }
     });
     h.test("sample reference and register preservation",[&]{
-        std::array<uint16_t,4> phase{{65520,0x7fff,1234,65500}},inc{{100,3691,257,8000}};
+        std::array<uint16_t,3> phase{{65520,0x7fff,1234}};
+        std::array<uint16_t,4> inc{{100,3691,257,8000}};
         std::array<uint8_t,4> amp{{31,31,31,31}};
-        uint8_t lfsr=1;
-        for(int i=0;i<4;++i) { h.word(phases+2*i,phase[i]); h.word(controls+3*i,inc[i]); h.control(i,amp[i]); }
-        h.c().data[noise]=lfsr;
+        uint16_t lfsr=1;
+        for(int i=0;i<4;++i) { if(i<3) h.word(phases+2*i,phase[i]); h.word(controls+3*i,inc[i]); h.control(i,amp[i]); }
+        h.word(noise,lfsr);
         auto zero=h.c().data[2];
         h.c().data[2]=0x5a; // direct floating-point paths borrow r2
         h.c().data[1]=0xa5; // FMULSU must preserve the interrupted r1 value too
@@ -1235,19 +1281,18 @@ void synthesis(harness& h) {
         for(unsigned n=0;n<1024;++n) {
             int duty=128;
             for(int i=0;i<4;++i) {
-                auto sum=uint32_t(phase[i])+inc[i]; phase[i]=uint16_t(sum);
-                if(i==3) { if(sum>65535) lfsr=uint8_t((lfsr>>1)^((lfsr&1)?0xb8:0)); duty+=(lfsr&1)?-amp[i]:amp[i]; }
-                else duty+=(phase[i]&0x8000)?-amp[i]:amp[i];
+                if(i==3) { lfsr=noise_next(lfsr); duty+=(lfsr&0x8000)?-amp[i]:amp[i]; }
+                else { phase[i]=uint16_t(phase[i]+inc[i]); duty+=(phase[i]&0x8000)?-amp[i]:amp[i]; }
             }
             auto t=h.synth_sample();
             h.isrmin=std::min(h.isrmin,t); h.isrmax=std::max(h.isrmax,t);
             require(duty>=4 && duty<=252,"mix overflow");
             require(h.c().data[held_sample]==duty,"assembly sample disagrees with reference");
-            require(h.c().data[noise]==lfsr,"LFSR mismatch");
+            require(h.word(noise)==lfsr,"LFSR mismatch");
             for(unsigned i=0;i<32;++i) require(h.c().data[i]==regs[i],"synth ISR corrupted registers");
             require(h.c().sp()==sp,"synth ISR stack leak");
         }
-        for(int i=0;i<4;++i) require(h.word(phases+2*i)==phase[i],"phase wrap mismatch");
+        for(int i=0;i<3;++i) require(h.word(phases+2*i)==phase[i],"phase wrap mismatch");
         for(int i=0;i<4;++i) h.c().data[controls+3*i+2]=0;
         h.synth_sample(); require(h.c().data[held_sample]==128,"silence wrong");
         h.c().data[2]=zero;
@@ -1276,9 +1321,9 @@ void shared_gain(harness& h) {
             for(unsigned ch=0;ch<4;++ch) {
                 unsigned amp=std::min(remaining,31u); remaining-=amp;
                 h.control(ch,amp); h.word(controls+3*ch,0);
-                h.word(phases+2*ch,mix<0 ? 0x8000 : 0);
+                if(ch<3) h.word(phases+2*ch,mix<0 ? 0x8000 : 0);
             }
-            h.c().data[noise]=mix<0 ? 1 : 2;
+            h.word(noise,mix<0 ? 0x4000 : 1);
             h.c().data[volume]=uint8_t(master);
             auto regs=h.c().data; auto sp=h.c().sp();
             h.synth_sample();
@@ -1300,29 +1345,44 @@ void shared_gain(harness& h) {
 }
 
 void mixer_profile(harness& h) {
-    for(unsigned selected=0;selected<2;++selected) for(unsigned master : {1u,32u,128u,255u})
+    for(unsigned selected=0;selected<2;++selected) for(unsigned master : {0u,1u,32u,128u,255u})
     for(unsigned level : {0u,128u,64u,32u}) {
         h.command(13,selected); h.command(5,master); h.command(15,level);
         uint64_t ordinary_min=10000, ordinary_max=0, pending_max=0;
         for(unsigned waves=0;waves<27;++waves) for(unsigned signs=0;signs<16;++signs)
         for(unsigned phase_byte : {0u,65u}) for(unsigned history : {35u,128u,221u})
-        for(unsigned packet : {0u,128u,129u,130u}) {
+        for(unsigned packet : {0u,128u,129u,130u,164u,165u,191u}) {
             unsigned selection=waves;
             for(unsigned ch=0;ch<4;++ch) {
                 h.word(controls+3*ch,1);
-                h.word(phases+2*ch,ch==3 ? 65535 : uint16_t(((phase_byte+(signs&(1u<<ch) ? 128 : 0))&255)<<8));
+                if(ch<3) h.word(phases+2*ch,uint16_t(((phase_byte+(signs&(1u<<ch) ? 128 : 0))&255)<<8));
                 h.control(ch,31,128,selection%3); selection/=3;
             }
-            h.c().data[noise]=signs&8 ? 3 : 1;
+            h.word(noise,signs&8 ? 0x4000 : 1);
             h.c().data[lowpass_state]=uint8_t(history);
             std::copy_n(h.c().data.begin()+controls,16,h.c().data.begin()+update_controls);
             h.c().data[update]=uint8_t(packet);
             auto cycles=h.synth_sample();
+            require(cycles<1024,"mixer ISR missed shortest supported deadline");
             if(packet) pending_max=std::max(pending_max,cycles);
             else { ordinary_min=std::min(ordinary_min,cycles); ordinary_max=std::max(ordinary_max,cycles); }
         }
+        uint64_t stopped_min=10000, stopped_max=0, stopped_pending=0;
+        for(unsigned history : {35u,128u,221u}) for(unsigned packet : {0u,128u,129u,165u,191u}) {
+            for(unsigned ch=0;ch<4;++ch) { h.word(controls+3*ch,0); h.control(ch,255); }
+            h.c().data[lowpass_state]=uint8_t(history);
+            std::copy_n(h.c().data.begin()+controls,16,h.c().data.begin()+update_controls);
+            h.c().data[update]=uint8_t(packet);
+            auto state=h.word(noise);
+            auto cycles=h.synth_sample();
+            require(cycles<1024,"stopped mixer ISR missed shortest supported deadline");
+            require(h.word(noise)==(packet&63 ? seed_state(packet&63) : state),"stopped mixer advanced noise");
+            if(packet) stopped_pending=std::max(stopped_pending,cycles);
+            else { stopped_min=std::min(stopped_min,cycles); stopped_max=std::max(stopped_max,cycles); }
+        }
         std::cout<<"mixer profile rate="<<selected<<" master="<<master<<" filter="<<level
-            <<" ordinary="<<ordinary_min<<".."<<ordinary_max<<" pending="<<pending_max<<"\n";
+            <<" ordinary="<<ordinary_min<<".."<<ordinary_max<<" pending="<<pending_max
+            <<" stopped="<<stopped_min<<".."<<stopped_max<<" stopped_pending="<<stopped_pending<<"\n";
     }
     h.command(15,0);
 }
@@ -1371,16 +1431,15 @@ void lowpass_filter(harness& h) {
                     int sample=wave==2 ? int(high)-128 : wave==1 ? 2*int(std::min(high,255-high))-127 : high<duty ? 127 : -127;
                     tonal+=int(std::floor((sample*int(amp)+64)/128.));
                 }
-                unsigned seed=(n*41)%255+1, noise_amp=(n*17)%32;
-                unsigned noise_phase=(n*39019)&65535, noise_inc=(n*1777)&65535;
-                h.c().data[noise]=uint8_t(seed); h.control(3,noise_amp);
-                h.word(phases+6,uint16_t(noise_phase)); h.word(controls+9,uint16_t(noise_inc));
-                if(noise_phase+noise_inc>65535) seed=(seed>>1)^((seed&1) ? 0xb8 : 0);
+                auto seed=uint16_t(n*39019); unsigned noise_amp=(n*17)%32;
+                h.word(noise,seed); h.control(3,noise_amp);
+                h.word(controls+9,uint16_t(n*1777));
+                seed=noise_next(seed);
                 unsigned coefficient=selected ? level : std::min(255u,2*level-(level*level>>8));
                 int delta=tonal-state, step=(std::abs(delta)*int(coefficient)+255)>>8;
                 state+=delta>=0 ? step : -step;
                 int filtered=state;
-                int expected=std::clamp(128+filtered+((seed&1) ? -int(noise_amp) : int(noise_amp)),0,255);
+                int expected=std::clamp(128+filtered+((seed&0x8000) ? -int(noise_amp) : int(noise_amp)),0,255);
                 h.c().data[0]=0x5a; h.c().data[1]=0xa5; h.c().data[2]=0x37;
                 unsigned flags=n&127;
                 h.c().data[reg::addr::SREG]=uint8_t(flags); h.c().prev_sreg=uint8_t(flags);
@@ -1388,7 +1447,7 @@ void lowpass_filter(harness& h) {
                 h.synth_sample();
                 require(h.c().data[lowpass_state]==128+state,"filter byte history differs from reference");
                 require(h.c().data[held_sample]==expected,"filter output or noise bypass differs from reference");
-                require(h.c().data[noise]==seed,"filter changed noise evolution");
+                require(h.word(noise)==seed,"filter changed noise evolution");
                 for(unsigned r=0;r<32;++r) require(h.c().data[r]==regs[r],"filter corrupted an ISR register");
                 require((h.c().data[reg::addr::SREG]&127)==flags && h.c().sp()==sp,"filter corrupted flags or stack");
                 h.c().data[2]=0;
@@ -1428,11 +1487,11 @@ void lowpass_filter(harness& h) {
             for(unsigned waves=0;waves<27;++waves) for(unsigned packet : {0u,128u,129u,130u}) {
                 unsigned bits=waves;
                 for(unsigned ch=0;ch<4;++ch) {
-                    h.word(controls+3*ch,65535); h.word(phases+2*ch,65535);
+                    h.word(controls+3*ch,65535); if(ch<3) h.word(phases+2*ch,65535);
                     h.control(ch,31,128,bits%3); bits/=3;
                 }
                 std::copy_n(h.c().data.begin()+controls,16,h.c().data.begin()+update_controls);
-                h.c().data[update]=uint8_t(packet); h.c().data[noise]=1;
+                h.c().data[update]=uint8_t(packet); h.word(noise,1);
                 maximum=std::max(maximum,h.synth_sample());
             }
             require(maximum<(selected ? 1024u : 2048u),"filtered ISR missed synthesis deadline");
@@ -1456,32 +1515,32 @@ void sentinels(harness& h) {
                 require(h.amplitude(voice)==255 && h.word(controls+3*voice)==0,
                     "zero increment was not encoded as a stopped sentinel");
                 expected[voice]=uint16_t(0xf123+997*voice);
-                h.word(phases+2*voice,expected[voice]);
+                if(voice<3) h.word(phases+2*voice,expected[voice]);
             }
-            h.c().data[noise]=37;
+            h.word(noise,seed_state(37));
+            expected[3]=seed_state(37);
             for(unsigned n=0;n<128;++n) {
                 require(h.synth_sample()==79 && h.c().data[held_sample]==128,"stopped voice contributed to mix");
-                for(unsigned voice=0;voice<4;++voice)
+                for(unsigned voice=0;voice<3;++voice)
                     require(h.word(phases+2*voice)==expected[voice],"stopped phase changed");
-                require(h.c().data[noise]==37,"stopped LFSR changed");
+                require(h.word(noise)==seed_state(37),"stopped LFSR changed");
             }
             h.word(notes+4*ch,0x713b); h.routine("audio_commit");
             require(h.amplitude(ch)==31,"reactivation did not replace sentinel with normal gain");
-            uint8_t lfsr=37;
+            uint16_t lfsr=seed_state(37);
             for(unsigned n=0;n<128;++n) {
-                auto sum=uint32_t(expected[ch])+h.word(controls+3*ch);
-                expected[ch]=uint16_t(sum);
+                if(ch<3) expected[ch]=uint16_t(expected[ch]+h.word(controls+3*ch));
                 int contribution;
                 if(ch==3) {
-                    if(sum>65535) lfsr=uint8_t((lfsr>>1)^((lfsr&1) ? 0xb8 : 0));
-                    contribution=(lfsr&1) ? -31 : 31;
+                    lfsr=noise_next(lfsr); expected[3]=lfsr;
+                    contribution=(lfsr&0x8000) ? -31 : 31;
                 } else {
                     unsigned p=expected[ch]>>8;
                     int sample=wave==2 ? int(p)-128 : wave==1 ? int(2*std::min(p,255-p))-127 : p<71 ? 127 : -127;
                     contribution=int(std::floor(sample*31/128.+0.5));
                 }
                 h.synth_sample();
-                require(h.word(phases+2*ch)==expected[ch] && h.c().data[noise]==lfsr,
+                require((ch==3 || h.word(phases+2*ch)==expected[ch]) && h.word(noise)==lfsr,
                     "reactivation lost phase or LFSR continuity");
                 require(h.c().data[held_sample]==output(contribution,255),"reactivation sample mismatch");
             }
@@ -1499,8 +1558,8 @@ void sentinels(harness& h) {
             h.c().data[notes+4*ch+3]=71;
             h.routine("audio_commit");
             require(h.amplitude(ch)==(master ? 31 : 0) && h.word(controls+3*ch)!=0,"muted running voice became sentinel");
-            uint16_t phase=0xf123; uint8_t lfsr=37;
-            h.word(phases+2*ch,phase); h.c().data[noise]=lfsr;
+            uint16_t phase=0xf123; uint16_t lfsr=seed_state(37);
+            if(ch<3) h.word(phases+2*ch,phase); h.word(noise,lfsr);
             for(unsigned n=0;n<512;++n) {
                 if(n==256) {
                     h.c().data[notes+4*ch+2]=uint8_t(flags|31);
@@ -1508,17 +1567,17 @@ void sentinels(harness& h) {
                     h.routine("audio_commit"); // publish the manually edited channel volume
                     require(h.amplitude(ch)==31,"unmute lost prepared gain");
                 }
-                auto sum=uint32_t(phase)+h.word(controls+3*ch); phase=uint16_t(sum);
-                if(ch==3 && sum>65535) lfsr=uint8_t((lfsr>>1)^((lfsr&1) ? 0xb8 : 0));
+                if(ch<3) phase=uint16_t(phase+h.word(controls+3*ch));
+                else lfsr=noise_next(lfsr);
                 int amplitude=(master || n>=256) ? 31 : 0, contribution;
-                if(ch==3) contribution=(lfsr&1) ? -amplitude : amplitude;
+                if(ch==3) contribution=(lfsr&0x8000) ? -amplitude : amplitude;
                 else {
                     unsigned p=phase>>8;
                     int sample=wave==2 ? int(p)-128 : wave==1 ? int(2*std::min(p,255-p))-127 : p<71 ? 127 : -127;
                     contribution=int(std::floor(sample*amplitude/128.+0.5));
                 }
                 h.synth_sample();
-                require(h.word(phases+2*ch)==phase && h.c().data[noise]==lfsr,"mute/unmute changed oscillator continuity");
+                require((ch==3 || h.word(phases+2*ch)==phase) && h.word(noise)==lfsr,"mute/unmute changed oscillator continuity");
                 require(h.c().data[held_sample]==output(contribution,n<256 ? (master ? 0 : 255) : 255),"mute/unmute sample mismatch");
             }
         }
@@ -1528,17 +1587,17 @@ void sentinels(harness& h) {
             h.play({8,0,0x88,0,0,0x9f,37,0,0x80,0x9f,11,255,0,1});
             h.command(13,selected);
             require(h.amplitude(3)==255 && h.word(controls+9)==0,"zero-pitch retrigger became active");
-            h.word(phases+6,0xf123); h.c().data[noise]=63;
+            h.word(noise,0xf123);
             h.c().st(reg::addr::TIMSK1,2);
             h.c().data[pending]=1; h.routine("audio_service_func");
-            require(h.c().data[update]==(128|11) && h.c().data[noise]==63 && h.word(phases+6)==0xf123,
+            require(h.c().data[update]==(128|11) && h.word(noise)==0xf123,
                 "stopped retrigger modified live state before publication");
             require(h.c().data[update_controls+11]==255,"stopped retrigger lost sentinel");
             h.synth_sample();
-            require(!h.c().data[update] && h.amplitude(3)==255 && h.word(phases+6)==0 && h.c().data[noise]==11,
-                "stopped sentinel suppressed pending phase reset/reseed");
+            require(!h.c().data[update] && h.amplitude(3)==255 && h.word(noise)==seed_state(11),
+                "stopped sentinel suppressed pending reseed");
             for(unsigned n=0;n<128;++n) h.synth_sample();
-            require(h.word(phases+6)==0 && h.c().data[noise]==11,"stopped retrigger advanced afterward");
+            require(h.word(noise)==seed_state(11),"stopped retrigger advanced afterward");
             h.quiet();
         }
     });
@@ -1549,7 +1608,7 @@ void rates(harness& h) {
         h.play_midi({15,0,255,60,64,67,36,7,8,9,10,255,0,1});
         h.play_midi({12,0,0xcc,80,69,0x6c,13,255,0,1},0x21000,true);
         h.command(11,64); h.command(12,96);
-        for(unsigned ch=0;ch<4;++ch) h.word(phases+2*ch,uint16_t(0xf321+ch));
+        for(unsigned ch=0;ch<4;++ch) h.word(ch==3 ? noise : phases+2*ch,uint16_t(0xf321+ch));
         auto desired=h.c().data;
         for(unsigned selected : {1u,0u,1u,0u}) {
             h.command(13,selected);
@@ -1561,7 +1620,7 @@ void rates(harness& h) {
                 auto source=(ch==1 || ch==3) ? sfxnotes+4*(ch==3) : notes+4*ch;
                 require(h.word(controls+3*ch)==h.word(source)*(selected ? 1 : 2),
                     "rate scaling used the wrong owner or accumulated rounding");
-                require(h.word(phases+2*ch)==0xf321+ch,"rate switch reset oscillator phase");
+                require(h.word(ch==3 ? noise : phases+2*ch)==0xf321+ch,"rate switch reset oscillator phase");
                 auto amp=h.c().data[source+2]&31;
                 auto gain=ch==1 || ch==3 ? 96 : 64;
                 require(h.amplitude(ch)==(amp*gain+127)/255,
@@ -1569,7 +1628,7 @@ void rates(harness& h) {
             }
             require(std::equal(desired.begin()+notes,desired.begin()+update_controls,h.c().data.begin()+notes),
                 "rate switch changed desired pitches, ownership, cursor, wait, or status");
-            require(h.c().data[noise]==desired[noise] && h.c().data[held_sample]==desired[held_sample],
+            require(h.c().data[noise]==desired[noise] && h.c().data[noise+1]==desired[noise+1] && h.c().data[held_sample]==desired[held_sample],
                 "rate switch changed noise seed or held output");
             h.command(13,selected);
             for(unsigned invalid : {2u,3u,127u,255u}) h.command(13,invalid);
@@ -1690,9 +1749,9 @@ void handoff(harness& h) {
                 h.c().data[update_controls+3*ch+2]=uint8_t(stopped&(1u<<ch) ? 255 : amp);
                 if(ch<3) h.c().data[update_controls+12+ch]=128;
                 auto phase=uint16_t(signs&(1u<<ch) ? 0x8000 : 0);
-                h.word(phases+2*ch,ch==3 && noise_path ? 65535 : phase);
+                if(ch<3) h.word(phases+2*ch,phase);
             }
-            h.c().data[noise]=noise_path==2 ? 2 : 1;
+            h.word(noise,noise_path==2 ? 0x6000 : noise_path==1 ? 0x4000 : 1);
             unsigned packed=0, selection=waves;
             for(unsigned ch=0;ch<3;++ch) {
                 auto wave=selection%3; selection/=3;
@@ -1730,13 +1789,13 @@ void handoff(harness& h) {
             require(before_sp-path_minsp==(!descriptor ? 8u : 10u),"ISR native stack high-water changed");
         };
         // Every waveform/mask/descriptor triple, with independent rotating
-        // amplitude/sign choices and all three noise paths on each triple.
+        // amplitude/sign choices and three directed noise states on each triple.
         for(unsigned waves=0;waves<27;++waves) for(unsigned stopped=0;stopped<16;++stopped)
         for(unsigned d=0;d<4;++d) for(unsigned variant=0;variant<3;++variant)
             check(waves,stopped,descriptors[d],amplitudes[(waves+stopped+d+variant)%4],
                 (waves+3*stopped+5*d+7*variant)%16,variant);
-        // Captured from the original 331,776-case Cartesian sweep: ordinary
-        // family minima/maxima, all-stopped, copy/reseed maxima and stack 10.
+        // Directed ordinary family, stopped, copy/reseed and stack witnesses.
+        // Noise timing is now independent of state and active amplitude.
         constexpr unsigned witnesses[][6]={
             {0,0,0,0,0,0},{0,0,0,1,0,1},
             {13,0,0,0,0,0},{13,0,0,1,0,1},
@@ -1750,10 +1809,10 @@ void handoff(harness& h) {
         for(bool seen : signs_seen) require(seen,"missing ISR sign combination");
         for(bool seen : noise_seen) require(seen,"missing ISR noise path");
         std::cout<<"pending ISR matrix: "<<cases<<" cases passed\n";
-        require(copymax==271 && reseedmax==272,"pending ISR cycle target changed");
-        require(ordinary_min[0]==183 && ordinary_max[0]==192,"pulse ISR cycle target changed");
-        require(ordinary_min[13]==186 && ordinary_max[13]==195,"triangle ISR cycle target changed");
-        require(ordinary_min[26]==180 && ordinary_max[26]==189,"saw ISR cycle target changed");
+        require(copymax==265 && reseedmax==269,"pending ISR cycle target changed");
+        require(ordinary_min[0]==182 && ordinary_max[0]==186,"pulse ISR cycle target changed");
+        require(ordinary_min[13]==185 && ordinary_max[13]==189,"triangle ISR cycle target changed");
+        require(ordinary_min[26]==179 && ordinary_max[26]==183,"saw ISR cycle target changed");
         require(mask_min[15]==79 && mask_max[15]==79,"all-stopped ISR cycle target changed");
         require(initial_sp-minsp==10,"pending ISR native stack changed");
         std::cout<<"worst pending ISR: copy "<<copymax<<", reseed "<<reseedmax
@@ -1766,11 +1825,11 @@ void handoff(harness& h) {
     });
     h.test("reseed publication is atomic and preserves every ISR register",[&]{
         h.play({8,0,0x88,0x00,0x10,0x8a,37,0,0x80,0x8a,37,255,0,1},0x20000,false,0);
-        h.c().data[noise]=11; h.word(phases+6,0xf123);
+        h.word(noise,0xf123);
         h.c().st(reg::addr::TIMSK1,2);
         h.c().data[pending]=1;
         h.routine("audio_service_func");
-        require(h.c().data[update]==(0x80|37) && h.c().data[noise]==11 && h.word(phases+6)==0xf123,
+        require(h.c().data[update]==(0x80|37) && h.word(noise)==0xf123,
             "foreground modified live noise before ISR consumption");
         std::fill_n(h.c().data.begin()+private_end,72,0xa5);
         auto zero=h.c().data[2]; h.c().data[2]=0x5a;
@@ -1778,8 +1837,8 @@ void handoff(harness& h) {
         auto normalmin=h.isrmin, normalmax=h.isrmax;
         auto cycles=h.synth_sample();
         h.isrmin=normalmin; h.isrmax=normalmax;
-        require(h.c().data[update]==0 && h.c().data[noise]==37 && h.word(phases+6)==0x2000,
-            "ISR did not reseed and reset phase before its next noise sample");
+        require(h.c().data[update]==0 && h.word(noise)==noise_next(seed_state(37)),
+            "ISR did not reseed before its next noise sample");
         for(unsigned r=0;r<32;++r) require(h.c().data[r]==regs[r],"reseed ISR corrupted registers");
         require(h.c().sp()==sp,"reseed ISR leaked stack");
         h.c().data[2]=zero;
@@ -1787,7 +1846,7 @@ void handoff(harness& h) {
         h.routine("audio_service_func");
         require(h.c().data[update]==(0x80|37),"repeated seed-only update was not published");
         h.routine("timer1_compa_isr",true);
-        require(h.word(phases+6)==0x2000 && h.c().data[noise]==37,"repeated retrigger did not reset pattern");
+        require(h.word(noise)==noise_next(seed_state(37)),"repeated retrigger did not reset pattern");
         h.quiet();
         std::cout<<"noise reseed pending ISR: "<<cycles<<" cycles\n";
     });
@@ -1839,8 +1898,9 @@ void handoff(harness& h) {
         std::fill_n(h.c().data.begin()+private_end,72,0xa5);
         auto zero=h.c().data[2]; h.c().data[2]=0x5a;
         auto regs=h.c().data; auto sp=h.c().sp();
-        std::array<uint16_t,4> previous_phase;
-        for(unsigned ch=0;ch<4;++ch) previous_phase[ch]=h.word(phases+2*ch);
+        std::array<uint16_t,3> previous_phase;
+        for(unsigned ch=0;ch<3;++ch) previous_phase[ch]=h.word(phases+2*ch);
+        auto previous_noise=h.word(noise);
         auto cycles=h.routine("timer1_compa_isr",true)+7;
         require(cycles<1024,"update ISR overran the next PWM deadline");
         for(unsigned r=0;r<32;++r) require(h.c().data[r]==regs[r],"update ISR corrupted registers");
@@ -1848,10 +1908,12 @@ void handoff(harness& h) {
         require(h.c().data[update]==0 &&
             std::equal(packet.begin(),packet.end(),h.c().data.begin()+controls),
             "ISR failed to accept the complete persistent packet");
-        for(unsigned ch=0;ch<4;++ch)
+        for(unsigned ch=0;ch<3;++ch)
             require(h.word(phases+2*ch)==uint16_t(previous_phase[ch]+h.word(controls+3*ch)),"ISR reset a phase");
+        require(h.word(noise)==noise_next(previous_noise),"publication reset noise state");
         h.routine("timer1_compa_isr",true); // next synthesis, no pending packet
-        for(unsigned ch=0;ch<4;++ch)
+        require(h.word(noise)==noise_next(noise_next(previous_noise)),"acknowledged publication reset noise state");
+        for(unsigned ch=0;ch<3;++ch)
             require(h.word(phases+2*ch)==uint16_t(previous_phase[ch]+2*h.word(controls+3*ch)),
                 "acknowledged update changed oscillator progression");
         h.c().data[2]=zero;
@@ -2011,7 +2073,7 @@ void automatic(harness& h) {
             std::cerr<<"idle diagnostics: pending="<<unsigned(h.c().data[pending])<<" nativePC="<<std::hex<<h.c().pc*2<<" guestPC="<<(h.word(4)|(uint32_t(h.c().data[6])<<16))<<std::dec<<" serviceGap="<<h.latencymax<<"\n";
             require(false,"idle sequencer starvation");
         }
-        require(h.c().data[noise]!=0,"noise stuck during interrupts");
+        require(h.word(noise)!=0,"noise stuck during interrupts");
         // Finish a real wakeup/dispatch before replacing PC in quiet(); the
         // elapsed-time cutoff can land inside SLEEP or an interrupt handler.
         h.until([&]{return h.boundary();});
@@ -2329,8 +2391,8 @@ void render_logical(char** args, bool loop, unsigned filter) {
     h.command(14,unsigned(loop));
     h.command(15,filter);
     h.play(song,0x20000,false,0);
-    for(unsigned ch=0;ch<4;++ch) h.word(phases+2*ch,0);
-    h.c().data[noise]=1;
+    for(unsigned ch=0;ch<3;++ch) h.word(phases+2*ch,0);
+    h.word(noise,1);
     std::ofstream out(args[6],std::ios::binary);
     require(bool(out),"cannot create logical PCM");
     unsigned previous=0;
@@ -2689,6 +2751,7 @@ void core_isa(char** args) {
 void core_audio(char** args) {
     harness h(args); sequence(h); synthesis(h); sentinels(h); rates(h);
     shared_gain(h); lowpass_filter(h); handoff(h); automatic(h);
+    std::cout<<"audio SRAM: 98 persistent bytes; native stack space: "<<0xb00-scratch_end<<" bytes\n";
     std::cout<<h.cases<<" native audio cases passed\n"
         <<"Timer1 including entry/vector: "<<h.isrmin<<".."<<h.isrmax<<" cycles; CPU "
         <<100.*h.isrmax/2048<<"%\nobserved idle service gap: "<<h.latencymax/16000.<<" ms\n";
@@ -2727,7 +2790,7 @@ int main(int argc,char** argv) {
                 h.command(7); h.command(13,selected);
                 for(unsigned ch=0;ch<4;++ch) {
                     h.word(controls+3*ch,0); h.control(ch,amplitude,128,wave);
-                    h.word(phases+2*ch,uint16_t(0xf123+ch));
+                    if(ch<3) h.word(phases+2*ch,uint16_t(0xf123+ch));
                 }
                 std::cout<<"all-stopped rate "<<selected<<", waveform "<<wave<<": "<<h.synth_sample()<<" cycles\n";
             }

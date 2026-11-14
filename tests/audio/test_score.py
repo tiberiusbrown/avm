@@ -45,6 +45,14 @@ def decode(data, raw=False):
 
 
 class ScoreTests(unittest.TestCase):
+    def test_all_noise_seeds_keep_one_byte_extension_and_pitch_gates(self):
+        for seed in range(1, 64):
+            data = music.compile_source(f"automation 4ms channel 3 {{ gate 100% volume 17 noise_retrigger {{ every 4ms seed {seed} }} c:12ms }}")
+            events, _, _ = decode(data, raw=True)
+            self.assertEqual([u[3]["seed"] for _, u in events if "seed" in u.get(3, {})], [seed, seed])
+            self.assertEqual(data[:8], bytes([8, 0, 0x88, music.note_increment(60) & 255,
+                                            music.note_increment(60) >> 8, 0x91, seed, 0]))
+
     def compile(self, source):
         return decode(music.compile_source(source))
 

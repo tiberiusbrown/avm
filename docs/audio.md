@@ -324,8 +324,12 @@ and initial inherited duration is a quarter note, independently per channel.
 The declared channels determine binary ownership, even if a channel contains
 only rests. Pulse/triangle/sawtooth hardware is fixed to channels 0..2, noise to channel 3;
 the `wave` setting does not reroute a voice. Use `wave noise` for noise
-instruments. On channel 3 the note's pitch controls the noise clock rate,
-rather than the fundamental frequency of a pitched pulse.
+instruments. Channel 3 note tokens retain their duration and full uint16
+increments, but only zero versus nonzero gates noise. Every active synthesis
+sample clocks noise once; changing pitch does not change its timbre or clock.
+Frequency slides, pitch LFOs, arpeggios and glissando remain accepted and emit
+the same increment updates. Use volume, envelopes, gates and explicit retriggers
+for percussion character.
 
 The score length is the longest written channel timeline. Shorter parts become
 silent after their sounding notes and release tails finish. Rests at the end
@@ -747,7 +751,8 @@ transform, duty modulation follows the duty slide, and volume modulation adds
 after the envelope and tremolo. Final controls clamp to their legal ranges.
 
 One LFO per target can run at a time, alongside LFOs for the other targets.
-Noise accepts pitch and volume LFOs; duty LFOs require channels 0..2.
+Noise accepts pitch and volume LFOs; pitch updates retain their encoding but
+do not alter noise timbre. Duty LFOs require channels 0..2.
 `lfo pitch off`, `lfo duty off`, and `lfo volume off` disable one target;
 `lfo off` disables all three for later notes. Song-relative phase does not
 advance another channel's timeline; each channel evaluates the same absolute
@@ -794,7 +799,8 @@ channel 3 roll { c:160ms r:80ms }
 `every` and `seed` are required. The interval must be at least 4 ms and the
 seed an integer 1..63. Optional `onset` defaults to `yes`, reseeding at onset
 and each interval afterward. `onset no` waits one interval before the first
-reseed. The command resets the noise LFSR and noise phase, preserving pitch.
+reseed. The command replaces the 16-bit noise state using the table-free seed
+mapping below, preserving the increment and its gate. It also works while stopped.
 It requires channel 3. `noise_retrigger off` disables it for later notes.
 
 Retriggering runs for the note's sounding lifetime, including release, until
@@ -1141,22 +1147,65 @@ bits, including controls during a sustained note, with no new per-sample lookup.
 The branchless `CP/SBC/ANDI/SUBI` comparison has fixed instruction cost for
 every threshold and phase. It uses no table, LPM, or Z register. FMULSU,
 rounding `floor(sample * amplitude / 128 + 0.5)`, sign extension, signed
-16-bit mixing, PWM bias 128, and final 0..255 clipping are retained.
+biased byte mixing, PWM bias 128, and final 0..255 clipping are retained.
 The unused space before the fixed primary dispatch table remains padding.
 
-Noise uses a fourth phase accumulator; overflow clocks the existing 8-bit
-Galois LFSR (feedback B8, startup seed 1, period 255). Its low bit selects
-positive or negative prepared amplitude. Ordinary pitch/control changes
-preserve phase and LFSR. An explicit retrigger atomically sets seed 1..63
-and resets noise phase before generating the next sample. It does not change
-the pitch. Hidden music retriggers are discarded while SFX owns noise; release
-restores current music controls without replaying an earlier seed.
-Noise uses the same stopped sentinel: phase, LFSR and mixing are skipped in
-five cycles. Muted noise with nonzero increment still advances both phase and
-LFSR. Pending retriggers reset phase and reseed before the sentinel check,
-including while stopped. Active noise takes 25 cycles without overflow,
-29 with a shift and 30 with feedback. See [audio-benchmarks.md](../bench/README.md)
-for instruction accounting and measured before/after results.
+Noise uses a 16-bit LFSR recurrence. On each **active** synthesis
+sample it shifts the full word left, then XORs bit zero once for each of bits
+7 and 6 of the **shifted high byte** (shifted word bits 15 and 14):
+
+```c
+uint16_t noise_next(uint16_t state) {
+    uint16_t shifted = (uint16_t)(state << 1);
+    return shifted ^ (((shifted >> 15) ^ (shifted >> 14)) & 1u);
+}
+```
+
+Bit 15 of the new state selects negative amplitude; otherwise amplitude is
+positive. The nonzero main cycle has 32,767 states, starting at `0x0002`.
+Initialization sets `0x0001`, which enters that cycle after one update.
+At both 7,812.5 and 15,625 Hz there is one transition per active sample, so
+8 kHz mode evolves half as fast in wall time. Increment magnitude has no effect.
+
+The stopped sentinel `255` skips advancement and mixing in **5 cycles**.
+Active amplitude zero still advances the LFSR and mixes zero. This stopped
+freeze is an intentional AVM optimization. The active block
+costs **24 cycles**, independent of state, amplitude and pitch. It uses the
+existing ISR registers and preserves the biased byte accumulator.
+
+Explicit AVMS seeds remain one byte in `1..63`. For seed `s`, the state is
+`s | ((uint16_t)swap8(s) << 8)`, where `swap8(s)` exchanges the two nibbles.
+AVR implements this with `STS`, `SWAP`, `STS`; there is no lookup table.
+All 63 states are distinct and nonzero and enter the same periodic cycle.
+They select deterministic starting sequences, not polynomials or frequencies.
+Examples: 1 maps to `1001`, 8 to `8008`, 16 to `0110`, 37 to `5225`, and
+63 to `F33F`. Seed 37's first post-update states are
+`A44B 4897 912F 225E 44BD 897B 12F6 25EC`, with negative selection bits
+`1 0 1 0 0 1 0 0`.
+
+PLAY, STOP, pause/resume, looping, volume/pitch updates, sample-rate changes
+and SFX ownership changes preserve the state unless an explicit retrigger is
+accepted. Stopping/pausing freezes evolution when no audible owner has a
+nonzero increment; muting an active owner does not freeze it. Full interpreter/
+audio initialization resets to `0001`. A pending retrigger replaces both bytes
+before the next synthesis sample, even while stopped. Hidden music retriggers
+are discarded while SFX owns noise; SFX release never replays discarded seeds.
+A later audible music retrigger works normally. Tonal-only SFX release does
+not cancel a simultaneous audible music retrigger.
+
+The desktop renderer precomputes the 32,767-state cycle starting at `0002` and
+a state-to-index dictionary, only on the host. Its cursor denotes the next
+post-update state, so the transient startup/seed states need no extra flag.
+Initialization indexes `noise_next(0001)`; retriggers index
+`noise_next(seed_state(s))`. Vectorized rendering and skipped excerpts
+advance that cursor by the number of **active** samples in each event span;
+stopped spans leave it unchanged. This preserves loops, retriggers and muted
+intervals without a Python sample loop to skip noise prefixes. No cycle table
+is exported in firmware or assets.
+
+AVM retains its existing Timer1 synthesis, Timer4 PWM, tonal oscillators,
+mix, gain, filtering and clipping. Its seed mapping is table-free.
+See [benchmark notes](../bench/README.md) for measured resources and timing.
 
 ## Binary stream format
 
@@ -1372,8 +1421,9 @@ clears it before `audio_init_func` sets the nonzero defaults noted below.
 | `0A18..0A23` | `data_audio_controls` | 12 | Four live three-byte `(uint16 increment, uint8 amplitude)` records in physical channel order. Amplitudes 0..31, or 255 for stopped. |
 | `0A24..0A26` | `data_audio_duty` | 3 | Live pulse thresholds for channels 0..2, each 0..255; default 128. |
 | `0A27` | `data_audio_waveform` | 1 | Live waveform flags: bits 0..2 non-pulse, bits 3..5 saw, bits 6..7 reserved. Defaults to pulse on all channels. |
-| `0A28..0A2F` | `data_audio_phases` | 8 | Four uint16 oscillator phases, physical channel order; advance modulo 65536, initially zero. |
-| `0A30` | `data_audio_noise` | 1 | Noise Galois LFSR state; default seed 1, feedback B8. |
+| `0A28..0A2D` | `data_audio_phases` | 6 | Three tonal uint16 phases for channels 0..2; advance modulo 65536, initially zero. |
+| `0A2E..0A2F` | `data_audio_noise` | 2 | Little-endian 16-bit LFSR state; startup `0001`. |
+| `0A30` | `data_audio_noise_spare` | 1 | Reserved, unused; retains all subsequent addresses. |
 | `0A31..0A40` | `data_audio_music_notes` | 16 | Four desired four-byte voice records, physical channel order; format below. |
 | `0A41..0A48` | `data_audio_sfx_notes` | 8 | Two desired four-byte voice records: tonal slot then noise slot; direct tonal commands can route the tonal slot to channels 0..2. |
 | `0A49..0A52` | `data_audio_music` | 10 | Music stream record; all fields below. |
@@ -1426,9 +1476,9 @@ ISR accesses these scratch bytes:
 Foreground owns desired banks, stream records, gains, rate/loop/filter settings,
 fade volume/song and staging bytes. It waits for acknowledgement before reusing staging and
 publishes the descriptor in one byte store. `audio_apply_update` copies all 16
-staged bytes into the live latch before acknowledging, and applies any seed
-and noise-phase reset. Timer1 normally applies packets after the fixed PWM
-store; foreground applies them directly only with synthesis unavailable or
+staged bytes into the live latch before acknowledging, and maps any nonzero
+masked seed to both LFSR bytes. A zero seed preserves the state. Timer1
+normally applies packets after the fixed PWM store; foreground applies them directly only with synthesis unavailable or
 interrupts disabled. Timer1 updates phases, LFSR, held sample and filter
 history. Initialization, output restart and explicit control operations also
 write the state described above under their documented synchronization rules.
@@ -1465,15 +1515,18 @@ copier. It preserves r0/r1/r20/r21/r26 and SREG; r27 and Z are untouched even on
 pending path. The foreground preserves borrowed VM state and guest flags.
 The tonal filter adds no saved registers or stack use. Bypass costs five
 cycles; all-stopped output takes 79 cycles. At default gain, measured all-active
-ordinary/pending maxima are 205/282 cycles with filtering off and 219/296
-with any named filter preset at either sample rate. Other gains have different output paths.
+ordinary/pending maxima are 199/279 cycles with filtering off and 213/293
+with any named filter preset at either sample rate. Across the profiled gains
+0/1/32/128/255 and named filter presets, maxima are 227 ordinary and 307
+pending cycles, below the shortest 1024-cycle sample interval. Other gains
+have different output paths.
 PWM writes remain at 21 cycles at both rates and all levels. FX, FX-C and Mini
-firmware is 29044 bytes, leaving 652 bytes below the 29696-byte boundary.
+firmware is 29032 bytes, leaving 664 bytes below the 29696-byte boundary.
 Independent attenuation adds 44 flash bytes and two SRAM bytes. Preparing a
 four-active-voice packet adds at most 44 cycles (2.75 us at 16 MHz), with no
 additional sample-interrupt work. At 250 packets/s this adds 0.069 percentage
 points of CPU utilization.
-See [audio-benchmarks.md](../bench/README.md) for gain/filter timings.
+See [benchmark notes](../bench/README.md) for gain/filter timings.
 
 The compact FX reader performs one interruptible burst per due event with
 24-bit cursors and actual-consumption advancement, preserving speculative
@@ -1494,7 +1547,7 @@ Garden and four MIDI imports with wraparound, preserving pause and rate.
 Build `audio_demo_assets` then
 `avm_audio_demo`; the checked-in package is `projects/audio_demo/audio_demo.arduboy`.
 
-See [audio-benchmarks.md](../bench/README.md) for measured resource results.
+See [benchmark notes](../bench/README.md) for measured resource results.
 `avm_audio_tests_run` uses Ardens' AVR instruction emulator for samples,
 sequencing, ownership, publication races, SPI and native-stack checks, plus
 Python compiler tests and Mini/FX-C assembly. `avm_tests_run` adds all interpreter
@@ -1530,9 +1583,3 @@ Abrupt duty/cut/ownership changes can click. Four loud voices can clip.
 These checks are simulator verification. Physical Arduboy listening, speaker
 polarity, PLL/carrier timing, analog DC/click behavior, power draw and FX-C/Mini
 pad routing still need hardware validation. Mini needs an added speaker.
-
-Conceptual reference: [ATMlib2 documentation](https://github.com/moduscreate/ATMlib2)
-and [its effect implementation](https://github.com/moduscreate/ATMlib2/blob/master/src/atm_synth.c).
-AVM compiles effects offline and uses different timing, amplitude ranges,
-interpolation, ownership slots and noise reseeding semantics; its firmware does
-not port ATMlib2's effect engine.

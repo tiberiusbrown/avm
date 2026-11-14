@@ -26,7 +26,7 @@ Start with these registers when assigning musical roles to the voices. The **pre
 | **CH0 / 25% pulse lead** | **D5–B5** (587–988 Hz) | **G4–E6** (392–1,319 Hz) | Go higher briefly for emphasis |
 | **CH1 / square harmony** | **B2–C4** (123–262 Hz), especially chord *roots* | **G2–F5** (98–698 Hz) | Arpeggios sound above their written roots |
 | **CH2 / saw bass** | **A2–G♯3** (110–208 Hz) | **F2–G4** (87–392 Hz) | Emphasize harmonics and rhythmic articulation |
-| **CH3 / noise** | No tonal register | Adjust pitch/noise clock by ear | Short accents and fills |
+| **CH3 / noise** | No tonal register | Adjust envelopes, gates and retriggers | Short accents and fills |
 
 **How to use these ranges:**
 
@@ -34,7 +34,7 @@ Start with these registers when assigning musical roles to the voices. The **pre
 - **Harmony:** Start with chord roots near **C3–C4**. A triad arpeggio adds **+3/+4 and +7 semitones**, so the *sounding* harmony extends higher than the written root. Echoes and countermelodies can move into the lead register.
 - **Bass:** Start near **A2–G3**. Root/fifth/octave figures can extend toward D4 or G4. **Do not automatically move all bass into octave 4**: a harmonically rich sawtooth can make notes in octaves 2–3 audible even when their fundamental frequencies are weak.
 - **Sawtooth is not bass-only:** It can also carry a lead or melodic ostinato. Try a different register when the composition calls for it, rather than treating any channel as permanently bound to one octave.
-- **Noise:** Choose kick/snare/hat textures by ear on hardware. Pitch tokens on the noise channel select noise-clock settings, not ordinary melodic pitches. Vary amplitude and duration to distinguish percussion parts.
+- **Noise:** Choose kick/snare/hat textures by ear on hardware. Pitch tokens gate the noise voice; their numeric pitches do not change its clock or timbre. Vary amplitude, envelopes, duration and explicit `noise_retrigger` seeds to distinguish percussion parts. Active volume zero keeps the sequence running; rests freeze it.
 
 **Hardware caveat:** Register guidance is not a measured frequency-response curve. An A2 fundamental (~110 Hz) may be weak on the piezo while higher harmonics remain audible. Do not assume a universal bass floor, resonance, or equal-loudness curve. Verify the final register and mix on the target hardware.
 
@@ -129,8 +129,8 @@ instrument kick  { wave noise volume 8 envelope drum_hit gate 65% }
 instrument snare { wave noise volume 6 envelope drum_hit gate 65% }
 instrument hat   { wave noise volume 2 envelope drum_tick gate 60% }
 
-// Note names on a noise channel select noise-clock settings, not tonal melody.
-// These particular noise pitches are placeholders; test the texture on hardware.
+// Noise notes gate sounding duration; their pitches do not change the timbre.
+// Shape percussion with volume, envelopes, gates and explicit retriggers.
 channel 3 octave 4 {
     repeat 2 {
         c8@kick b8@hat g8@snare b8@hat
@@ -199,7 +199,7 @@ channel 3 drum octave 4 {
 }
 ```
 
-**Adjust first:** melodic octave, arpeggio root and volume, bass audibility, noise-clock pitches, and envelopes. Different physical piezos and different playback gains can change the best balance. A successful mix often requires the accompaniment to be **considerably less prominent** than the melody, even when its source-note root is low.
+**Adjust first:** melodic octave, arpeggio root and volume, bass audibility, percussion gates/retriggers, and envelopes. Different physical piezos and different playback gains can change the best balance. A successful mix often requires the accompaniment to be **considerably less prominent** than the melody, even when its source-note root is low.
 
 ## 5. Composer checklist
 

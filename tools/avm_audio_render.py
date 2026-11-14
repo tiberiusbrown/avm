@@ -103,13 +103,26 @@ def decode(data):
     raise ValueError("Audio stream has no End")
 
 
-# Every nonzero seed belongs to this single 255-element Galois cycle.
-_cycle = [1]
-for _ in range(254):
-    _value = _cycle[-1]
-    _cycle.append((_value >> 1) ^ (0xB8 if _value & 1 else 0))
+def noise_next(state):
+    """feedback uses bits 15/14 of the shifted 16-bit word."""
+    shifted = (state << 1) & 0xffff
+    return shifted ^ (((shifted >> 15) ^ (shifted >> 14)) & 1)
+
+
+def seed_state(seed):
+    """AVMS 1..63 mapping; AVR SWAP supplies the high byte."""
+    return seed | ((((seed << 4) | (seed >> 4)) & 255) << 8)
+
+
+# Host-only periodic cycle. The cursor identifies the next post-update state,
+# allowing startup/retrigger states one transient step outside this cycle.
+_cycle = [2]
+for _ in range(32766):
+    _cycle.append(noise_next(_cycle[-1]))
+assert noise_next(_cycle[-1]) == 2
 _cycle = np.array(_cycle, dtype=np.int64)
 _indices = {int(v): i for i, v in enumerate(_cycle)}
+assert len(_indices) == 32767
 
 
 def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False, lowpass=0):
@@ -122,6 +135,9 @@ def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False
     a uint8 tonal coefficient: 0=off, 128=mild, 64=medium, 32=strong. Smaller
     nonzero values smooth more; 255 follows the byte target immediately.
     Filtering retains byte history from time zero, including a skipped prefix.
+    Noise advances once per nonzero-increment sample, including volume zero;
+    stopped intervals freeze its cursor. Retriggers replace the next-state cursor
+    even while stopped. Pitch magnitude never changes its clock.
     One shared output gain applies after tonal filtering and noise addition.
     """
     if rate not in RATES or not isinstance(master, int) or not 0 <= master <= 255:
@@ -140,8 +156,9 @@ def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False
     render_first = 0 if lowpass else first
     mix = np.zeros(stop - render_first, dtype=np.int16)
     tonal = np.zeros_like(mix) if lowpass else None
-    increments, volumes, duties, phases = [0]*4, [24]*4, [128]*3, [0]*4
-    noise_index, cursor, base_tick, count = 0, 0, 0, 0
+    increments, volumes, duties, phases = [0]*4, [24]*4, [128]*3, [0]*3
+    noise_index = _indices[noise_next(0x0001)]
+    cursor, base_tick, count = 0, 0, 0
 
     def span(end):
         nonlocal cursor, noise_index
@@ -156,8 +173,8 @@ def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False
                 amp = (volumes[ch] & 31) if increments[ch] else 0
                 if not amp:
                     continue
-                position = phases[ch] + k * increments[ch]
                 if ch < 3:
+                    position = phases[ch] + k * increments[ch]
                     high = (position & 65535) >> 8
                     if volumes[ch] & 64:
                         sample = high - 128
@@ -172,12 +189,13 @@ def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False
                     if lowpass:
                         tonal[lo-render_first:end-render_first] += contribution
                 else:
-                    lfsr = _cycle[(noise_index + (position >> 16)) % 255]
-                    out += np.where(lfsr & 1, -amp, amp).astype(np.int16)
+                    lfsr = _cycle[(noise_index + k - 1) % 32767]
+                    out += np.where(lfsr & 0x8000, -amp, amp).astype(np.int16)
             mix[lo-render_first:end-render_first] = out
         n = end - cursor
-        noise_index = (noise_index + (phases[3] + n * increments[3]) // 65536) % 255
-        for ch in range(4):
+        if increments[3]:
+            noise_index = (noise_index + n) % 32767
+        for ch in range(3):
             phases[ch] = (phases[ch] + n * increments[ch]) & 65535
         cursor = end
 
@@ -196,7 +214,7 @@ def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False
                     if ch < 3:
                         duties[ch] = extension
                     else:
-                        phases[3], noise_index = 0, _indices[extension]
+                        noise_index = _indices[noise_next(seed_state(extension))]
             if event.command == 1 and not loop:
                 increments = [0]*4
                 span(stop)

@@ -13,9 +13,10 @@ sys.path.insert(0, str(ROOT / "tools"))
 import avm_music
 from avm_audio_render import render
 
-LOOPED = {"steady", "phase_loop", "triangle", "triangle_switch", "saw", "saw_switch"}
+LOOPED = {"noise_gates", "steady", "phase_loop", "triangle", "triangle_switch", "saw", "saw_switch"}
 
 SCORES = {
+    "noise_gates": "channel 3 { volume 31 r:40ms noise_retrigger { every 12ms seed 37 } c:40ms noise_retrigger off volume 0 octave 6 b:40ms volume 31 octave 1 c:40ms r:40ms noise_retrigger { every 16ms seed 8 onset no } octave 4 a:40ms }",
     "steady": "channel 0 { volume 12 duty 64 c:800ms }",
     "single": "channel 0 { volume 12 octave 4 c:160ms octave 1 c:160ms octave 6 b:160ms }",
     "duties": "channel 0 { volume 31 duty 0 c:80ms duty 32 c:80ms duty 64 c:80ms duty 96 c:80ms duty 128 c:80ms duty 255 c:80ms }",

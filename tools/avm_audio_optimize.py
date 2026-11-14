@@ -279,11 +279,6 @@ def candidate_groups(stage, best, baseline, config):
         for name in used:
             if best.instruments[name].wave == "pulse":
                 yield name+" duty", [(str(d), lambda a, n=name, v=d: setattr(a.instruments[n], "duty", v)) for d in (128, 64, 96, 32, 48, 80, 192)]
-            elif best.instruments[name].wave == "noise":
-                def pitch(a, shift, name=name):
-                    for n, b in zip(_instrument_notes(a, name), _instrument_notes(baseline, name)):
-                        n.pitch = min(95, max(24, b.pitch+shift))
-                yield name+" noise rate", [(str(s), lambda a, s=s, p=pitch: p(a, s)) for s in (-12, -5, 5, 12)]
     elif stage == "envelopes":
         # A compact reusable vocabulary; values are actual compiler breakpoints.
         shapes = [((0, 100),), ((0, 100), (48, 35)), ((0, 100), (96, 60)),

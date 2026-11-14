@@ -81,6 +81,7 @@ def arrangement_metrics(arrangement):
                       "mean_volume": sum(n.volume for n in notes)/max(1, len(notes)),
                       "duties": sorted({arrangement.instruments[n.instrument].duty for n in notes}),
                       "gates": sorted({n.gate for n in notes}),
+                      # Retained note gates; these do not select noise rates.
                       "noise_pitches": sorted({n.pitch for n in notes}) if ch == 3 else []}
                       for ch, notes in sorted(arrangement.voices.items())},
             "effects": dict(Counter(e.kind for notes in arrangement.voices.values() for n in notes for e in n.effects)),

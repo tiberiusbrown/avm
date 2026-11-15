@@ -762,7 +762,7 @@ def orchestrate(arrangement, song, settings, preset):
                 if abs(end_bend - start_bend) < 1 and inside:
                     # Do not erase an up/down bend whose final value is zero.
                     _, end_bend = max(inside, key=lambda p: abs(p[1] - start_bend))
-                frequency = 440 * 2 ** ((note.pitch - 69) / 12)
+                frequency = avm_music.note_frequency(note.pitch)
                 over = max(4, tick((inside[-1][0] - note.start) if inside else length) * 4)
                 note.effects.append(Effect("frequency_slide", {"from_hz": frequency * 2 ** (start_bend / 1200),
                                                                    "to_hz": frequency * 2 ** (end_bend / 1200), "over_ms": over}))

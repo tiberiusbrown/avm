@@ -21,7 +21,12 @@ def at(states, time, ch=0):
 
 
 def pitch(note):
-    return round(440 * 2 ** ((note - 69) / 12) * 65536 / 15625)
+    return music.note_increment(note)
+
+
+def shifted(note, cents):
+    """Increment of a note moved by cents from its tuned pitch, as slides and vibrato do."""
+    return round(music.note_frequency(note) * 2 ** (cents / 1200) * 65536 / 15625)
 
 
 class EffectTests(unittest.TestCase):
@@ -124,9 +129,11 @@ class EffectTests(unittest.TestCase):
         self.assertEqual([at(states, t)["control"] for t in (0, 8, 16, 24, 32)], [10, 5, 0, 10, 5])
 
     def test_frequency_slide_log_intermediates_and_end(self):
-        for target, half in (("g4", 63.5), ("f3", 56.5)):
+        for target, note in (("g4", 67), ("f3", 53)):
             states, _ = resolved(f"automation 4ms channel 0 {{ frequency_slide {{ to {target} over 16ms }} c:24ms }}")
-            self.assertEqual(at(states, 8)["note"], pitch(half))
+            # Halfway in pitch between the tuned C4 and the tuned target.
+            middle = math.sqrt(music.note_frequency(60) * music.note_frequency(note))
+            self.assertEqual(at(states, 8)["note"], round(middle * 65536 / 15625))
             self.assertEqual(at(states, 16)["note"], music.note_increment(target))
             self.assertEqual(at(states, 20)["note"], at(states, 16)["note"])
 
@@ -134,8 +141,9 @@ class EffectTests(unittest.TestCase):
         states, _ = resolved("automation 4ms channel 0 { frequency_slide { from 200Hz to 400Hz over 16ms curve linear } c:24ms }")
         self.assertEqual(at(states, 8)["note"], round(300 * 65536 / 15625))
         states, _ = resolved("automation 4ms channel 0 { frequency_slide { delta -600cents over 16ms } c:24ms }")
-        self.assertEqual(at(states, 8)["note"], pitch(57))
-        self.assertEqual(at(states, 16)["note"], pitch(54))
+        # Relative slides start from the tuned C4: -300 cents halfway, -600 cents at the end.
+        self.assertEqual(at(states, 8)["note"], round(music.note_frequency(60) * 2 ** (-300 / 1200) * 65536 / 15625))
+        self.assertEqual(at(states, 16)["note"], round(music.note_frequency(60) * 2 ** (-600 / 1200) * 65536 / 15625))
 
     def test_frequency_range_saturates(self):
         states, _ = resolved("channel 0 { frequency_slide { from 0.001Hz to 999999Hz over 16ms curve linear } c:24ms }")
@@ -210,7 +218,7 @@ class EffectTests(unittest.TestCase):
     def test_lfo_pitch_cents_and_semitones(self):
         for depth in ("100cents", "1semitone"):
             states, _ = resolved(f"automation 4ms channel 0 {{ lfo {{ target pitch depth {depth} period 16ms }} c:20ms }}")
-            self.assertEqual([at(states,t)["note"] for t in (0,4,8,12)], [pitch(n) for n in (60,61,60,59)])
+            self.assertEqual([at(states,t)["note"] for t in (0,4,8,12)], [shifted(60, c) for c in (0, 100, 0, -100)])
 
     def test_lfo_duty_phase_and_independence(self):
         for phase, expected in (("note",128), ("song",96)):
@@ -232,7 +240,7 @@ class EffectTests(unittest.TestCase):
 
     def test_frequency_slide_plus_vibrato(self):
         states, _ = resolved("automation 4ms channel 0 { frequency_slide { delta -1200cents over 16ms } lfo { target pitch depth 100cents period 16ms } c:24ms }")
-        self.assertEqual([at(states,t)["note"] for t in (0,4,8,12,16)], [pitch(n) for n in (60,58,54,50,48)])
+        self.assertEqual([at(states,t)["note"] for t in (0,4,8,12,16)], [shifted(60, c) for c in (0, -200, -600, -1000, -1200)])
 
     def test_duty_slide_plus_lfo(self):
         states, _ = resolved("automation 4ms channel 0 { duty_slide { from 128 to 64 over 16ms } lfo { target duty depth 16 period 16ms } c:24ms }")
@@ -280,7 +288,7 @@ class EffectTests(unittest.TestCase):
             phrase riff { c:16ms }
             channel 0 x { riff d:16ms@y frequency_slide off e:16ms }
         """)
-        self.assertEqual(at(states,8)["note"],pitch(48))
+        self.assertEqual(at(states,8)["note"],shifted(60, -1200))
         self.assertEqual(at(states,24)["note"],pitch(62))
         self.assertEqual(at(states,40)["note"],pitch(64))
         self.assertEqual(at(states,16)["control"],7)

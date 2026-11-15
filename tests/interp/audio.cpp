@@ -209,7 +209,13 @@ struct harness {
         return t;
     }
     static uint16_t increment(unsigned note) {
-        return note==128 ? 0 : uint16_t(std::lround(440*std::pow(2.,(int(note)-69)/12.)*65536/15625));
+        // The runtime's direct-tone table, which carries the compiler's per-note tuning.
+        static const uint16_t table[72]={
+#include "../../runtime/lib/note_increments.inc"
+        };
+        if(note==128) return 0;
+        if(note<24 || note>95) throw std::runtime_error("increment fixture note out of range");
+        return table[note-24];
     }
     unsigned note_index(unsigned channel) {
         auto pitch=word(notes+4*channel);
@@ -1302,9 +1308,18 @@ void synthesis(harness& h) {
         for(int note=24;note<=95;++note) {
             h.play_midi({1,0,1,uint8_t(note),9,0,1});
             auto expected=440*std::pow(2.,(note-69)/12.);
-            auto rounded=uint16_t(2*std::lround(expected*65536/15625));
+            auto rounded=uint16_t(2*h.increment(note));
             require(h.word(controls)==rounded,"canonical pitch rounding wrong");
-            maxcents=std::max(maxcents,std::abs(1200*std::log2(rounded*7812.5/65536/expected)));
+            auto cents=std::abs(1200*std::log2(rounded*7812.5/65536/expected));
+            // The universal 5 cent flat shift plus at most six cents of per-note correction,
+            // plus increment rounding.
+            require(cents<12,"note tuning drifted more than the tuning table allows");
+            maxcents=std::max(maxcents,cents);
+            // Notes below C3 carry only the universal shift.
+            if(note<48) {
+                auto shifted=uint16_t(std::lround(expected*std::pow(2.,-5/1200.)*65536/15625));
+                require(h.increment(note)==shifted,"low note should carry only the universal tuning shift");
+            }
         }
         std::cout<<"maximum tuning error: "<<maxcents<<" cents\n";
     });

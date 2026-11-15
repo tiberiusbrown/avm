@@ -199,7 +199,7 @@ class ScoreTests(unittest.TestCase):
         data = music._encode_events(2, [(1, {1: {"increment": 3717, "volume": 12}})], 1, True)
         self.assertEqual(data, bytes([2, 0, 0x22, 0x85, 0x0e, 140, 128, 0, 0, 1]))
         self.assertEqual(decode(data, raw=True)[0][0][1][1]["note"], 3717)
-        self.assertEqual(music.note_increment(69), 1845)
+        self.assertEqual(music.note_increment(69), 1838)  # A4: -5 cent shift, -2 cent correction
 
     def test_loop_directive_and_unavailable_sfx_channels_are_rejected(self):
         for source in ("loop channel 0 { c4 }", "sfx loop channel 1 { c4 }", "sfx channel 0 { c4 }", "sfx channel 2 { r4 }"):
@@ -471,8 +471,8 @@ class ScoreTests(unittest.TestCase):
 
     def test_pulse_and_triangle_exact_bytes(self):
         for wave, expected in (
-            ("pulse", "0100114904894001110000000011490409000001"),
-            ("triangle", "0100114904a94001110000200011490429000001"),
+            ("pulse", "0100114404894001110000000011" + "4404" + "09000001"),
+            ("triangle", "0100114404a94001110000200011" + "4404" + "29000001"),
         ):
             source = f"channel 0 {{ wave {wave} volume 9 duty 64 c:8ms r:4ms c:8ms }}"
             self.assertEqual(music.compile_source(source), bytes.fromhex(expected))

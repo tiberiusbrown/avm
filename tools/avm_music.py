@@ -54,10 +54,51 @@ def emit_event(output, ticks, payload):
     output += payload
 
 
+NOTE_FIRST, NOTE_LAST = 24, 95
+# The oscillators are plain phase accumulators, and at the 15625 Hz synthesis
+# rate a pulse beats audibly when its pitch sits within a few hertz of
+# 15625 / N for a whole number of samples per period (G5, C6 and G6 are the
+# worst notes at exact equal temperament). Written notes are therefore tuned in
+# two layers, derived together by avm_note_tuning.py:
+#   GLOBAL_TUNING_CENTS moves every note by the same amount, so intervals are
+#       untouched (A4 sounds at 438.7 Hz).
+#   NOTE_TUNING_CENTS then moves each MIDI note 24..95 (C1..B6) by at most
+#       +/-6 cents more, off whatever pitch still beats. Notes below C3 keep
+#       only the global shift.
+# runtime/lib/note_increments.inc holds the resulting direct-tone increments and
+# tests keep the two in step. Pitches given in Hz are never adjusted.
+GLOBAL_TUNING_CENTS = -5
+NOTE_TUNING_CENTS = (
+    +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0,  # C1..B1
+    +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0,  # C2..B2
+    -2, +0, +0, +0, +1, -5, -5, +0, +3, +5, +0, -1,  # C3..B3
+    -3, +1, -4, -4, +2, +0, -6, +0, +3, -2, +0, +3,  # C4..B4
+    -3, -4, +0, -4, +1, +3, -6, -1, +6, -5, +1, +1,  # C5..B5
+    -3, -4, +0, +3, +4, +2, -6, -1, -4, -1, +4, +5,  # C6..B6
+)
+
+
+def note_tuning_cents(pitch):
+    """Total tuning offset in cents from A = 440 Hz equal temperament for a MIDI pitch.
+
+    The universal shift plus the per-note correction; fractional pitches
+    interpolate the correction between neighbouring notes."""
+    position = min(max(pitch, NOTE_FIRST), NOTE_LAST) - NOTE_FIRST
+    low = int(position)
+    high = min(low + 1, NOTE_LAST - NOTE_FIRST)
+    correction = NOTE_TUNING_CENTS[low] + (NOTE_TUNING_CENTS[high] - NOTE_TUNING_CENTS[low]) * (position - low)
+    return GLOBAL_TUNING_CENTS + correction
+
+
+def note_frequency(pitch):
+    """Frequency in Hz of a MIDI pitch, including its tuning correction."""
+    return 440 * 2 ** ((pitch - 69) / 12) * 2 ** (note_tuning_cents(pitch) / 1200)
+
+
 def note_increment(value):
     """Convert a score/MIDI note to a uint16 increment at canonical 15625 Hz."""
     note = note_number(value)
-    return 0 if note == 0x80 else round(440 * 2 ** ((note - 69) / 12) * 65536 / 15625)
+    return 0 if note == 0x80 else round(note_frequency(note) * 65536 / 15625)
 
 
 def _encode_events(mask, events, tail_ticks, sfx=False):
@@ -317,7 +358,7 @@ class ScoreParser:
         if re.fullmatch(r"[a-gA-G][#b]?\d+", self.peek()):
             self.take()
             try:
-                return 440 * 2 ** ((note_number(token[0]) - 69) / 12)
+                return note_frequency(note_number(token[0]))
             except ValueError as error:
                 self.error(str(error), token)
         value = self.number()
@@ -929,7 +970,7 @@ def compile_source(source, filename="<score>", automation_ms=None, max_updates=2
                 if time >= stop:
                     continue
                 elapsed = time - start
-                frequency = 440 * 2 ** ((note["pitch"] - 69) / 12)
+                frequency = note_frequency(note["pitch"])
                 if sound.get("frequency_slide"):
                     frequency = slide_value(sound["frequency_slide"], frequency, elapsed, True)
                 elif sound.get("arpeggio"):
@@ -937,14 +978,14 @@ def compile_source(source, filename="<score>", automation_ms=None, max_updates=2
                     position = int(elapsed // arp["step"])
                     position = min(position, len(arp["offsets"]) - 1) if arp.get("once") else position % len(arp["offsets"])
                     pitch = max(24, min(95, note["pitch"] + arp["offsets"][position]))
-                    frequency = 440 * 2 ** ((pitch - 69) / 12)
+                    frequency = note_frequency(pitch)
                 elif sound.get("glissando"):
                     gliss = sound["glissando"]
                     direction = -1 if gliss.get("direction", "up") == "down" else 1
                     pitch = max(24, min(95, note["pitch"] + direction * gliss.get("step", 1) * (elapsed // gliss["every"])))
-                    frequency = 440 * 2 ** (float(pitch - 69) / 12)
+                    frequency = note_frequency(float(pitch))
                     if "to" in gliss:
-                        base = 440 * 2 ** ((note["pitch"] - 69) / 12)
+                        base = note_frequency(note["pitch"])
                         target = max(base, gliss["to"]) if direction > 0 else min(base, gliss["to"])
                         frequency = min(frequency, target) if direction > 0 else max(frequency, target)
                 if sound.get("lfo_pitch"):

@@ -377,6 +377,58 @@ In effect endpoints such as `frequency_slide { to g4 over 100ms }`, `g4`
 instead names the absolute pitch G4. Endpoint pitches use scientific pitch
 notation (`c4`, `f#3`, `bb2`) or a positive frequency such as `440Hz`.
 
+### Note tuning
+
+The oscillators are plain phase accumulators with no band limiting. At the
+15625 Hz synthesis rate a pulse sounds rough when its pitch lies within a few
+hertz of 15625 / N for a whole number N of samples per period: the edges snap
+to sample boundaries in a slowly shifting pattern, and the resulting alias
+lines beat against the real partials. G5, C6 and G6 are the worst notes at
+exact equal temperament (measured as 5% to 10% amplitude modulation around the
+fundamental between 15 and 120 Hz; most notes stay under 2%).
+
+To avoid this, the compiler tunes every written note in two layers:
+
+- **A universal shift of -5 cents.** Every note, including those below C3, is
+  five cents flat of equal temperament at A = 440 Hz, so A4 sounds at about
+  438.7 Hz before its correction. Intervals between notes are unaffected. A
+  search over shifts from -50 to +50 cents found no better region at this rate;
+  -5 to -8 cents is a plateau.
+- **A per-note correction of at most six cents** (`NOTE_TUNING_CENTS`), moving
+  each note off whatever pitch still beats. Notes below C3 have 60 or more
+  samples per period and no such beating, so they keep only the universal shift.
+  Corrections, in cents (octaves are rows):
+
+| Octave | C | C# | D | D# | E | F | F# | G | G# | A | A# | B |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 3 | -2 | 0 | 0 | 0 | +1 | -5 | -5 | 0 | +3 | +5 | 0 | -1 |
+| 4 | -3 | +1 | -4 | -4 | +2 | 0 | -6 | 0 | +3 | -2 | 0 | +3 |
+| 5 | -3 | -4 | 0 | -4 | +1 | +3 | -6 | -1 | +6 | -5 | +1 | +1 |
+| 6 | -3 | -4 | 0 | +3 | +4 | +2 | -6 | -1 | -4 | -1 | +4 | +5 |
+
+Across C4..B6 the measured roughness falls from a 2.0% mean (10.5% worst note)
+to 0.4% (1.2% worst). A note is therefore within 11 cents of equal temperament
+at A = 440 Hz, and simultaneous notes differ from the equal-tempered interval by
+at most twelve cents, which is below the usual threshold for hearing a note out
+of tune.
+
+Both layers belong to the written pitch, so they apply to plain notes, to every
+note of an `arpeggio`, to `glissando` steps, and to note names used as
+`frequency_slide` or `glissando` endpoints. Slides, vibrato and other offsets
+then move relative to the tuned note. Frequencies written in Hz are exact and
+are never adjusted, and noise ignores pitch. The direct-tone calls
+(`avm_audio_tone`, `avm_audio_tone_pulse`, `avm_audio_tone_triangle`) use the
+same pitches through the runtime table in `runtime/lib/note_increments.inc`.
+
+`GLOBAL_TUNING_CENTS` and `NOTE_TUNING_CENTS` live in
+[`tools/avm_music.py`](../tools/avm_music.py) and are derived together by
+[`tools/avm_note_tuning.py`](../tools/avm_note_tuning.py) (needs NumPy and SciPy;
+`--check` verifies the committed table). After changing either, regenerate
+`runtime/lib/note_increments.inc` from `note_increment(24..95)`, recompile
+scores, and run `tests/audio/test_tuning.py`, which keeps the compiler and the
+runtime table in step. Scores compiled before the tuning was added play correctly
+but keep their exact equal-temperament pitches until recompiled.
+
 ### Durations and inheritance
 
 A note duration denominator must be a positive power of two: `1` whole,
@@ -1229,7 +1281,8 @@ older assets, including A5/D1–D3 assets: their magic bytes are no longer part
 of the format, and the AVR does not detect incompatible or malformed data.
 Pitches are
 little-endian uint16 increments with zero meaning off, encoded for 15625 Hz:
-`round(frequency_Hz * 65536 / 15625)`. At 7812.5 Hz foreground preparation
+`round(frequency_Hz * 65536 / 15625)`, where the frequency of a MIDI note
+includes its [tuning correction](#note-tuning). At 7812.5 Hz foreground preparation
 doubles increments, saturating at 65535; desired state remains canonical.
 All uint16 increments are legal. MIDI source notation covers C1..B6.
 Pitch and duty updates preserve phase, including repeated notes and loops.
@@ -1273,8 +1326,8 @@ A volume/waveform control is one byte. A duty or seed update is two bytes and
 also carries the currently selected volume and tonal waveform. Optional bytes immediately follow
 their own control byte, before the next channel's control. Noise never
 interprets the extension as duty. Seed-only changes still publish a packet.
-For example `00 11 35 07 87 40` waits one tick, sets voice 0 to increment
-1845, volume 7, and duty 64. `00 80 8A 25` reseeds noise with 37 at volume 10.
+For example `00 11 2E 07 87 40` waits one tick, sets voice 0 to increment
+1838, volume 7, and duty 64. `00 80 8A 25` reseeds noise with 37 at volume 10.
 `00 10 27` selects triangle at volume 7 on channel 0; `00 10 67` selects saw;
 `00 10 07` switches back to pulse. All retain duty and phase. Wave encodings
 are pulse `00`, triangle `20`, and saw `60`; the compiler rejects `40`.
@@ -1336,7 +1389,7 @@ channel 0 { volume 7 duty 25% a4 }
 Its entire compiled stream is:
 
 ```hex
-01 00 11 35 07 87 40 7B 00 01
+01 00 11 2E 07 87 40 7B 00 01
 ```
 
 | Byte offsets (zero-based) | Bytes | Interpretation |
@@ -1344,7 +1397,7 @@ Its entire compiled stream is:
 | 0 | `01` | Own channel 0; the API selects music |
 | 1 | `00` | Wait 1 tick (4 ms) |
 | 2 | `11` | Update channel 0 pitch and control |
-| 3..4 | `35 07` | Increment `0x0735` = 1845, approximately 440 Hz |
+| 3..4 | `2E 07` | Increment `0x072E` = 1838, A4 at 438.2 Hz (the [tuned](#note-tuning) pitch) |
 | 5..6 | `87 40` | Volume 7 with extension flag; duty 64 = 25% |
 | 7 | `7B` | Wait 124 ticks (496 ms) after the onset |
 | 8..9 | `00 01` | Command record: End, at 500 ms from stream start |

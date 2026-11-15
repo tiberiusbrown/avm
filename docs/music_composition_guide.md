@@ -75,6 +75,8 @@ The channel declaration is `channel NUMBER [INSTRUMENT] [octave OCTAVE] { ... }`
 
 **Important:** In a channel, `c4` means a **quarter-note C**, not C in octave 4. Choose pitch octave with `octave 4` or the `'` and `,` modifiers. An explicit denominator updates the inherited duration for following notes; the starting duration is a quarter note. Notated pitches must resolve to C1–B6.
 
+The compiler tunes every written note five cents flat and then corrects each by at most six cents more (see [Note tuning](audio.md#note-tuning)) so that no common pitch lands where the 15625 Hz synthesis beats roughly. Write the notes you mean and do not detune by hand; pitches written in Hz are exact.
+
 All channels need not contain the same number of notes, but the **longest written channel timeline determines a music score's end**. Use terminal rests when a release tail or phrase needs room to finish.
 
 ### Envelope and effect syntax

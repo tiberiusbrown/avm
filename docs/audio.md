@@ -145,7 +145,6 @@ void play_pickup(void) {
 Near the beginning, each generated header reports `Compiled audio size: N bytes.`
 The count is exactly `len(data)`: stream
 headers, events, and terminal commands, excluding final `uint64_t` padding.
-The same comment appears for large assets stored in chunked structures.
 Raw binary exports and the existing opt-in `--stats` output are unchanged.
 
 `avm_audio_play` selects music; `avm_audio_sfx` selects one-shot SFX. Both use
@@ -178,7 +177,8 @@ counts resolved update records before insertion of long-wait Continue records
 and the terminal End command.
 
 `c_array` exports packed little-endian `uint64_t` words with at most seven
-trailing zero bytes. Large C/C++ exports use contiguous chunks when necessary.
+trailing zero bytes. Large C/C++ exports also use a single array in 24-bit
+program memory, including arrays larger than 64 KB or with more than 65,535 elements.
 No 64 KB asset-size cap is introduced; streams and program addresses remain
 24-bit. The End command makes export padding inert.
 

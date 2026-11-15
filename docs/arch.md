@@ -399,6 +399,13 @@ The linker MAY place functions, basic blocks, jump tables, constants, and other 
 
 Functions, basic blocks, fallthrough paths, and program data may freely cross 64 KiB boundaries.
 
+C and C++ array, struct, and union types may exceed 64 KiB for objects in
+24-bit program memory. Their bounds and layouts are preserved without widening
+stored program pointers. Objects in ordinary 16-bit data memory must still fit
+within 65,535 bytes; the linker enforces the smaller physical RAM budgets.
+`size_t` and `ptrdiff_t` remain 16 bits, so whole-object sizes and pointer
+differences beyond their range must not be represented using those types.
+
 ## 14. Endianness and alignment
 
 AVM is little-endian.

@@ -1054,18 +1054,8 @@ def c_array(data, name):
         return "\n".join(indent + ", ".join(f"0x{x:016x}ULL" for x in values[i:i + 4]) + ","
                          for i in range(0, len(values), 4))
 
-    if len(words) <= 65535:
-        return (prefix + "static const uint64_t AVM_PROGMEM " + name + "[] = {\n"
-                + rows(words, "    ") + "\n};\n")
-    # Even word arrays eventually exceed Clang's 16-bit inferred bound.
-    # Byte-aligned uint64 fields keep arbitrary FX-sized assets contiguous,
-    # with each field smaller than the ordinary C object-size bound.
-    chunks = [words[i:i + 2048] for i in range(0, len(words), 2048)]
-    fields = "\n".join(f"    uint64_t part_{i}[{len(chunk)}];" for i, chunk in enumerate(chunks))
-    bodies = ["    {\n" + rows(chunk, "        ") + "\n    }," for chunk in chunks]
-    return (prefix + "static const AVM_PROGMEM struct {\n" + fields + "\n} " + name + "_avm_storage = {\n"
-            + "\n".join(bodies) + "\n};\n#define " + name
-            + " ((const uint8_t AVM_PROGMEM *)&" + name + "_avm_storage)\n")
+    return (prefix + "static const uint64_t AVM_PROGMEM " + name + "[] = {\n"
+            + rows(words, "    ") + "\n};\n")
 
 
 

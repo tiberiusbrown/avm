@@ -198,14 +198,14 @@
        41519   math_trig_probe_identity_odd.c
       194646   math_trig_probe_inline_boundary.c
       195110   math_trig_probe_inline_cancel.c
-      379798   math_trig_probe_inline_cutoff.c
+      396646   math_trig_probe_inline_cutoff.c
        47542   math_trig_probe_inline_direct.c
       194894   math_trig_probe_inline_even.c
-     1098118   math_trig_probe_inline_extended.c
+     1182118   math_trig_probe_inline_extended.c
       125094   math_trig_probe_inline_first.c
       207166   math_trig_probe_inline_larger.c
       194806   math_trig_probe_inline_modest.c
-      515998   math_trig_probe_inline_normal.c
+      549694   math_trig_probe_inline_normal.c
       195078   math_trig_probe_inline_odd.c
        28413   math_trig_probe_loop_boundary.c
        28423   math_trig_probe_loop_cancel.c
@@ -220,14 +220,14 @@
        28239   math_trig_probe_loop_odd.c
       222335   math_trig_probe_outline_boundary.c
       222799   math_trig_probe_outline_cancel.c
-      385871   math_trig_probe_outline_cutoff.c
+      402719   math_trig_probe_outline_cutoff.c
        65183   math_trig_probe_outline_direct.c
       222583   math_trig_probe_outline_even.c
-     1108655   math_trig_probe_outline_extended.c
+     1192655   math_trig_probe_outline_extended.c
       135023   math_trig_probe_outline_first.c
       228335   math_trig_probe_outline_larger.c
       222495   math_trig_probe_outline_modest.c
-      526535   math_trig_probe_outline_normal.c
+      560231   math_trig_probe_outline_normal.c
       222767   math_trig_probe_outline_odd.c
        55647   math_trig_probe_quotient_modest.c
        90436   math_trig_probe_reconstruct_modest.c
@@ -265,16 +265,16 @@
       126082   math_trig_probe_tan_modest.c
       167730   math_trig_probe_tan_normal.c
       133234   math_trig_probe_tan_odd.c
-     1042735   math_trig_probe_window_extended.c
-      460615   math_trig_probe_window_normal.c
+     1126735   math_trig_probe_window_extended.c
+      494311   math_trig_probe_window_normal.c
        35013   math_trig_quotient_bias.c
        27481   math_trig_quotient_u16.c
        30980   math_trig_quotient_u32.c
        77784   math_trig_reconstruction.c
        63555   math_trig_reduce_direct.c
-      380171   math_trig_reduce_edge.c
+      394913   math_trig_reduce_edge.c
       190491   math_trig_reduce_game.c
-      455283   math_trig_reduce_large.c
+      480555   math_trig_reduce_large.c
       166151   math_trig_reduce_poles.c
        95233   math_trig_sin_direct.c
       111087   math_trig_sin_edge.c

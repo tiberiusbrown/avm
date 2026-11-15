@@ -380,7 +380,7 @@ class ScoreTests(unittest.TestCase):
 
     def test_word_export_preserves_bytes_and_padding(self):
         import re
-        for length in (1, 7, 8, 9, 65535, 66006, 524281):
+        for length in (1, 7, 8, 9, 65528, 65529, 65535, 66006, 78540, 524281):
             data = bytes(i % 256 for i in range(length))
             header = music.c_array(data, "song")
             words = re.findall(r"0x([0-9a-f]{16})ULL", header)
@@ -389,6 +389,9 @@ class ScoreTests(unittest.TestCase):
             self.assertLess(len(unpacked) - length, 8)
             self.assertEqual(unpacked[length:], bytes(len(unpacked) - length))
             self.assertIn(f"/* Compiled audio size: {len(data)} bytes. */", header)
+            self.assertIn("static const uint64_t AVM_PROGMEM song[]", header)
+            self.assertNotIn("struct", header)
+            self.assertNotIn("#define song", header)
 
 
     def test_triangle_controls_retention_switches_alias_and_initial_loop_state(self):

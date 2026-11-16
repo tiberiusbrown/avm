@@ -15345,7 +15345,16 @@ audio_advance:
     movw r30, r16
     ldd  r24, Z+AUDIO_STATUS
     cpi  r24, 1
+    breq .Laudio_advance_wait
+    cpi  r16, lo8(data_audio_sfx)
+    brne .Laudio_advance_done ; music status 2 is paused
+    cpi  r24, 2
     brne .Laudio_advance_done
+    ldd  r24, Z+AUDIO_WAIT
+    ldd  r25, Z+AUDIO_WAIT+1
+    or   r24, r25
+    breq .Laudio_advance_done ; zero duration is latched
+.Laudio_advance_wait:
     ldd  r24, Z+AUDIO_WAIT
     ldd  r25, Z+AUDIO_WAIT+1
     cp   r20, r24
@@ -15359,6 +15368,11 @@ audio_advance:
     ret
 .Laudio_event:
     ; Every record consumes time, bounding catch-up by the elapsed tick count.
+    ldd  r25, Z+AUDIO_STATUS
+    cpi  r25, 2
+    brne 1f
+    rjmp audio_release_owner ; direct tones have no event cursor
+1:
     sub  r20, r24
     rcall audio_read_event
     ld   r24, X+
@@ -15449,6 +15463,7 @@ audio_advance:
 audio_stream_end:
     movw r30, r16
     rcall audio_event_consumed
+audio_release_owner:
     ldd  r24, Z+AUDIO_MASK
     std  Z+AUDIO_STATUS, ZERO
     std  Z+AUDIO_MASK, ZERO
@@ -15622,7 +15637,7 @@ audio_apply_update:
     sts  data_audio_update, r0
     ret
 
-; SYS 0x38: r7 command; arguments in r4-r6. All guest registers and flags
+; SYS 0x38: r7 command; arguments in r4-r6, tone duration in r0. All guest registers and flags
 ; preserved except r4 for STATUS. The runtime provides ordinary ABI wrappers.
 sys_audio_impl:
     fx_disable ; SYS speculative opcode is complete by this far entry
@@ -15879,6 +15894,8 @@ audio_enable_phase:
     ret
 
 .Laudio_tone:
+    sts  data_audio_sfx+AUDIO_WAIT, VM_R0L
+    sts  data_audio_sfx+AUDIO_WAIT+1, VM_R0H
     mov  r25, VM_R4L
     andi r25, 3
     ldi  r30, lo8(data_audio_sfx_notes)
@@ -15905,7 +15922,7 @@ audio_enable_phase:
     rjmp 1b
 2:
     sts  data_audio_sfx+AUDIO_MASK, r24
-    ldi  r24, 2 ; latched direct tone, no event advancement
+    ldi  r24, 2 ; direct tone: zero wait latches, otherwise expires without events
     sts  data_audio_sfx+AUDIO_STATUS, r24
     rcall audio_enable
     rjmp .Laudio_command_commit

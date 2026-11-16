@@ -182,10 +182,11 @@ struct harness {
             (*flash.sectors[s])[a%4096]=data[i];
         }
     }
-    uint64_t command(unsigned command, uint32_t ptr=0, unsigned value=0, bool synchronous=true) {
+    uint64_t command(unsigned command, uint32_t ptr=0, unsigned value=0, bool synchronous=true, unsigned ticks=0) {
         if(synchronous) quiet();
         freeze_commits=synchronous;
         word(16,uint16_t(ptr)); word(18,uint16_t(ptr>>16)); word(20,uint16_t(value)); word(22,uint16_t(command));
+        if(command==10) word(8,uint16_t(ticks));
         auto regs=c().data; auto flags=c().data[reg::addr::GPIOR0]; auto sp=c().sp();
         c().pc=uint16_t(sym("sys_audio_impl")); tick();
         auto t=until([&]{return boundary();});
@@ -229,10 +230,10 @@ struct harness {
         for(unsigned note=24;note<=95;++note) if(increment(note)==pitch) return note-24;
         throw std::runtime_error("SFX pitch is not a fixture MIDI increment");
     }
-    uint64_t tone(uint32_t argument, unsigned amplitude) {
+    uint64_t tone(uint32_t argument, unsigned amplitude, unsigned ticks=0) {
         auto note=argument>>16;
         auto pitch=note>=24 && note<=95 ? increment(note) : 0;
-        return command(10,(uint32_t(pitch)<<16)|(argument&0xffff),amplitude);
+        return command(10,(uint32_t(pitch)<<16)|(argument&0xffff),amplitude,true,ticks);
     }
     static std::vector<uint8_t> midi_fixture(std::vector<uint8_t> const& data, bool effect=false) {
         require(!data.empty() && data[0]>=1 && data[0]<=15,"MIDI fixture ownership wrong");
@@ -791,6 +792,46 @@ void sequence(harness& h) {
         require(h.word(controls+6)==2*h.increment(69),"direct tone tuning wrong");
         h.elapsed(255); require(h.word(controls+6)==2*h.increment(69),"direct tone advanced a stream");
         h.command(8); require(h.amplitude(2)==255,"direct tone did not release");
+    });
+    h.test("direct tone countdown, ownership restoration and replacement",[&]{
+        for(unsigned rate : {0u,1u}) {
+            h.command(13,rate);
+            h.play({2,0,34,0x00,0x10,0xaf,96,1,0x20,0x2c,255,0,1});
+            h.tone((69u<<16)|(64u<<8)|1u,17,3);
+            h.elapsed(0);
+            require(h.word(sfx+3)==3,"zero elapsed consumed tone duration");
+            h.elapsed(1);
+            require(h.word(sfx+3)==2 && h.amplitude(1)==17,"tone expired early");
+            h.elapsed(2);
+            require(!h.c().data[sfx+5] && !h.c().data[sfx+6] && h.amplitude(1)==12
+                && (h.c().data[waveform]&2) && h.c().data[duties+1]==96,
+                "tone expiry did not restore current music controls");
+            h.command(3);
+            h.tone((69u<<16)|(128u<<8)|1u,17|32,256);
+            h.elapsed(255);
+            require(h.word(sfx+3)==1 && h.amplitude(1)==17,"16-bit tone duration truncated");
+            h.elapsed(8);
+            require(!h.c().data[sfx+5] && h.amplitude(1)==255 && h.c().data[music+5]==2,
+                "tone catch-up failed while music paused");
+            h.tone((69u<<16)|(128u<<8)|1u,17,65535);
+            for(unsigned i=0;i<256;++i) h.elapsed(255);
+            require(h.word(sfx+3)==255,"maximum tone duration truncated");
+            h.elapsed(255);
+            require(!h.c().data[sfx+5],"maximum tone duration failed to expire");
+            h.tone((69u<<16)|(128u<<8)|1u,17,1);
+            h.tone((69u<<16)|(128u<<8)|1u,20);
+            h.elapsed(255);
+            require(h.amplitude(1)==20,"latched replacement inherited duration");
+            h.tone((69u<<16)|(128u<<8)|1u,17,1);
+            h.play({2,0,34,0x00,0x10,15,4,0,1},0x21000,true);
+            h.elapsed(1);
+            require(h.c().data[sfx+5]==1 && h.amplitude(1)==15,"SFX replacement inherited countdown");
+            h.command(8); h.elapsed(10);
+            require(!h.c().data[sfx+5],"stop resurrected countdown");
+            h.tone((69u<<16)|(128u<<8)|1u,17,1);
+            h.command(7); h.command(6); h.elapsed(10);
+            require(!h.c().data[sfx+5],"disable resurrected countdown");
+        }
     });
     h.test("retained volume and phase across pitch updates",[&]{
         h.play_midi({1,0,0x11,60,31,3,0x10,7,3,1,60,9,0,1});
@@ -2245,7 +2286,7 @@ void formatter(char** args) {
             // Call 0 is the initial pulse tone, calls 1..256 cover every MIDI note,
             // then the triangle and explicit-duty pulse wrappers follow. Every direct
             // tone uses the default tonal SFX channel, physical channel 1.
-            unsigned note=69, amplitude=31, duty=128, channel=1;
+            unsigned note=69, amplitude=31, duty=128, channel=1, ticks=0;
             bool triangle=false;
             if(tone_calls>=1 && tone_calls<=256) {
                 note=(tone_calls-1)%256;
@@ -2255,13 +2296,23 @@ void formatter(char** args) {
             } else if(tone_calls==258) {
                 amplitude=20; duty=64;
             }
+            if(tone_calls>=259) {
+                static const unsigned durations[]={0,1,4,5,1024,65535};
+                unsigned variant=(tone_calls-259)%6;
+                unsigned duration=durations[(tone_calls-259)/6];
+                amplitude=20;
+                triangle=variant%3==1;
+                if(triangle) amplitude|=32;
+                if(variant%3==2) duty=64;
+                ticks=variant<3 ? (duration+3)/4 : duration;
+            }
             auto pitch=note>=24 && note<=95 ? h.increment(note) : 0;
             if(h.c().data[16]!=channel || h.word(18)!=pitch || h.c().data[20]!=amplitude
-                || (!triangle && h.c().data[17]!=duty)) {
+                || (!triangle && h.c().data[17]!=duty) || h.word(8)!=ticks) {
                 std::ostringstream error;
                 error<<"guest tone wrapper call "<<tone_calls<<": channel="<<h.word(16)
                     <<", pitch="<<h.word(18)<<" (expected "<<pitch<<"), amplitude="<<h.word(20)
-                    <<", duty="<<h.c().data[17]<<" (expected "<<duty<<")";
+                    <<", ticks="<<h.word(8)<<" (expected "<<ticks<<"), duty="<<h.c().data[17]<<" (expected "<<duty<<")";
                 throw std::runtime_error(error.str());
             }
             ++tone_calls;
@@ -2269,7 +2320,7 @@ void formatter(char** args) {
         h.tick(true);
     }
     require(h.c().autobreaks.test(AB_BREAK),"audio formatter workload did not finish");
-    require(tone_calls==259,"guest tone wrappers did not cover all notes and waveforms");
+    require(tone_calls==295,"guest tone wrappers did not cover all notes and waveforms");
     require(minsp>=scratch_end,"formatter/audio interrupts collided with private workspace");
     std::cout<<"libm/formatter with sample interrupts: native stack "<<0xb00-minsp<<" bytes\n";
 }

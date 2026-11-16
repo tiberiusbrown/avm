@@ -92,14 +92,104 @@ uint8_t avm_audio_get_lowpass(void);
 void avm_audio_stop_sfx(void);
 /* bit 0=music playing, bit 1=music paused, bit 2=SFX playing. */
 uint8_t avm_audio_status(void);
-/* Replaces SFX with a latched pulse tone on the default tonal sound-effect
-   channel until stop_sfx; MIDI 24..95, amplitude 0..31, duty 128 (50%).
-   Out-of-range MIDI mutes the tone. Phase is preserved. */
-void avm_audio_tone(uint8_t note, uint8_t amplitude);
-/* Same latched tone with a triangle waveform; triangle ignores duty. */
-void avm_audio_tone_triangle(uint8_t note, uint8_t amplitude);
-/* Same latched tone with pulse duty threshold 0..255 (128 = 50%). */
-void avm_audio_tone_pulse(uint8_t note, uint8_t amplitude, uint8_t duty);
+/* MIDI note constants for every supported pitch (C1..B6, 24..95).
+   S denotes sharp and B denotes flat: CS4 and DB4 are the same pitch.
+   Middle C is AVM_NOTE_C4 (60); AVM_NOTE_A4 is 69 (nominally 440 Hz).
+   Use these with any avm_audio_tone* function. */
+enum {
+    AVM_NOTE_C1 = 24,
+    AVM_NOTE_CS1 = 25, AVM_NOTE_DB1 = AVM_NOTE_CS1,
+    AVM_NOTE_D1 = 26,
+    AVM_NOTE_DS1 = 27, AVM_NOTE_EB1 = AVM_NOTE_DS1,
+    AVM_NOTE_E1 = 28,
+    AVM_NOTE_F1 = 29,
+    AVM_NOTE_FS1 = 30, AVM_NOTE_GB1 = AVM_NOTE_FS1,
+    AVM_NOTE_G1 = 31,
+    AVM_NOTE_GS1 = 32, AVM_NOTE_AB1 = AVM_NOTE_GS1,
+    AVM_NOTE_A1 = 33,
+    AVM_NOTE_AS1 = 34, AVM_NOTE_BB1 = AVM_NOTE_AS1,
+    AVM_NOTE_B1 = 35,
+
+    AVM_NOTE_C2 = 36,
+    AVM_NOTE_CS2 = 37, AVM_NOTE_DB2 = AVM_NOTE_CS2,
+    AVM_NOTE_D2 = 38,
+    AVM_NOTE_DS2 = 39, AVM_NOTE_EB2 = AVM_NOTE_DS2,
+    AVM_NOTE_E2 = 40,
+    AVM_NOTE_F2 = 41,
+    AVM_NOTE_FS2 = 42, AVM_NOTE_GB2 = AVM_NOTE_FS2,
+    AVM_NOTE_G2 = 43,
+    AVM_NOTE_GS2 = 44, AVM_NOTE_AB2 = AVM_NOTE_GS2,
+    AVM_NOTE_A2 = 45,
+    AVM_NOTE_AS2 = 46, AVM_NOTE_BB2 = AVM_NOTE_AS2,
+    AVM_NOTE_B2 = 47,
+
+    AVM_NOTE_C3 = 48,
+    AVM_NOTE_CS3 = 49, AVM_NOTE_DB3 = AVM_NOTE_CS3,
+    AVM_NOTE_D3 = 50,
+    AVM_NOTE_DS3 = 51, AVM_NOTE_EB3 = AVM_NOTE_DS3,
+    AVM_NOTE_E3 = 52,
+    AVM_NOTE_F3 = 53,
+    AVM_NOTE_FS3 = 54, AVM_NOTE_GB3 = AVM_NOTE_FS3,
+    AVM_NOTE_G3 = 55,
+    AVM_NOTE_GS3 = 56, AVM_NOTE_AB3 = AVM_NOTE_GS3,
+    AVM_NOTE_A3 = 57,
+    AVM_NOTE_AS3 = 58, AVM_NOTE_BB3 = AVM_NOTE_AS3,
+    AVM_NOTE_B3 = 59,
+
+    AVM_NOTE_C4 = 60,
+    AVM_NOTE_CS4 = 61, AVM_NOTE_DB4 = AVM_NOTE_CS4,
+    AVM_NOTE_D4 = 62,
+    AVM_NOTE_DS4 = 63, AVM_NOTE_EB4 = AVM_NOTE_DS4,
+    AVM_NOTE_E4 = 64,
+    AVM_NOTE_F4 = 65,
+    AVM_NOTE_FS4 = 66, AVM_NOTE_GB4 = AVM_NOTE_FS4,
+    AVM_NOTE_G4 = 67,
+    AVM_NOTE_GS4 = 68, AVM_NOTE_AB4 = AVM_NOTE_GS4,
+    AVM_NOTE_A4 = 69,
+    AVM_NOTE_AS4 = 70, AVM_NOTE_BB4 = AVM_NOTE_AS4,
+    AVM_NOTE_B4 = 71,
+
+    AVM_NOTE_C5 = 72,
+    AVM_NOTE_CS5 = 73, AVM_NOTE_DB5 = AVM_NOTE_CS5,
+    AVM_NOTE_D5 = 74,
+    AVM_NOTE_DS5 = 75, AVM_NOTE_EB5 = AVM_NOTE_DS5,
+    AVM_NOTE_E5 = 76,
+    AVM_NOTE_F5 = 77,
+    AVM_NOTE_FS5 = 78, AVM_NOTE_GB5 = AVM_NOTE_FS5,
+    AVM_NOTE_G5 = 79,
+    AVM_NOTE_GS5 = 80, AVM_NOTE_AB5 = AVM_NOTE_GS5,
+    AVM_NOTE_A5 = 81,
+    AVM_NOTE_AS5 = 82, AVM_NOTE_BB5 = AVM_NOTE_AS5,
+    AVM_NOTE_B5 = 83,
+
+    AVM_NOTE_C6 = 84,
+    AVM_NOTE_CS6 = 85, AVM_NOTE_DB6 = AVM_NOTE_CS6,
+    AVM_NOTE_D6 = 86,
+    AVM_NOTE_DS6 = 87, AVM_NOTE_EB6 = AVM_NOTE_DS6,
+    AVM_NOTE_E6 = 88,
+    AVM_NOTE_F6 = 89,
+    AVM_NOTE_FS6 = 90, AVM_NOTE_GB6 = AVM_NOTE_FS6,
+    AVM_NOTE_G6 = 91,
+    AVM_NOTE_GS6 = 92, AVM_NOTE_AB6 = AVM_NOTE_GS6,
+    AVM_NOTE_A6 = 93,
+    AVM_NOTE_AS6 = 94, AVM_NOTE_BB6 = AVM_NOTE_AS6,
+    AVM_NOTE_B6 = 95,
+};
+/* Replaces SFX with a pulse tone on physical channel 1; MIDI 24..95,
+   amplitude 0..31, duty 128 (50%). Out-of-range MIDI mutes the tone.
+   Phase is preserved. Duration is uint16 milliseconds, rounded up to 4 ms
+   audio ticks. Zero latches until stop_sfx or replacement. Expiry releases
+   SFX ownership and restores current music. Timing follows audio tick
+   boundaries and interpreter servicing, not an independent wall clock. */
+void avm_audio_tone(uint8_t note, uint8_t amplitude, uint16_t dur_ms);
+/* Same tone with a triangle waveform; triangle ignores duty. */
+void avm_audio_tone_triangle(uint8_t note, uint8_t amplitude, uint16_t dur_ms);
+/* Same tone with pulse duty threshold 0..255 (128 = 50%). */
+void avm_audio_tone_pulse(uint8_t note, uint8_t amplitude, uint8_t duty, uint16_t dur_ms);
+/* Durations in 4 ms audio ticks; zero latches, 65535 = 262.14 seconds. */
+void avm_audio_tone_ticks(uint8_t note, uint8_t amplitude, uint16_t dur_ticks);
+void avm_audio_tone_triangle_ticks(uint8_t note, uint8_t amplitude, uint16_t dur_ticks);
+void avm_audio_tone_pulse_ticks(uint8_t note, uint8_t amplitude, uint8_t duty, uint16_t dur_ticks);
 #ifdef __cplusplus
 }
 #endif

@@ -12,13 +12,13 @@ SYMBOL TABLE:
 00000023 g     F .text	00000005 avm_audio_disable
 00000028 g     F .text	00000005 avm_audio_stop_sfx
 0000002d g     F .text	00000005 avm_audio_status
-00000032 g     F .text	00000005 __avm_audio_tone_raw
-00000037 g     F .text	00000005 avm_audio_music_volume
-0000003c g     F .text	00000005 avm_audio_sfx_volume
-00000041 g     F .text	00000005 avm_audio_rate
-00000046 g     F .text	00000005 avm_audio_music_loop
-0000004b g     F .text	00000005 avm_audio_lowpass
-00000050 g     F .text	00000005 __avm_audio_play_fade
+00000032 g     F .text	00000009 __avm_audio_tone_raw
+0000003b g     F .text	00000005 avm_audio_music_volume
+00000040 g     F .text	00000005 avm_audio_sfx_volume
+00000045 g     F .text	00000005 avm_audio_rate
+0000004a g     F .text	00000005 avm_audio_music_loop
+0000004f g     F .text	00000005 avm_audio_lowpass
+00000054 g     F .text	00000005 __avm_audio_play_fade
 
 Disassembly of section .text:
 
@@ -73,8 +73,11 @@ Disassembly of section .text:
  ef                    ret
 
 <__avm_audio_tone_raw>:
+ b0                    push16	r0
+ f1 07                 mov	r0, r7
  c3 0a                 ldi8	r7, 0xa
  d7 38                 sys	audio
+ b8                    pop16	r0
  ef                    ret
 
 <avm_audio_music_volume>:

@@ -1025,19 +1025,45 @@ Undeclared slots remain available to music. Music advances underneath SFX;
 End/stop restores its current pitch, volume, waveform, and duty atomically. Oscillators
 and phases are shared: there is no hidden fifth oscillator or saved music phase.
 
-`avm_audio_tone(MIDI_note, amplitude)` plays a latched tone on the default tonal
-sound-effect channel, physical channel 1, until `avm_audio_stop_sfx()`. It uses
-pulse with duty 128. Amplitude is masked to 0..31, and MIDI outside 24..95
-mutes the tone. Its MIDI lookup table lives in guest program storage and is
-linked only if this API is used.
+`avm_audio_tone(MIDI_note, amplitude, dur_ms)` plays a pulse tone with duty
+128 on the default tonal sound-effect channel, physical channel 1. Amplitude
+is masked to 0..31, and MIDI outside 24..95 mutes the tone. Its MIDI lookup
+table lives in guest program storage and is linked only if this API is used.
 
-`avm_audio_tone_pulse(MIDI_note, amplitude, duty)` is the same latched tone with
-a pulse duty threshold; 128 is 50%. `avm_audio_tone_triangle(MIDI_note,
-amplitude)` selects a triangle waveform with no duty. All three share SYS
-command 10, which takes the channel explicitly and a raw uint16 phase increment;
-the guest runtime converts MIDI notes to increments and always passes channel 1.
-Command 10 reads the pulse duty from the high byte of `r4` and the waveform from
-bit 5 of `r6`.
+`avm_audio_tone_pulse(MIDI_note, amplitude, duty, dur_ms)` accepts a pulse duty
+threshold; 128 is 50%. `avm_audio_tone_triangle(MIDI_note, amplitude, dur_ms)`
+selects a triangle waveform with no duty. Each also has a `_ticks` variant:
+`avm_audio_tone_ticks`, `avm_audio_tone_pulse_ticks`, and
+`avm_audio_tone_triangle_ticks`, with the same arguments except that the final
+argument is a duration in 4 ms audio ticks.
+
+The header provides `AVM_NOTE_C1` through `AVM_NOTE_B6` for all supported
+MIDI pitches (24..95), using scientific pitch notation: middle C is
+`AVM_NOTE_C4` (60), and `AVM_NOTE_A4` is 69. Accidentals use `S` for sharp
+and `B` for flat, with equivalent aliases such as `AVM_NOTE_CS4` and
+`AVM_NOTE_DB4`. For example, `avm_audio_tone(AVM_NOTE_A4, 20, 100)` plays
+A4 for 100 ms.
+
+Both duration forms take `uint16_t`. Milliseconds round up to ticks in the guest
+runtime without overflow: 1..4 ms becomes one tick, 5 ms becomes two, and
+65535 ms becomes 16384 ticks. The tick variants support up to 65535 ticks
+(262.14 seconds). Zero duration latches until `avm_audio_stop_sfx()` or
+replacement. Existing callers must supply the new duration argument; use zero
+to retain latched behavior. These calls replace any previous SFX or direct tone.
+On expiry, SFX ownership is released and the current underlying music controls
+are restored. Music pause does not pause the tone countdown. Timing follows
+audio tick boundaries, so elapsed time can be almost 4 ms shorter than the
+rounded duration, with additional latency from interpreter safe-point servicing.
+
+All six share SYS command 10, which takes the channel explicitly and a raw
+uint16 phase increment; the guest runtime converts MIDI notes to increments
+and always passes channel 1. Command 10 reads pulse duty from the high byte of
+`r4`, waveform from bit 5 of `r6`, and duration ticks from `r0`. The internal
+raw wrapper moves its fourth ordinary ABI argument from `r7` into
+`r0` before selecting command 10 in `r7`, saving and restoring the callee-saved
+`r0` on the guest stack (two bytes). SYS preserves these registers. The
+interpreter reuses the SFX wait field for the countdown; direct tones never
+consume an event cursor.
 
 `avm_audio_stop`, `avm_audio_pause`, `avm_audio_resume`, `avm_audio_stop_sfx`,
 `avm_audio_enable`, `avm_audio_disable`, and `avm_audio_rate` retain their APIs.
@@ -1511,8 +1537,8 @@ Both stream records use these fields; only music has `AUDIO_START`:
 | Offset / symbol | Music address(es) | SFX address(es) | Bytes | Encoding / purpose |
 | --- | --- | --- | ---: | --- |
 | 0 / `AUDIO_CURSOR` | `0A49..0A4B` | `0A53..0A55` | 3 | Image-relative cursor to the next event payload; advances only by consumed bytes. |
-| 3 / `AUDIO_WAIT` | `0A4C..0A4D` | `0A56..0A57` | 2 | Remaining 4 ms ticks before the event, 1..256 while waiting; paused music freezes it. |
-| 5 / `AUDIO_STATUS` | `0A4E` | `0A58` | 1 | Music: 0 stopped, 1 playing, 2 paused. SFX: 0 stopped, 1 sequencing, 2 latched direct tone with no event advancement. |
+| 3 / `AUDIO_WAIT` | `0A4C..0A4D` | `0A56..0A57` | 2 | Remaining 4 ms ticks: sequenced event waits use 1..256; direct tones use 1..65535, or zero to latch. Paused music freezes its wait. |
+| 5 / `AUDIO_STATUS` | `0A4E` | `0A58` | 1 | Music: 0 stopped, 1 playing, 2 paused. SFX: 0 stopped, 1 sequencing, 2 direct tone with no event advancement (zero wait latches; nonzero wait counts down to release). |
 | 6 / `AUDIO_MASK` | `0A4F` | `0A59` | 1 | Physical ownership bits 0..3. Sequenced SFX uses bits 1 and/or 3; direct tones select one channel. Muting retains ownership. |
 | 7 / `AUDIO_START` | `0A50..0A52` | — | 3 | Original image-relative music asset pointer, including its ownership header; retained across pause/stop and used to rewind past the header. |
 

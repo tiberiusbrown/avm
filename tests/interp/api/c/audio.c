@@ -73,15 +73,25 @@ int avm_test_main(void) {
     avm_audio_play_fade(song); /* Zero gain starts immediately, through the public ABI. */
     if(avm_audio_get_music()!=song || avm_audio_get_music_volume()!=0) return 18;
     if(avm_audio_status()!=1) return 11;
-    avm_audio_tone(69,31);
+    avm_audio_tone(AVM_NOTE_A4,31,0);
     if(avm_audio_status()!=5) return 10;
     /* Exercise the guest program-space MIDI table and its bounds. */
     for(unsigned note=0;note<256;++note)
-        avm_audio_tone((uint8_t)note,17);
-    avm_audio_tone_triangle(69,20);
+        avm_audio_tone((uint8_t)note,17,0);
+    avm_audio_tone_triangle(AVM_NOTE_A4,20,0);
     if(avm_audio_status()!=5) return 12;
-    avm_audio_tone_pulse(69,20,64);
+    avm_audio_tone_pulse(AVM_NOTE_A4,20,64,0);
     if(avm_audio_status()!=5) return 13;
+    static const uint16_t durations[]={0,1,4,5,1024,65535};
+    for(unsigned i=0;i<sizeof(durations)/sizeof(durations[0]);++i) {
+        uint16_t d=durations[i];
+        avm_audio_tone(AVM_NOTE_A4,20,d);
+        avm_audio_tone_triangle(AVM_NOTE_A4,20,d);
+        avm_audio_tone_pulse(AVM_NOTE_A4,20,64,d);
+        avm_audio_tone_ticks(AVM_NOTE_A4,20,d);
+        avm_audio_tone_triangle_ticks(AVM_NOTE_A4,20,d);
+        avm_audio_tone_pulse_ticks(AVM_NOTE_A4,20,64,d);
+    }
     avm_audio_stop_sfx();
     avm_audio_stop();
     if(avm_audio_status()!=0) return 9;

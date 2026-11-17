@@ -100,21 +100,19 @@
 #define data_audio_rate              (data_audio_sample+1)
 #define data_audio_music_loop        (data_audio_rate+1)
 ; Pulse edges are placed within a sample, which needs 1/increment. Each tonal voice keeps
-; floor(2^24/increment) (zero for increments below 257), published with its increment.
-; The low bytes occupy the three bytes that used to hold the removed tonal low-pass, so every
-; address the guest runtime reads stays where it was; the high bytes follow the fade song.
-#define data_audio_recip_lo          (data_audio_music_loop+1)
+; floor(65536/increment) (zero for increments below 257), published with its increment.
+; The three bytes occupy the place of the removed tonal low-pass, so every address the guest
+; runtime reads stays where it was.
+#define data_audio_recip             (data_audio_music_loop+1)
 ; Independent owner attenuation, 0=mute / 255=full volume.
-#define data_audio_music_volume      (data_audio_recip_lo+3)
+#define data_audio_music_volume      (data_audio_recip+3)
 #define data_audio_sfx_volume        (data_audio_music_volume+1)
 ; Nonzero saved gain arms the asynchronous fade; the queued pointer stays 24-bit.
 #define data_audio_fade_volume       (data_audio_sfx_volume+1)
 #define data_audio_fade_song         (data_audio_fade_volume+1)
-#define data_audio_recip_hi          (data_audio_fade_song+3)
 ; The unpublished reciprocals, copied with the update controls.
-#define data_audio_update_recip_lo   (data_audio_recip_hi+3)
-#define data_audio_update_recip_hi   (data_audio_update_recip_lo+3)
-#define data_audio_end               (data_audio_update_recip_hi+3)
+#define data_audio_update_recip      (data_audio_fade_song+3)
+#define data_audio_end               (data_audio_update_recip+3)
 
 ; Stream records share cursor/wait/status/mask; only music has a loop start.
 ; All program pointers are image-relative, little-endian uint24.
@@ -127,8 +125,8 @@
 .if (data_audio_noise != 0x0a2e) || (data_audio_noise_spare != 0x0a30) || (data_audio_music_notes != 0x0a31)
     .error "noise replacement must preserve the existing audio RAM layout"
 .endif
-.if (data_audio_end - data_audio_begin) != 107
-    .error "audio persistent SRAM must occupy 107 bytes"
+.if (data_audio_end - data_audio_begin) != 101
+    .error "audio persistent SRAM must occupy 101 bytes"
 .endif
 .if (data_audio_begin >> 8) != ((data_audio_end-1) >> 8)
     .error "audio compact pointers must fit in one SRAM page"
@@ -15625,39 +15623,17 @@ audio_commit_prepare:
 1:
     ret
 
-; Stage floor(2^24/increment) for tonal voice r18, whose increment was just staged through X
+; Stage floor(65536/increment) for tonal voice r18, whose increment was just staged through X
 ; (X points past its three bytes). Increments of 256 and below, and silence, stage zero: the
-; synthesis then delays both edges by a sample. An unchanged increment reuses the published
-; value, so the division only runs when the pitch moves. Clobbers r19, r24, r25, r30, r31.
+; synthesis then delays both edges by a sample. The staged byte from an earlier pass is kept
+; when it is still the floor for the new increment, that is when 0 <= 65536 - increment*R <
+; increment, so the division only runs when the pitch has moved by roughly 1/R of itself.
+; Clobbers r0, r1, r19, r24, r25, r30, r31.
 audio_stage_recip:
-    push r16
-    push r17
-    push r22
     movw r30, r26
     sbiw r30, 3
     ld   r24, Z+
     ld   r25, Z ; staged increment
-    mov  r30, r18
-    lsl  r30
-    add  r30, r18
-    subi r30, lo8(-data_audio_controls)
-    ldi  r31, hi8(data_audio_controls)
-    ld   r16, Z+
-    ld   r17, Z ; published increment
-    cp   r16, r24
-    cpc  r17, r25
-    brne .Laudio_recip_divide
-    ldi  r30, lo8(data_audio_recip_lo)
-    add  r30, r18
-    ldi  r31, hi8(data_audio_recip_lo)
-    ld   r16, Z
-    ldi  r30, lo8(data_audio_recip_hi)
-    add  r30, r18
-    ld   r17, Z
-    mov  r24, r16
-    mov  r25, r17
-    rjmp .Laudio_recip_store
-.Laudio_recip_divide:
     cpi  r25, 2
     brsh 1f
     cpi  r25, 1
@@ -15665,48 +15641,57 @@ audio_stage_recip:
     tst  r24
     breq .Laudio_recip_zero ; 256 itself: the quotient would not fit
 1:
-    ; Restoring division of 2^24 by r25:r24, starting from the top byte of the dividend (0x0100,
-    ; below the divisor). The quotient shifts into r22:r19; a seeded 1 leaves as carry after
-    ; sixteen bits.
-    ldi  r16, 0
-    ldi  r17, 1
+    ldi  r30, lo8(data_audio_update_recip)
+    add  r30, r18
+    ldi  r31, hi8(data_audio_update_recip)
+    ld   r19, Z
+    mul  r24, r19
+    movw r30, r0 ; the product increment*R as r1:r31:r30
+    mul  r25, r19
+    add  r31, r0
+    adc  r1, ZERO
+    neg  r30 ; 65536 minus the product, kept as r1:r0:r30 until it is compared
+    clr  r0
+    sbc  r0, r31
+    mov  r31, r0
+    adc  r1, ZERO ; one exactly when the product is at most 65536
+    dec  r1
+    brne .Laudio_recip_divide
+    cp   r30, r24
+    cpc  r31, r25
+    brlo .Laudio_recip_keep ; remainder below the increment: the staged byte is still the floor
+.Laudio_recip_divide:
+    ; Restoring division of 2^16 by r25:r24, starting from the top bits of the dividend (0x0100,
+    ; below the divisor). The quotient shifts into r19; a seeded 1 leaves as carry after eight bits.
+    ldi  r30, 0
+    ldi  r31, 1
     ldi  r19, 1
-    clr  r22
 .Laudio_recip_bit:
-    lsl  r16
-    rol  r17
+    lsl  r30
+    rol  r31
     brcs 2f
-    cp   r16, r24
-    cpc  r17, r25
+    cp   r30, r24
+    cpc  r31, r25
     brlo 3f
 2:
-    sub  r16, r24
-    sbc  r17, r25
+    sub  r30, r24
+    sbc  r31, r25
     sec
     rjmp 4f
 3:
     clc
 4:
     rol  r19
-    rol  r22
     brcc .Laudio_recip_bit
-    mov  r24, r19
-    mov  r25, r22
     rjmp .Laudio_recip_store
 .Laudio_recip_zero:
-    clr  r24
-    clr  r25
+    clr  r19
 .Laudio_recip_store:
-    ldi  r30, lo8(data_audio_update_recip_lo)
+    ldi  r30, lo8(data_audio_update_recip)
     add  r30, r18
-    ldi  r31, hi8(data_audio_update_recip_lo)
-    st   Z, r24
-    ldi  r30, lo8(data_audio_update_recip_hi)
-    add  r30, r18
-    st   Z, r25
-    pop  r22
-    pop  r17
-    pop  r16
+    ldi  r31, hi8(data_audio_update_recip)
+    st   Z, r19
+.Laudio_recip_keep:
     ret
 
 ; Called after the PWM store by synthesis, or with its interrupt unavailable.
@@ -15721,10 +15706,8 @@ audio_apply_update:
     .endr
     .set audio_control_offset, 0
     .rept 3
-        lds r21, data_audio_update_recip_lo+audio_control_offset
-        sts data_audio_recip_lo+audio_control_offset, r21
-        lds r21, data_audio_update_recip_hi+audio_control_offset
-        sts data_audio_recip_hi+audio_control_offset, r21
+        lds r21, data_audio_update_recip+audio_control_offset
+        sts data_audio_recip+audio_control_offset, r21
         .set audio_control_offset, audio_control_offset+1
     .endr
     andi r20, 63
@@ -16298,24 +16281,13 @@ audio_pulse_rise\channel:
 1:
     clt ; rising edge: the high fraction is covered(min(phase, threshold))
 audio_pulse_covered\channel:
-    ; covered = floor(x * R / 65536), with x = r21:phase low byte, as three byte products.
-    push r22
-    lds  r20, data_audio_recip_hi+\channel
+    ; covered = floor(x * R / 256), with x = r21:phase low byte, as two byte products.
+    lds  r20, data_audio_recip+\channel
     mul  r21, r20
-    mov  r22, r0
-    lds  r20, data_audio_recip_lo+\channel
-    mul  r21, r20
-    add  r22, r1
     mov  r21, r0
-    lds  r20, data_audio_recip_hi+\channel
     lds  r0, data_audio_phases+2*\channel
     mul  r0, r20
-    add  r22, r1
-    add  r21, r0
-    clr  r1
-    adc  r22, r1
-    mov  r21, r22
-    pop  r22
+    add  r21, r1 ; r1 is rewritten by the mix before anything reads it
     lds  r20, data_audio_controls+3*\channel+2
     brtc 2f
     com  r21

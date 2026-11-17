@@ -21,10 +21,9 @@ constexpr unsigned pending=0xa15, volume=0xa17, controls=0xa18, duties=0xa24,
     waveform=0xa27, phases=0xa28, noise=0xa2e, noise_spare=0xa30, notes=0xa31, sfxnotes=0xa41,
     music=0xa49, sfx=0xa53, update_controls=0xa5a, update_waveform=0xa69, update=0xa6a,
     held_sample=0xa6b, rate=held_sample+1,
-    music_loop=rate+1, recip_lo=music_loop+1, musicvolume=recip_lo+3,
+    music_loop=rate+1, recip=music_loop+1, musicvolume=recip+3,
     sfxvolume=musicvolume+1, fade_volume=sfxvolume+1, fade_song=fade_volume+1,
-    recip_hi=fade_song+3, update_recip_lo=recip_hi+3, update_recip_hi=update_recip_lo+3,
-    private_end=update_recip_hi+3,
+    update_recip=fade_song+3, private_end=update_recip+3,
     event_buffer=private_end+2, scratch_end=private_end+72;
 void require(bool c, char const* m) { if(!c) throw std::runtime_error(m); }
 // Ordered byte positions, shared by directed boundary and full-phase sweeps.
@@ -48,12 +47,11 @@ uint16_t seed_state(unsigned seed) {
     return uint16_t(seed|(unsigned(high)<<8));
 }
 // A pulse sample is the high fraction of the sample interval, found with the voice's reciprocal
-// floor(2^24/increment), which is zero below 257. These mirror the interrupt's arithmetic.
-uint16_t reciprocal(unsigned inc) { return inc>=257 ? uint16_t((1u<<24)/inc) : 0; }
+// floor(65536/increment), which is zero below 257. These mirror the interrupt's arithmetic.
+uint8_t reciprocal(unsigned inc) { return inc>=257 ? uint8_t(65536u/inc) : 0; }
 unsigned covered(unsigned x, unsigned recip) {
-    // x*recip>>16 as three byte products, modulo 256 (exact for x below the increment).
-    unsigned xh=x>>8, xl=x&255, rh=recip>>8, rl=recip&255, m=xh*rl, n=xl*rh;
-    return (xh*rh+(m>>8)+(n>>8)+(((m&255)+(n&255))>>8))&255;
+    // x*recip>>8 as two byte products, modulo 256 (the low product's low byte is dropped).
+    return ((x>>8)*recip+(((x&255)*recip)>>8))&255;
 }
 // The signed value (-127..127) of a pulse voice before amplitude, after its phase moves from
 // `before` by `inc`, for a duty threshold of `duty*256`.
@@ -157,7 +155,7 @@ struct harness {
         require(c().data[rate]==1,"synthesis must default to 16 kHz");
         require(c().data[music_loop]==0,"music looping must default to disabled");
         for(unsigned i=0;i<3;++i)
-            require(c().data[recip_lo+i]==0 && c().data[recip_hi+i]==0,"pulse reciprocals must start at zero");
+            require(c().data[recip+i]==0 && c().data[update_recip+i]==0,"pulse reciprocals must start at zero");
         require(c().data[reg::addr::TIMSK3] == 0 && c().data[reg::addr::TCCR3B] == 0 &&
             c().data[reg::addr::TCCR3A] == 0, "unused Timer3 must release its interrupt and speaker pin");
         require(!(c().data[reg::addr::PRR0] & (reg::bit::PRR0::PRTIM0 | reg::bit::PRR0::PRTIM1)),
@@ -167,7 +165,7 @@ struct harness {
             "default audio gains wrong");
         require(c().data[waveform]==0 && c().data[update_waveform]==0,"waveform must default to pulse");
         require(word(noise)==1,"startup noise state must be 0x0001");
-        require(private_end==0xa80 && scratch_end==0xac8,"audio SRAM boundaries changed");
+        require(private_end==0xa7a && scratch_end==0xac2,"audio SRAM boundaries changed");
         if(isolated) {
             c().st(reg::addr::TIMSK0,0); c().st(reg::addr::TCCR0B,0);
             quiet();
@@ -185,8 +183,7 @@ struct harness {
     void sync_recips() {
         for(unsigned ch=0;ch<3;++ch) {
             auto live=reciprocal(word(controls+3*ch)), staged=reciprocal(word(update_controls+3*ch));
-            c().data[recip_lo+ch]=uint8_t(live); c().data[recip_hi+ch]=uint8_t(live>>8);
-            c().data[update_recip_lo+ch]=uint8_t(staged); c().data[update_recip_hi+ch]=uint8_t(staged>>8);
+            c().data[recip+ch]=live; c().data[update_recip+ch]=staged;
         }
     }
     uint64_t synth_sample(bool sync=true) {
@@ -1103,8 +1100,8 @@ void synthesis(harness& h) {
         std::cout<<"prepared amplitudes: "<<cases<<" ownership/master/volume cases passed\n";
     });
     h.test("pulse reciprocals are staged with the pitch and published with it",[&]{
-        // Through the real foreground commit, so the division, the reuse of an unchanged
-        // pitch's published value and the silent encoding all run.
+        // Through the real foreground commit, so the division, the reuse of a staged byte that is
+        // still the floor and the silent encoding all run.
         unsigned cases=0;
         for(unsigned selected=0;selected<2;++selected) {
             h.command(13,selected);
@@ -1121,11 +1118,9 @@ void synthesis(harness& h) {
                 for(unsigned voice=0;voice<3;++voice) {
                     // Each voice's published reciprocal follows its published (rate-scaled) increment.
                     auto expected=reciprocal(h.word(controls+3*voice));
-                    require(h.c().data[recip_lo+voice]==uint8_t(expected) && h.c().data[recip_hi+voice]==uint8_t(expected>>8),
-                        "published reciprocal differs from 2^24/increment");
+                    require(h.c().data[recip+voice]==expected,"published reciprocal differs from 65536/increment");
                     auto staged=reciprocal(h.word(update_controls+3*voice));
-                    require(h.c().data[update_recip_lo+voice]==uint8_t(staged) && h.c().data[update_recip_hi+voice]==uint8_t(staged>>8),
-                        "staged reciprocal differs from 2^24/increment");
+                    require(h.c().data[update_recip+voice]==staged,"staged reciprocal differs from 65536/increment");
                     ++cases;
                 }
                 require(h.c().sp()==sp,"reciprocal staging leaked native stack");
@@ -1135,7 +1130,33 @@ void synthesis(harness& h) {
                     "reciprocal division did not restore its borrowed registers");
             }
         }
-        std::cout<<"pulse reciprocals: "<<cases<<" staged and published values passed at both rates\n";
+        // Stepping the pitch keeps the staged byte whenever it is still the floor, and must replace
+        // it exactly when it is not: every increment in order, then a vibrato-like random walk.
+        h.command(13,0);
+        unsigned kept=0, replaced=0;
+        for(unsigned ch=0;ch<3;++ch) {
+            std::fill_n(h.c().data.begin()+notes,24,0);
+            h.c().data[notes+4*ch+2]=31; h.c().data[notes+4*ch+3]=64;
+            unsigned inc=ch==0 ? 1 : 20000+3000*ch, state=12345+ch;
+            for(unsigned step=0;step<(ch==0 ? 65538u : 4000u);++step) {
+                if(ch==0) inc=step;
+                else {
+                    state=state*1103515245u+12345u;
+                    int delta=int((state>>16)%61)-30;
+                    inc=unsigned(std::clamp(int(inc)+delta,1,65535));
+                }
+                auto before=h.c().data[update_recip+ch];
+                h.word(notes+4*ch,uint16_t(inc));
+                h.routine("audio_commit");
+                auto staged=h.c().data[update_recip+ch];
+                require(staged==reciprocal(h.word(update_controls+3*ch)),"stepped reciprocal differs from 65536/increment");
+                if(staged==before) ++kept; else ++replaced;
+                ++cases;
+            }
+        }
+        require(kept && replaced,"stepped pitches must both keep and replace the staged byte");
+        std::cout<<"pulse reciprocals: "<<cases<<" staged and published values passed at both rates; stepping kept "
+            <<kept<<" and replaced "<<replaced<<"\n";
     });
     auto sample=[](unsigned duty, unsigned position) { return position<duty ? 127 : -127; };
     h.test("every signed byte mix and shared-gain saturation",[&]{
@@ -1323,7 +1344,7 @@ void synthesis(harness& h) {
     });
     h.test("pulse paths: cycle counts and values for every kind of sample",[&]{
         // Counted by hand from the instructions: 35 wholly high, 40 wholly low, 52 low with
-        // the high bytes tied, 71 rising edge, 87 falling edge, including the 23 shared by all.
+        // the high bytes tied, 55 rising edge, 71 falling edge, including the 23 shared by all.
         unsigned cases=0, paths[5]{};
         for(unsigned ch=0;ch<3;++ch) {
             auto begin="audio_wave_begin"+std::to_string(ch), end="audio_wave_end"+std::to_string(ch);
@@ -1352,9 +1373,9 @@ void synthesis(harness& h) {
                                 auto past=((high-duty)<<8)|(phase&255);
                                 kind=past>=inc ? 2 : 4;
                             }
-                            static constexpr unsigned expected_cycles[5]{35,40,52,71,87};
+                            static constexpr unsigned expected_cycles[5]{35,40,52,55,71};
                             require(cycles==expected_cycles[kind],"pulse path cycle count changed");
-                            require(top==h.c().sp() && top-deepest==(kind>=3 ? 1u : 0u),"pulse path stack use changed");
+                            require(top==h.c().sp() && top==deepest,"pulse path must not touch the stack");
                             ++paths[kind];
                             auto value=pulse_sample(before,uint16_t(inc),duty,reciprocal(inc));
                             auto contribution=int(std::floor(value*int(amp)/128.+0.5));
@@ -1370,7 +1391,7 @@ void synthesis(harness& h) {
         }
         for(unsigned kind=0;kind<5;++kind) require(paths[kind],"a pulse path was never exercised");
         std::cout<<"pulse paths: "<<cases<<" samples; high "<<paths[0]<<", low "<<paths[1]+paths[2]
-            <<", rising "<<paths[3]<<", falling "<<paths[4]<<"; 35 high, 40 low, 71 rising, 87 falling cycles\n";
+            <<", rising "<<paths[3]<<", falling "<<paths[4]<<"; 35 high, 40 low, 55 rising, 71 falling cycles\n";
     });
     h.test("noise states, amplitudes, gates and exact instruction timing",[&]{
         unsigned cases=0;
@@ -1476,8 +1497,8 @@ void synthesis(harness& h) {
             // plus increment rounding.
             require(cents<12,"note tuning drifted more than the tuning table allows");
             maxcents=std::max(maxcents,cents);
-            // Notes below C3 carry only the universal shift.
-            if(note<48) {
+            // Notes below F3 carry only the universal shift.
+            if(note<53) {
                 auto shifted=uint16_t(std::lround(expected*std::pow(2.,-5/1200.)*65536/15625));
                 require(h.increment(note)==shifted,"low note should carry only the universal tuning shift");
             }
@@ -1894,7 +1915,7 @@ void handoff(harness& h) {
         std::cout<<"pending ISR matrix: "<<cases<<" cases passed\n";
         // The pulse range is three voices wholly high (183) to three wholly low with the high
         // bytes tied (238); the matrix never lands on an edge, which the pulse path test covers.
-        require(copymax==321 && reseedmax==342,"pending ISR cycle target changed");
+        require(copymax==309 && reseedmax==330,"pending ISR cycle target changed");
         require(ordinary_min[0]==183 && ordinary_max[0]==238,"pulse ISR cycle target changed");
         require(ordinary_min[13]==180 && ordinary_max[13]==184,"triangle ISR cycle target changed");
         require(ordinary_min[26]==174 && ordinary_max[26]==178,"saw ISR cycle target changed");
@@ -2844,7 +2865,7 @@ void core_isa(char** args) {
 void core_audio(char** args) {
     harness h(args); sequence(h); synthesis(h); sentinels(h); rates(h);
     shared_gain(h); isr_bounds(h); handoff(h); automatic(h);
-    std::cout<<"audio SRAM: 107 persistent bytes; native stack space: "<<0xb00-scratch_end<<" bytes\n";
+    std::cout<<"audio SRAM: 101 persistent bytes; native stack space: "<<0xb00-scratch_end<<" bytes\n";
     std::cout<<h.cases<<" native audio cases passed\n"
         <<"Timer1 including entry/vector: "<<h.isrmin<<".."<<h.isrmax<<" cycles; CPU "
         <<100.*h.isrmax/2048<<"%\nobserved idle service gap: "<<h.latencymax/16000.<<" ms\n";

@@ -55,15 +55,15 @@ def emit_event(output, ticks, payload):
 
 
 NOTE_FIRST, NOTE_LAST = 24, 95
-# The oscillators are plain phase accumulators, and at the 15625 Hz synthesis
-# rate a pulse beats audibly when its pitch sits within a few hertz of
-# 15625 / N for a whole number of samples per period (G5, C6 and G6 are the
-# worst notes at exact equal temperament). Written notes are therefore tuned in
-# two layers, derived together by avm_note_tuning.py:
+# Pulse samples that contain an edge hold the fraction of their interval spent high, which
+# removes most of the beating of a hard-edged pulse, but at the 15625 Hz synthesis rate a few
+# pitches still sit close enough to 15625 / N for a whole number of samples per period for the
+# remaining quantization to beat faintly (G6 is the worst note at exact equal temperament).
+# Written notes are therefore tuned in two layers, derived together by avm_note_tuning.py:
 #   GLOBAL_TUNING_CENTS moves every note by the same amount, so intervals are
 #       untouched (A4 sounds at 438.7 Hz).
 #   NOTE_TUNING_CENTS then moves each MIDI note 24..95 (C1..B6) by at most
-#       +/-6 cents more, off whatever pitch still beats. Notes below C3 keep
+#       +/-6 cents more, off whatever pitch still beats. Notes below G3 keep
 #       only the global shift.
 # runtime/lib/note_increments.inc holds the resulting direct-tone increments and
 # tests keep the two in step. Pitches given in Hz are never adjusted.
@@ -71,10 +71,10 @@ GLOBAL_TUNING_CENTS = -5
 NOTE_TUNING_CENTS = (
     +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0,  # C1..B1
     +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0, +0,  # C2..B2
-    -2, +0, +0, +0, +1, -5, -5, +0, +3, +5, +0, -1,  # C3..B3
-    -3, +1, -4, -4, +2, +0, -6, +0, +3, -2, +0, +3,  # C4..B4
-    -3, -4, +0, -4, +1, +3, -6, -1, +6, -5, +1, +1,  # C5..B5
-    -3, -4, +0, +3, +4, +2, -6, -1, -4, -1, +4, +5,  # C6..B6
+    +0, +0, +0, +0, +0, -5, -5, -1, +0, +5, +0, -1,  # C3..B3
+    -3, +0, -4, +0, +0, -5, -6, +0, +3, -5, +0, -1,  # C4..B4
+    -4, -4, +1, +0, +0, +3, -6, -2, +6, -5, +1, +1,  # C5..B5
+    -3, -4, +1, +0, +4, +3, -6, -2, +6, +3, +6, +5,  # C6..B6
 )
 
 

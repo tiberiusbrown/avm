@@ -42,6 +42,10 @@ int avm_test_main(void) {
     avm_audio_play_fade(song);
     if(avm_audio_get_fade_volume()!=255 || avm_audio_get_fade_song()!=song) return 21;
     avm_audio_music_loop(0);
+    /* The one-tick stream must still be playing when the fade is requested. Start it just after a
+       millisecond edge, which is also where the 4 ms control ticks fall, so the next tick is never
+       a few hundred cycles away. */
+    for(uint16_t edge=avm_millis();avm_millis()==edge;) {}
     avm_audio_play(short_song);
     uint8_t restore=avm_audio_get_music_volume();
     avm_audio_play_fade(song);

@@ -199,7 +199,7 @@ class ScoreTests(unittest.TestCase):
         data = music._encode_events(2, [(1, {1: {"increment": 3717, "volume": 12}})], 1, True)
         self.assertEqual(data, bytes([2, 0, 0x22, 0x85, 0x0e, 140, 128, 0, 0, 1]))
         self.assertEqual(decode(data, raw=True)[0][0][1][1]["note"], 3717)
-        self.assertEqual(music.note_increment(69), 1838)  # A4: -5 cent shift, -2 cent correction
+        self.assertEqual(music.note_increment(69), 1835)  # A4: -5 cent shift, -5 cent correction
 
     def test_loop_directive_and_unavailable_sfx_channels_are_rejected(self):
         for source in ("loop channel 0 { c4 }", "sfx loop channel 1 { c4 }", "sfx channel 0 { c4 }", "sfx channel 2 { r4 }"):

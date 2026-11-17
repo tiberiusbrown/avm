@@ -46,14 +46,12 @@ def scalar_pulse(before, inc, duty):
     """The interrupt's pulse sample before amplitude, written as scalar code.
 
     The sample is the high fraction of its interval, found with the voice's reciprocal
-    floor(2^24/increment) (zero below 257): +127 or -127 when no edge falls in it, else a blend.
+    floor(65536/increment) (zero below 257): +127 or -127 when no edge falls in it, else a blend.
     """
-    recip = (1 << 24) // inc if inc >= 257 else 0
+    recip = 65536 // inc if inc >= 257 else 0
 
     def covered(x):
-        xh, xl, rh, rl = x >> 8, x & 255, recip >> 8, recip & 255
-        m, n = xh * rl, xl * rh
-        return (xh * rh + (m >> 8) + (n >> 8) + (((m & 255) + (n & 255)) >> 8)) & 255
+        return ((x >> 8) * recip + (((x & 255) * recip) >> 8)) & 255
 
     total = before + inc
     phase = total & 65535
@@ -225,8 +223,9 @@ class RenderTests(unittest.TestCase):
             np.testing.assert_array_equal(result.pcm[first:first+100], expected)
 
     def test_pulse_tracks_the_exact_average_of_the_ideal_waveform(self):
-        # Where one edge falls in a sample, the fixed-point value stays within three of 254 steps
-        # of the exact fraction of the interval spent high.
+        # Where one edge falls in a sample, the value stays within 254/R + 2 of 254 steps of the
+        # exact fraction of the interval spent high: the floor of 65536/increment loses up to 1/R of
+        # the fraction, so it is tight at low pitches and coarse in the top octave.
         for rate_factor in (1, 2):
             for inc in (257, 300, 600, 1097, 2185, 3691, 4000, 8000):
                 for duty in (32, 64, 96, 128, 192, 224):
@@ -241,7 +240,7 @@ class RenderTests(unittest.TestCase):
                         return (p // 65536)*threshold + np.minimum(p % 65536, threshold)
                     ideal = 254*(area(end)-area(start))/step - 127
                     actual = np.array([scalar_pulse(int(a) % 65536, step, duty) for a in start])
-                    self.assertLessEqual(float(np.abs(actual-ideal).max()), 3.0, (step, duty))
+                    self.assertLessEqual(float(np.abs(actual-ideal).max()), 254/(65536//step) + 2, (step, duty))
 
     def test_duty_extremes_and_volume_quantization(self):
         for duty in (0, 32, 64, 96, 128, 255):

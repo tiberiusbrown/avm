@@ -378,35 +378,45 @@ notation (`c4`, `f#3`, `bb2`) or a positive frequency such as `440Hz`.
 
 ### Note tuning
 
-The oscillators are plain phase accumulators with no band limiting. At the
-15625 Hz synthesis rate a pulse sounds rough when its pitch lies within a few
-hertz of 15625 / N for a whole number N of samples per period: the edges snap
-to sample boundaries in a slowly shifting pattern, and the resulting alias
-lines beat against the real partials. G5, C6 and G6 are the worst notes at
-exact equal temperament (measured as 5% to 10% amplitude modulation around the
-fundamental between 15 and 120 Hz; most notes stay under 2%).
+The oscillators are plain phase accumulators with no band limiting. Pulse samples
+that contain an edge hold the fraction of their interval spent high (see the
+synthesis section), which removes most of the beating of a hard-edged pulse. At the
+15625 Hz synthesis rate a few pitches still lie within a few hertz of 15625 / N for a
+whole number N of samples per period, and there the remaining quantization of that
+fraction, and of the amplitude the voice rounds it to, beats faintly against the real
+partials. G6 is the worst note at exact equal temperament (the roughness metric is the
+15 to 120 Hz amplitude modulation around the fundamental; averaged over duties and
+amplitudes it is 2.8% for G6 and 0.4% over C4..B6).
 
 To avoid this, the compiler tunes every written note in two layers:
 
-- **A universal shift of -5 cents.** Every note, including those below C3, is
+- **A universal shift of -5 cents.** Every note, including those below F3, is
   five cents flat of equal temperament at A = 440 Hz, so A4 sounds at about
-  438.7 Hz before its correction. Intervals between notes are unaffected. A
-  search over shifts from -50 to +50 cents found no better region at this rate;
-  -5 to -8 cents is a plateau.
+  438.7 Hz before its correction. Intervals between notes are unaffected. The
+  shift widens each note's search window, and it pays: deriving the whole table at
+  every shift from -30 to +30 cents (`tools/avm_note_tuning.py --shifts`), -5 cents
+  gives the lowest mean roughness over C4..B6, and -7 to -4 cents is a plateau.
+  Without it the mean is about a fifth higher and the worst case about 60% higher.
 - **A per-note correction of at most six cents** (`NOTE_TUNING_CENTS`), moving
-  each note off whatever pitch still beats. Notes below C3 have 60 or more
+  each note off whatever pitch still beats. Notes below F3 have 60 or more
   samples per period and no such beating, so they keep only the universal shift.
   Corrections, in cents (octaves are rows):
 
 | Octave | C | C# | D | D# | E | F | F# | G | G# | A | A# | B |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 3 | -2 | 0 | 0 | 0 | +1 | -5 | -5 | 0 | +3 | +5 | 0 | -1 |
-| 4 | -3 | +1 | -4 | -4 | +2 | 0 | -6 | 0 | +3 | -2 | 0 | +3 |
-| 5 | -3 | -4 | 0 | -4 | +1 | +3 | -6 | -1 | +6 | -5 | +1 | +1 |
-| 6 | -3 | -4 | 0 | +3 | +4 | +2 | -6 | -1 | -4 | -1 | +4 | +5 |
+| 3 | 0 | 0 | 0 | 0 | 0 | -5 | -5 | -1 | 0 | +5 | 0 | -1 |
+| 4 | -3 | 0 | -4 | 0 | 0 | -5 | -6 | 0 | +3 | -5 | 0 | -1 |
+| 5 | -4 | -4 | +1 | 0 | 0 | +3 | -6 | -2 | +6 | -5 | +1 | +1 |
+| 6 | -3 | -4 | +1 | 0 | +4 | +3 | -6 | -2 | +6 | +3 | +6 | +5 |
 
-Across C4..B6 the measured roughness falls from a 2.0% mean (10.5% worst note)
-to 0.4% (1.2% worst). A note is therefore within 11 cents of equal temperament
+The table is derived on the exact model of the interrupt, including the rounding of
+each sample to whole output steps at the voice's amplitude, which is coarser than the
+8-bit edge fraction at the volumes the scores mostly use; a model without that
+rounding does not predict the roughness of the real output (with it, the model matches
+the emulated interrupt output to within 0.01 point). It averages over pulse duties of
+12.5%, 25%, 37.5% and 50% and nine amplitudes from 4 to 31. Across C4..B6 the modelled
+roughness falls from a 0.41% mean (2.8% worst note) at equal temperament to 0.17%
+(0.57% worst). A note is therefore within 11 cents of equal temperament
 at A = 440 Hz, and simultaneous notes differ from the equal-tempered interval by
 at most twelve cents, which is below the usual threshold for hearing a note out
 of tune.
@@ -1170,13 +1180,13 @@ interval in 0..255:
 * **Rising edge** (the phase wrapped this sample): `f = covered(min(phase, threshold))`,
   where `phase` is the new phase and `threshold` is `duty * 256`.
 * **Falling edge** (no wrap, and `phase - threshold < increment`): `f = 255 - covered(phase - threshold)`.
-* `covered(x) = (x * R) >> 16` modulo 256, where `R = floor(2^24 / increment)` is the
-  voice's reciprocal. Foreground computes it with the pitch (below) and publishes it
+* `covered(x) = (x * R) >> 8` modulo 256, where `R = floor(65536 / increment)` is the
+  voice's 8-bit reciprocal. Foreground computes it with the pitch (below) and publishes it
   with the increment. `R` is zero for increments below 257 (about 61 Hz at 15625 Hz), where an
   edge lands within 0.4 percent of a sample boundary anyway; both edges are then delayed
-  by one sample, which preserves the pulse width. The product is formed from three byte
-  multiplications, `hi(x)*hi(R)`, `hi(x)*lo(R)` and `lo(x)*hi(R)`, dropping `lo(x)*lo(R)`,
-  so `covered` is within one of the exact value.
+  by one sample, which preserves the pulse width. The product is formed from two byte
+  multiplications, `hi(x)*R` (its low byte) and `lo(x)*R` (its high byte), so `covered` is
+  within one of `x*R/256`. Because `x` is always below the increment, `x*R/256` stays below 256.
 
 The model places at most one edge in a sample, which holds while the increment stays
 below both `duty * 256` and `65536 - duty * 256`; the highest notated pitch (B6) at a duty
@@ -1184,12 +1194,18 @@ below 12.5% exceeds the first limit, and a duty above 87.5% exceeds the second a
 highest pitches. Outside those limits the value stays bounded (`f` is always 0..255) but
 is only approximate. At 7812.5 Hz the doubled increments are used the same way.
 
-The fixed-point value stays within three of the exact area average (on the 254-step
-scale) wherever one edge falls in a sample. Measured on the emulated interrupt output
-for every note C4..B6 at duties of 12.5%, 25%, 37.5% and 50%, the 15 to 120 Hz amplitude
-modulation around the fundamental that this beating produces (the metric
-`tools/avm_note_tuning.py` uses) falls from a maximum of 13.58% to 0.63% and from a
-mean of 1.22% to 0.10%.
+The value stays within `254/R + 2` of the exact area average (on the 254-step scale)
+wherever one edge falls in a sample, because flooring `65536/increment` loses up to `1/R`
+of the fraction: at most 3 steps at the lowest pitches, 6 at C4, 10 at C5, 19 at C6 and 38
+at B6, where a period is only 7 samples long and `R` is 7 (the measured worst case over
+C4..B6 is 29). Measured
+on the emulated interrupt output for every note C4..B6 at duties of 12.5%, 25%, 37.5% and
+50%, the 15 to 120 Hz amplitude modulation around the fundamental that this beating
+produces (the metric `tools/avm_note_tuning.py` uses) falls from a mean of 1.22% and a
+maximum of 13.58% for point-sampled pulses to a mean of 0.11% and a maximum of 0.70% at
+voice volume 24 (see [benchmark notes](../bench/README.md) for volumes 8 and 15). The
+worst note is G6 at 25% to 50% duty, where `R` is 10; a 16-bit reciprocal measured
+0.1% to 0.2% there.
 
 For triangle, let `h = phase >> 8`. If bit 7 is set, complement all eight
 bits, then compute `sample = 2*h - 127`. Equivalently,
@@ -1204,10 +1220,16 @@ and the mixer are unchanged. Including phase advancement, amplitude load, select
 multiplication/accumulation, an active triangle voice costs **34 cycles** and a saw voice
 **32**, independent of phase, non-sentinel amplitude, and duty. A pulse voice costs
 **35** when the sample is wholly high, **40** when it is wholly low (**52** when the
-high bytes of the time past the threshold and of the increment tie), **71** with a rising
-edge and **87** with a falling edge. Each stopped voice takes **5 cycles**. The edge paths
-are out of line, after the interrupt's `RETI`, and push one register (r22) for their three
-byte products. Wave changes preserve all phase bits, including controls during a sustained
+high bytes of the time past the threshold and of the increment tie), **55** with a rising
+edge and **71** with a falling edge. Each stopped voice takes **5 cycles**. The edge paths
+are out of line, after the interrupt's `RETI`, and use only the registers the interrupt
+already saves. A single shared edge routine for the three voices would save only about 18
+bytes: the voice-dependent loads cannot be shared (the voice data are separate arrays), the
+four free registers cannot hold the two products and their operands without one more
+saved register, so the shared part is a handful of instructions behind an `RCALL`/`RET`
+that costs 12 more cycles per edge. At the 0.09 to 0.13 edge samples per interrupt
+of the shipped songs, that is about 1.1 cycles per interrupt on average, and it was not
+adopted. Wave changes preserve all phase bits, including controls during a sustained
 note, with no new per-sample lookup.
 
 The pulse fast paths are 16-bit compares of the phase against the threshold, so no sample
@@ -1216,14 +1238,19 @@ Z register. FMULSU, rounding `floor(sample * amplitude / 128 + 0.5)`, sign exten
 biased byte mixing, PWM bias 128, and final 0..255 clipping are retained.
 
 Foreground publishes each tonal voice's reciprocal `R` with its increment, while staging a
-packet. When the staged increment equals the published one it reuses the published `R`;
-otherwise it divides, with a 16-iteration restoring division of `2^24` (about 290 cycles),
-so the division runs only when the pitch changes. Silent voices and increments of 256 or
-less stage zero. The reciprocal is staged in six bytes beside the update controls and the
-interrupt copies it with them, so a voice never sees an increment without its own `R`.
-Staging a four-voice note with three new pitches costs 864 cycles more than before (2103
-cycles against 1239) and a volume-only update 213 more (1344 against 1131); neither adds
-sample-interrupt work.
+packet. The staged byte from the previous pass is kept whenever it is still the floor for
+the new increment, which is the case exactly when `0 <= 65536 - increment*R < increment`
+(one 16x8 multiplication, about 20 cycles); otherwise it divides, with an 8-iteration
+restoring division of `2^16` (about 110 cycles). A pitch change therefore divides only
+when it has moved by about `1/R` of itself (1.7% at C4, 3.3% at C5, 6.7% at C6), so
+vibrato rarely does. Silent voices and increments of 256 or less stage zero. The
+reciprocal is staged in three bytes beside the update controls and the interrupt copies
+them with the controls, so a voice never sees an increment without its own `R`. Committing
+one tonal voice's packet takes 446 cycles with an unchanged or vibrato-sized pitch step,
+552 with a new pitch and 417 for silence (548, 771 and 529 with the previous 16-bit
+reciprocal, which divided on every step). Staging a four-voice note with three new pitches
+costs 450 cycles more than before area sampling (1689 cycles against 1239) and a
+volume-only update 141 more (1272 against 1131); neither adds sample-interrupt work.
 
 Noise uses a 16-bit LFSR recurrence. On each **active** synthesis
 sample it shifts the full word left, then XORs bit zero once for each of bits
@@ -1452,8 +1479,8 @@ running Timer0 ISR is not preempted. The unchanged startup/rate-switch sequence
 seeds Timer1 from Timer0, placing deadlines 64..120 cycles apart modulo 128.
 
 The live latch is 16 bytes: four `(increment, prepared_amplitude)` triples,
-three duty bytes, and one packed waveform byte. The interrupt also copies the six
-staged reciprocal bytes (three low bytes, three high bytes) when it applies a packet:
+three duty bytes, and one packed waveform byte. The interrupt also copies the three
+staged reciprocal bytes when it applies a packet:
 
 | Physical waveform bit | Meaning |
 | --- | --- |
@@ -1468,7 +1495,7 @@ Desired music/SFX voices remain four-byte records: increment low/high,
 volume/waveform, duty. Bits 5..6 of desired volume retain the waveform; only its lower
 five bits contribute to prepared amplitude. Foreground chooses each current
 music/SFX owner and waits for acknowledgement before reusing the staging
-buffer (16 bytes and the six reciprocal bytes); one descriptor-byte store publishes the whole packet.
+buffer (16 bytes and the three reciprocal bytes); one descriptor-byte store publishes the whole packet.
 Bit 7 means ready, bits 0..5 contain optional seed 1..63 (zero means no reseed),
 bit 6 is unused. Timer1 copies all controls then reseeds before the next sample.
 Transient commands are not retained with desired state. Foreground never
@@ -1487,7 +1514,7 @@ phase; stop silences the owner. Direct tones initialize pulse and duty 128.
 The following is the complete interpreter-private timer/audio RAM layout from
 `interp/interp.asm`. Addresses are hexadecimal AVR data-space addresses;
 all multi-byte integers and 24-bit image-relative program pointers are
-little-endian and byte-aligned. Persistent state occupies 107 bytes. Startup
+little-endian and byte-aligned. Persistent state occupies 101 bytes. Startup
 clears it before `audio_init_func` sets the nonzero defaults noted below.
 
 | Address(es) | Assembler symbol | Bytes | Encoding / purpose |
@@ -1511,15 +1538,13 @@ clears it before `audio_init_func` sets the nonzero defaults noted below.
 | `0A6B` | `data_audio_sample` | 1 | Held biased PWM sample 0..255; 128 is silence. Primed to 128 when enabling output, then replaced by Timer1 synthesis. |
 | `0A6C` | `data_audio_rate` | 1 | Synthesis rate selector: 0=7812.5 Hz, 1=15625 Hz (default). |
 | `0A6D` | `data_audio_music_loop` | 1 | Zero stops music at End; any nonzero value rewinds. Default zero. |
-| `0A6E..0A70` | `data_audio_recip_lo` | 3 | Low bytes of each tonal voice's live reciprocal `floor(2^24 / increment)` (zero below 257), published with its increment. The high bytes are at `0A77..0A79`. |
+| `0A6E..0A70` | `data_audio_recip` | 3 | Each tonal voice's live reciprocal `floor(65536 / increment)` (zero below 257), published with its increment. |
 | `0A71` | `data_audio_music_volume` | 1 | Independent music attenuation: 0=mute, 255=full volume (default). |
 | `0A72` | `data_audio_sfx_volume` | 1 | Independent SFX/direct-tone attenuation, same range and default. |
 | `0A73` | `data_audio_fade_volume` | 1 | Saved music attenuation; nonzero arms the fade. Zero means no queued fade. Cleared at startup, handoff or cancellation. |
 | `0A74..0A76` | `data_audio_fade_song` | 3 | Queued image-relative music asset pointer, little-endian uint24; meaningful only while the fade is armed. Retained after handoff/cancellation. |
-| `0A77..0A79` | `data_audio_recip_hi` | 3 | High bytes of the live reciprocals. |
-| `0A7A..0A7C` | `data_audio_update_recip_lo` | 3 | Staged low bytes of the reciprocals, copied with the update controls. |
-| `0A7D..0A7F` | `data_audio_update_recip_hi` | 3 | Staged high bytes of the reciprocals. |
-| `0A80` | `data_audio_end` / `data_end_private` | 0 | Exclusive persistent-state end and beginning of aliased call-lifetime workspace. |
+| `0A77..0A79` | `data_audio_update_recip` | 3 | Staged reciprocals, copied with the update controls; the byte also serves as the cache that the staging validity test reads. |
+| `0A7A` | `data_audio_end` / `data_end_private` | 0 | Exclusive persistent-state end and beginning of aliased call-lifetime workspace. |
 
 Desired voice records have a canonical 15625 Hz uint16 increment at offsets
 0..1 (zero means note-off), a volume/wave byte at offset 2 and pulse duty at
@@ -1547,9 +1572,9 @@ ISR accesses these scratch bytes:
 
 | Address(es) | Assembler symbol | Bytes | Encoding / purpose |
 | --- | --- | ---: | --- |
-| `0A77` | `data_audio_dirty` | 1 | Nonzero if sequencing or a fade changed desired controls/gains and needs a commit; cleared on service entry. |
-| `0A78` | `data_audio_reseed` | 1 | Transient pending audible noise seed 1..63, or zero for no retrigger; cleared on service/command entry and when preparing publication. |
-| `0A79..0A8A` | `data_audio_event` | 18 | Maximum music event read-ahead (`AUDIO_EVENT_BYTES`): mask, eight pitch bytes, eight extended-control bytes and next delta. SFX reads at most ten bytes. Only consumed bytes advance the cursor. |
+| `0A7A` | `data_audio_dirty` | 1 | Nonzero if sequencing or a fade changed desired controls/gains and needs a commit; cleared on service entry. |
+| `0A7B` | `data_audio_reseed` | 1 | Transient pending audible noise seed 1..63, or zero for no retrigger; cleared on service/command entry and when preparing publication. |
+| `0A7C..0A8D` | `data_audio_event` | 18 | Maximum music event read-ahead (`AUDIO_EVENT_BYTES`): mask, eight pitch bytes, eight extended-control bytes and next delta. SFX reads at most ten bytes. Only consumed bytes advance the cursor. |
 
 Foreground owns desired banks, stream records, gains, rate/loop settings,
 fade volume/song and staging bytes. It waits for acknowledgement before reusing staging and
@@ -1581,23 +1606,23 @@ timer ISRs do not write them. A layout change must update these runtime getters
 and their tests together with the interpreter. The runtime and interpreter in
 a packaged SDK must agree on these addresses.
 
-Audio occupies 0A15..0A7F, private end 0A80. Existing 72-byte formatter/text
-scratch ends at 0AC8, leaving 56 bytes for native stack. Audio aliases 20 scratch
+Audio occupies 0A15..0A79, private end 0A7A. Existing 72-byte formatter/text
+scratch ends at 0AC2, leaving 62 bytes for native stack. Audio aliases 20 scratch
 bytes: dirty, transient reseed and 18-byte event buffer; persistent state and
 the pending packet never alias scratch. Guest memory addresses are unchanged.
 Assembler assertions retain the single-SRAM-page and minimum-stack constraints.
 Timer1 uses 8 stack bytes including interrupt PC, 10 while calling the fixed
-copier, and one more on a pulse edge. It preserves r0/r1/r20/r21/r26 and SREG (and r22
-around an edge); r27 and Z are untouched even on the pending path. The foreground
+copier. It preserves r0/r1/r20/r21/r26 and SREG; r27 and Z are untouched even on the
+pending path. The foreground
 preserves borrowed VM state and guest flags. All-stopped output takes 74 cycles. At
-default gain, the measured all-active ordinary/pending maxima are 246/350 cycles at either
-sample rate; across the profiled gains 0/1/32/128/255 they are at most 262 ordinary and
-366 pending, and the worst case of any waveform, every pulse edge falling in the sample
-and a pending packet is 399 cycles, below the shortest 1024-cycle sample interval. Over
-the four shipped songs the interrupt averages 166 to 183 cycles. Other gains have
+default gain, with no voice stopped the interrupt takes 174..238 cycles ordinary (183..238
+for three pulse voices without an edge) and at most 330 with a pending packet, at either
+sample rate; the worst case of any waveform, every pulse edge falling in the sample
+and a pending packet, is 339 cycles, below the shortest 1024-cycle sample interval. Over
+the four shipped songs the interrupt averages 165 to 182 cycles. Other gains have
 different output paths.
 PWM writes remain at 21 cycles at both rates. FX, FX-C and Mini
-firmware is 29464 bytes, leaving 232 bytes below the 29696-byte boundary.
+firmware is 29332 bytes, leaving 364 bytes below the 29696-byte boundary.
 Independent attenuation adds 44 flash bytes and two SRAM bytes. Preparing a
 four-active-voice packet adds at most 44 cycles (2.75 us at 16 MHz), with no
 additional sample-interrupt work. At 250 packets/s this adds 0.069 percentage

@@ -126,8 +126,8 @@ assert len(_indices) == 32767
 
 
 def reciprocal(increment):
-    """floor(2^24 / increment), zero below 257: what the foreground publishes with each pitch."""
-    return (1 << 24) // increment if increment >= 257 else 0
+    """floor(65536 / increment), zero below 257: what the foreground publishes with each pitch."""
+    return 65536 // increment if increment >= 257 else 0
 
 
 def pulse_values(position, increment, duty):
@@ -137,20 +137,16 @@ def pulse_values(position, increment, duty):
     its interval that the pulse was high: wholly high or low samples are +127 or -127, and a sample
     that contains an edge blends them, with the edge placed by the voice's reciprocal. A rising
     edge (the phase wrapped) is covered(min(phase, threshold)); a falling edge (the phase passed
-    the threshold) is 255 - covered(phase - threshold). covered(x) is x*recip>>16 as three byte
+    the threshold) is 255 - covered(phase - threshold). covered(x) is x*recip>>8 as two byte
     products modulo 256, exactly as the AVR forms it.
     """
     recip = reciprocal(increment)
-    recip_high, recip_low = recip >> 8, recip & 255
     wrapped = (position >> 16) != ((position - increment) >> 16)
     phase = position & 65535
     high, low = phase >> 8, phase & 255
 
     def covered(x_high, x_low):
-        product = x_high * recip_low
-        cross = x_low * recip_high
-        return (x_high * recip_high + (product >> 8) + (cross >> 8)
-                + (((product & 255) + (cross & 255)) >> 8)) & 255
+        return (x_high * recip + ((x_low * recip) >> 8)) & 255
 
     below = high < duty
     past_high = high - duty

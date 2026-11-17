@@ -27,10 +27,10 @@ class NoteTuningTests(unittest.TestCase):
 
     def test_universal_shift_applies_to_every_note_including_untuned_low_notes(self):
         self.assertEqual(music.GLOBAL_TUNING_CENTS, -5)
-        for note in range(24, 48):
+        for note in range(24, 53):
             self.assertEqual(music.NOTE_TUNING_CENTS[note - music.NOTE_FIRST], 0)
             self.assertAlmostEqual(music.note_tuning_cents(note), -5)
-        self.assertEqual(music.note_increment(69), 1838)
+        self.assertEqual(music.note_increment(69), 1835)
 
     def test_increments_stay_strictly_ascending(self):
         values = [music.note_increment(note) for note in range(24, 96)]

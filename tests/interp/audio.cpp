@@ -21,10 +21,10 @@ constexpr unsigned pending=0xa15, volume=0xa17, controls=0xa18, duties=0xa24,
     waveform=0xa27, phases=0xa28, noise=0xa2e, noise_spare=0xa30, notes=0xa31, sfxnotes=0xa41,
     music=0xa49, sfx=0xa53, update_controls=0xa5a, update_waveform=0xa69, update=0xa6a,
     held_sample=0xa6b, rate=held_sample+1,
-    music_loop=rate+1, lowpass=music_loop+1, lowpass_state=lowpass+1,
-    lowpass_coefficient=lowpass_state+1, musicvolume=lowpass_coefficient+1,
+    music_loop=rate+1, recip_lo=music_loop+1, musicvolume=recip_lo+3,
     sfxvolume=musicvolume+1, fade_volume=sfxvolume+1, fade_song=fade_volume+1,
-    private_end=fade_song+3,
+    recip_hi=fade_song+3, update_recip_lo=recip_hi+3, update_recip_hi=update_recip_lo+3,
+    private_end=update_recip_hi+3,
     event_buffer=private_end+2, scratch_end=private_end+72;
 void require(bool c, char const* m) { if(!c) throw std::runtime_error(m); }
 // Ordered byte positions, shared by directed boundary and full-phase sweeps.
@@ -46,6 +46,27 @@ uint16_t noise_next(uint16_t state) {
 uint16_t seed_state(unsigned seed) {
     auto high=uint8_t((seed<<4)|(seed>>4));
     return uint16_t(seed|(unsigned(high)<<8));
+}
+// A pulse sample is the high fraction of the sample interval, found with the voice's reciprocal
+// floor(2^24/increment), which is zero below 257. These mirror the interrupt's arithmetic.
+uint16_t reciprocal(unsigned inc) { return inc>=257 ? uint16_t((1u<<24)/inc) : 0; }
+unsigned covered(unsigned x, unsigned recip) {
+    // x*recip>>16 as three byte products, modulo 256 (exact for x below the increment).
+    unsigned xh=x>>8, xl=x&255, rh=recip>>8, rl=recip&255, m=xh*rl, n=xl*rh;
+    return (xh*rh+(m>>8)+(n>>8)+(((m&255)+(n&255))>>8))&255;
+}
+// The signed value (-127..127) of a pulse voice before amplitude, after its phase moves from
+// `before` by `inc`, for a duty threshold of `duty*256`.
+int pulse_sample(uint16_t before, uint16_t inc, unsigned duty, unsigned recip) {
+    unsigned phase=unsigned(before)+inc; bool wrap=phase>0xffff; phase&=0xffff;
+    unsigned high=phase>>8, low=phase&255, fraction;
+    if(wrap) fraction=covered(((high<duty ? high : duty)<<8)|low,recip);
+    else if(high<duty) fraction=255;
+    else {
+        unsigned past=((high-duty)<<8)|low;
+        fraction=past>=inc ? 0 : 255-covered(past,recip);
+    }
+    return int(fraction&0xfe)-127;
 }
 int output(int mix, unsigned master=32) {
     return std::clamp(128+int(std::floor((mix*int(master)+16)/32.)),0,255);
@@ -125,7 +146,6 @@ struct harness {
         c().st(reg::addr::TIMSK3, 2);
         c().data[reg::addr::TIFR1] |= 2;
         c().data[reg::addr::TIFR3] |= 2;
-        c().data[lowpass]=255; c().data[lowpass_state]=0x55; c().data[lowpass_coefficient]=0xaa;
         c().st(reg::addr::PRR0, c().data[reg::addr::PRR0] |
             reg::bit::PRR0::PRTIM0 | reg::bit::PRR0::PRTIM1);
         c().pc=0; // test firmware reset vector, independently of bootloader fuses
@@ -136,8 +156,8 @@ struct harness {
             (c().timer1.ocrNa==127 || c().timer1.ocrNa==255),"Timer1 TOP wrong");
         require(c().data[rate]==1,"synthesis must default to 16 kHz");
         require(c().data[music_loop]==0,"music looping must default to disabled");
-        require(c().data[lowpass]==0 && c().data[lowpass_state]==128 && c().data[lowpass_coefficient]==0,
-            "tonal low-pass must default to bypass with silent history");
+        for(unsigned i=0;i<3;++i)
+            require(c().data[recip_lo+i]==0 && c().data[recip_hi+i]==0,"pulse reciprocals must start at zero");
         require(c().data[reg::addr::TIMSK3] == 0 && c().data[reg::addr::TCCR3B] == 0 &&
             c().data[reg::addr::TCCR3A] == 0, "unused Timer3 must release its interrupt and speaker pin");
         require(!(c().data[reg::addr::PRR0] & (reg::bit::PRR0::PRTIM0 | reg::bit::PRR0::PRTIM1)),
@@ -147,7 +167,7 @@ struct harness {
             "default audio gains wrong");
         require(c().data[waveform]==0 && c().data[update_waveform]==0,"waveform must default to pulse");
         require(word(noise)==1,"startup noise state must be 0x0001");
-        require(private_end==0xa77 && scratch_end==0xabf,"audio SRAM boundaries changed");
+        require(private_end==0xa80 && scratch_end==0xac8,"audio SRAM boundaries changed");
         if(isolated) {
             c().st(reg::addr::TIMSK0,0); c().st(reg::addr::TCCR0B,0);
             quiet();
@@ -160,7 +180,17 @@ struct harness {
         if(isr) { c().data[reg::addr::SREG]&=0x7f; c().prev_sreg&=0x7f; }
         return until([&]{return c().pc==dest;});
     }
-    uint64_t synth_sample() {
+    // Tests set increments directly, so give each tonal voice the reciprocal the foreground would
+    // have published with it, and stage one for a pending update.
+    void sync_recips() {
+        for(unsigned ch=0;ch<3;++ch) {
+            auto live=reciprocal(word(controls+3*ch)), staged=reciprocal(word(update_controls+3*ch));
+            c().data[recip_lo+ch]=uint8_t(live); c().data[recip_hi+ch]=uint8_t(live>>8);
+            c().data[update_recip_lo+ch]=uint8_t(staged); c().data[update_recip_hi+ch]=uint8_t(staged>>8);
+        }
+    }
+    uint64_t synth_sample(bool sync=true) {
+        if(sync) sync_recips();
         auto previous=c().data[held_sample];
         c().data[reg::addr::TC4H]=3;
         auto cycles=routine("timer1_compa_isr",true)+7;
@@ -271,7 +301,7 @@ struct harness {
         if(initial_ticks) elapsed(initial_ticks);
     }
     template<class F> void test(char const* name,F f) {
-        command(7); command(14,0); command(15,0); command(13,0); command(5,32);
+        command(7); command(14,0); command(13,0); command(5,32);
         command(11,255); command(12,255); quiet();
         try { f(); } catch(std::exception const& e2) { throw std::runtime_error(std::string(name)+": "+e2.what()); }
         ++cases;
@@ -972,8 +1002,7 @@ void synthesis(harness& h) {
     });
     h.test("fixed early PWM write at both synthesis rates",[&]{
         auto dest=h.sym("primary_table");
-        for(unsigned selected=0;selected<2;++selected) for(unsigned level : {0u,32u,64u,128u,255u}) {
-            h.command(15,level);
+        for(unsigned selected=0;selected<2;++selected) {
             h.command(13,selected);
             h.c().push(uint8_t(dest)); h.c().push(uint8_t(dest>>8));
             h.c().pc=uint16_t(h.sym("timer1_compa_isr"));
@@ -983,7 +1012,7 @@ void synthesis(harness& h) {
             require(h.c().cycle_count-start+7+2==21,"rate changed the early PWM write latency");
             h.until([&]{return h.c().pc==dest;});
         }
-        std::cout<<"Timer1 PWM write including entry/vector: 21 cycles at both rates and all low-pass levels\n";
+        std::cout<<"Timer1 PWM write including entry/vector: 21 cycles at both rates\n";
     });
     h.test("held output and restart",[&]{
         h.command(6); h.quiet();
@@ -1073,6 +1102,41 @@ void synthesis(harness& h) {
         }
         std::cout<<"prepared amplitudes: "<<cases<<" ownership/master/volume cases passed\n";
     });
+    h.test("pulse reciprocals are staged with the pitch and published with it",[&]{
+        // Through the real foreground commit, so the division, the reuse of an unchanged
+        // pitch's published value and the silent encoding all run.
+        unsigned cases=0;
+        for(unsigned selected=0;selected<2;++selected) {
+            h.command(13,selected);
+            h.c().data[music+5]=1;
+            for(unsigned ch=0;ch<3;++ch)
+            for(unsigned inc : {0u,1u,100u,255u,256u,257u,258u,300u,600u,1097u,2185u,3691u,4000u,8000u,16383u,32768u,65535u})
+            for(unsigned previous : {0u,1097u,65535u,inc}) {
+                std::fill_n(h.c().data.begin()+notes,24,0);
+                h.word(notes+4*ch,uint16_t(previous)); h.c().data[notes+4*ch+2]=31; h.c().data[notes+4*ch+3]=64;
+                h.routine("audio_commit");
+                h.word(notes+4*ch,uint16_t(inc));
+                auto regs=h.c().data; auto sp=h.c().sp();
+                h.routine("audio_commit");
+                for(unsigned voice=0;voice<3;++voice) {
+                    // Each voice's published reciprocal follows its published (rate-scaled) increment.
+                    auto expected=reciprocal(h.word(controls+3*voice));
+                    require(h.c().data[recip_lo+voice]==uint8_t(expected) && h.c().data[recip_hi+voice]==uint8_t(expected>>8),
+                        "published reciprocal differs from 2^24/increment");
+                    auto staged=reciprocal(h.word(update_controls+3*voice));
+                    require(h.c().data[update_recip_lo+voice]==uint8_t(staged) && h.c().data[update_recip_hi+voice]==uint8_t(staged>>8),
+                        "staged reciprocal differs from 2^24/increment");
+                    ++cases;
+                }
+                require(h.c().sp()==sp,"reciprocal staging leaked native stack");
+                // The commit may clobber r18-r21 and r23-r25 like the rest of the staging, but not
+                // the registers the division borrows.
+                require(h.c().data[16]==regs[16] && h.c().data[17]==regs[17] && h.c().data[22]==regs[22],
+                    "reciprocal division did not restore its borrowed registers");
+            }
+        }
+        std::cout<<"pulse reciprocals: "<<cases<<" staged and published values passed at both rates\n";
+    });
     auto sample=[](unsigned duty, unsigned position) { return position<duty ? 127 : -127; };
     h.test("every signed byte mix and shared-gain saturation",[&]{
         h.command(5,128);
@@ -1130,7 +1194,7 @@ void synthesis(harness& h) {
                 auto inc=uint16_t(1097+ch*997), target=uint16_t((position<<8)|255);
                 h.word(controls+3*ch,inc); h.control(ch,a,threshold);
                 h.word(phases+2*ch,uint16_t(target-inc));
-                mix+=int(std::floor(sample(threshold,position)*int(a)/128.+0.5));
+                mix+=int(std::floor(pulse_sample(uint16_t(target-inc),inc,threshold,reciprocal(inc))*int(a)/128.+0.5));
             }
             auto noiseamp=(amp+87)%32;
             h.word(controls+9,path ? 1 : 0); h.control(3,noiseamp);
@@ -1156,12 +1220,10 @@ void synthesis(harness& h) {
                     auto target=uint16_t((position<<8)|((position&1)?255:0));
                     h.word(phases+2*ch,uint16_t(target-inc));
                     h.word(controls+3*ch,inc); h.control(ch,amp,duty);
-                    auto expected=std::clamp(128+int(std::floor(sample(duty,position)*int(amp)/128.+0.5)),0,255);
+                    auto expected=std::clamp(128+int(std::floor(pulse_sample(uint16_t(target-inc),uint16_t(inc),duty,reciprocal(inc))*int(amp)/128.+0.5)),0,255);
                     h.synth_sample();
                     require(h.c().data[held_sample]==expected,"pulse comparison/scaling mismatch");
                     require(h.word(phases+2*ch)==target,"pulse phase addition mismatch");
-                    if(duty==128) require(sample(duty,position)==(position/4<32 ? 127 : -127),
-                        "50 percent pulse differs from old square table");
                     ++cases;
                 };
                 for(unsigned duty : {0u,1u,32u,64u,128u,192u,224u,254u,255u})
@@ -1213,9 +1275,10 @@ void synthesis(harness& h) {
             for(unsigned ch=0;ch<3;++ch) {
                 auto p=(pos+71*ch)%256, duty=(29+53*ch)%256;
                 auto wave=selection%3; selection/=3;
-                int value=wave==2 ? int(p)-128 : wave==1 ? int(2*std::min(p,255-p))-127 : (p<duty ? 127 : -127);
+                auto before=uint16_t((p<<8)-1097);
+                int value=wave==2 ? int(p)-128 : wave==1 ? int(2*std::min(p,255-p))-127 : pulse_sample(before,1097,duty,reciprocal(1097));
                 h.control(ch,amp,duty,wave);
-                h.word(controls+3*ch,1097); h.word(phases+2*ch,uint16_t((p<<8)-1097));
+                h.word(controls+3*ch,1097); h.word(phases+2*ch,before);
                 mix+=int(std::floor(value*int(amp)/128.+0.5));
             }
             auto seed=uint16_t(path==2 ? 0x6000 : path==1 ? 0x4000 : 1);
@@ -1241,7 +1304,10 @@ void synthesis(harness& h) {
                 h.word(26,0x1234);
                 h.c().pc=uint16_t(h.sym(begin.c_str()));
                 auto cycles=h.until([&]{return h.c().pc==h.sym(end.c_str());});
-                require(cycles==(amp==255 ? 5 : wave==2 ? 32 : wave==1 ? 34 : 33),"tonal synthesis cycle target changed");
+                // With a zero increment a pulse is wholly high below the threshold, wholly low
+                // past it (quickly, unless the high bytes tie), and the tie compares both bytes.
+                require(cycles==(amp==255 ? 5 : wave==2 ? 32 : wave==1 ? 34 :
+                    position<128 ? 35 : position==128 ? 52 : 40),"tonal synthesis cycle target changed");
                 int value=wave==2 ? int(position)-128 : wave==1 ? int(2*std::min(position,255-position))-127 : (position<128 ? 127 : -127);
                 auto contribution=amp==255 ? 0 : int(std::floor(value*int(amp)/128.+0.5));
                 require(h.c().data[26]==uint8_t(0x34+contribution) && h.c().data[27]==0x12,"byte multiply/rounding/accumulation mismatch");
@@ -1252,8 +1318,59 @@ void synthesis(harness& h) {
             for(unsigned amp : {0u,1u,15u,31u,255u})
                 for(unsigned position=0;position<256;++position) check(amp,position);
         }
-        std::cout<<"tonal synthesis: "<<cases<<" directed/full-phase cases; pulse 33, triangle 34, sawtooth 32 cycles on all channels and phases\n";
+        std::cout<<"tonal synthesis: "<<cases<<" directed/full-phase cases; triangle 34, sawtooth 32 cycles on all channels and phases\n";
         std::cout<<"stopped tonal synthesis: 5 cycles on all channels and waveforms\n";
+    });
+    h.test("pulse paths: cycle counts and values for every kind of sample",[&]{
+        // Counted by hand from the instructions: 35 wholly high, 40 wholly low, 52 low with
+        // the high bytes tied, 71 rising edge, 87 falling edge, including the 23 shared by all.
+        unsigned cases=0, paths[5]{};
+        for(unsigned ch=0;ch<3;++ch) {
+            auto begin="audio_wave_begin"+std::to_string(ch), end="audio_wave_end"+std::to_string(ch);
+            for(unsigned selected=0;selected<2;++selected) {
+                h.command(13,selected);
+                for(unsigned duty : {0u,1u,32u,64u,96u,128u,192u,254u,255u})
+                for(unsigned inc : {1u,256u,257u,600u,1097u,2185u,3691u,8000u,8191u}) {
+                    unsigned threshold=duty<<8;
+                    std::vector<unsigned> positions{0,1,0xffff,0x8000,threshold,threshold+1,threshold-1,
+                        65536-inc,65537-inc,65535-inc,threshold-inc,threshold-inc+1,threshold-inc-1,
+                        threshold+inc,threshold+inc-1,threshold+inc+1,threshold+256,threshold+inc+256};
+                    for(unsigned position=0;position<65536;position+=997) positions.push_back(position);
+                    for(auto raw : positions) {
+                        auto before=uint16_t(raw);
+                        for(unsigned amp : {1u,31u}) {
+                            h.control(ch,amp,duty,0); h.word(controls+3*ch,uint16_t(inc)); h.word(phases+2*ch,before);
+                            h.sync_recips(); h.word(26,0x1234);
+                            h.c().pc=uint16_t(h.sym(begin.c_str()));
+                            unsigned top=h.c().sp(), deepest=top;
+                            auto cycles=h.until([&]{deepest=std::min(deepest,unsigned(h.c().sp()));return h.c().pc==h.sym(end.c_str());});
+                            unsigned phase=unsigned(before)+inc, high=(phase>>8)&255, kind;
+                            if(phase>0xffff) kind=3;
+                            else if(high<duty) kind=0;
+                            else if(inc>>8 < high-duty) kind=1;
+                            else {
+                                auto past=((high-duty)<<8)|(phase&255);
+                                kind=past>=inc ? 2 : 4;
+                            }
+                            static constexpr unsigned expected_cycles[5]{35,40,52,71,87};
+                            require(cycles==expected_cycles[kind],"pulse path cycle count changed");
+                            require(top==h.c().sp() && top-deepest==(kind>=3 ? 1u : 0u),"pulse path stack use changed");
+                            ++paths[kind];
+                            auto value=pulse_sample(before,uint16_t(inc),duty,reciprocal(inc));
+                            auto contribution=int(std::floor(value*int(amp)/128.+0.5));
+                            require(h.c().data[26]==uint8_t(0x34+contribution) && h.c().data[27]==0x12,
+                                "pulse value, rounding or accumulation mismatch");
+                            require(h.word(phases+2*ch)==uint16_t(phase),"pulse phase addition mismatch");
+                            ++cases;
+                        }
+                    }
+                }
+                h.control(ch,0); h.word(controls+3*ch,0);
+            }
+        }
+        for(unsigned kind=0;kind<5;++kind) require(paths[kind],"a pulse path was never exercised");
+        std::cout<<"pulse paths: "<<cases<<" samples; high "<<paths[0]<<", low "<<paths[1]+paths[2]
+            <<", rising "<<paths[3]<<", falling "<<paths[4]<<"; 35 high, 40 low, 71 rising, 87 falling cycles\n";
     });
     h.test("noise states, amplitudes, gates and exact instruction timing",[&]{
         unsigned cases=0;
@@ -1329,7 +1446,10 @@ void synthesis(harness& h) {
             int duty=128;
             for(int i=0;i<4;++i) {
                 if(i==3) { lfsr=noise_next(lfsr); duty+=(lfsr&0x8000)?-amp[i]:amp[i]; }
-                else { phase[i]=uint16_t(phase[i]+inc[i]); duty+=(phase[i]&0x8000)?-amp[i]:amp[i]; }
+                else {
+                    auto value=pulse_sample(phase[i],inc[i],128,reciprocal(inc[i]));
+                    phase[i]=uint16_t(phase[i]+inc[i]); duty+=int(std::floor(value*int(amp[i])/128.+0.5));
+                }
             }
             auto t=h.synth_sample();
             h.isrmin=std::min(h.isrmin,t); h.isrmax=std::max(h.isrmax,t);
@@ -1401,12 +1521,11 @@ void shared_gain(harness& h) {
 }
 
 void mixer_profile(harness& h) {
-    for(unsigned selected=0;selected<2;++selected) for(unsigned master : {0u,1u,32u,128u,255u})
-    for(unsigned level : {0u,128u,64u,32u}) {
-        h.command(13,selected); h.command(5,master); h.command(15,level);
+    for(unsigned selected=0;selected<2;++selected) for(unsigned master : {0u,1u,32u,128u,255u}) {
+        h.command(13,selected); h.command(5,master);
         uint64_t ordinary_min=10000, ordinary_max=0, pending_max=0;
         for(unsigned waves=0;waves<27;++waves) for(unsigned signs=0;signs<16;++signs)
-        for(unsigned phase_byte : {0u,65u}) for(unsigned history : {35u,128u,221u})
+        for(unsigned phase_byte : {0u,65u})
         for(unsigned packet : {0u,128u,129u,130u,164u,165u,191u}) {
             unsigned selection=waves;
             for(unsigned ch=0;ch<4;++ch) {
@@ -1415,7 +1534,6 @@ void mixer_profile(harness& h) {
                 h.control(ch,31,128,selection%3); selection/=3;
             }
             h.word(noise,signs&8 ? 0x4000 : 1);
-            h.c().data[lowpass_state]=uint8_t(history);
             std::copy_n(h.c().data.begin()+controls,16,h.c().data.begin()+update_controls);
             h.c().data[update]=uint8_t(packet);
             auto cycles=h.synth_sample();
@@ -1424,9 +1542,8 @@ void mixer_profile(harness& h) {
             else { ordinary_min=std::min(ordinary_min,cycles); ordinary_max=std::max(ordinary_max,cycles); }
         }
         uint64_t stopped_min=10000, stopped_max=0, stopped_pending=0;
-        for(unsigned history : {35u,128u,221u}) for(unsigned packet : {0u,128u,129u,165u,191u}) {
+        for(unsigned packet : {0u,128u,129u,165u,191u}) {
             for(unsigned ch=0;ch<4;++ch) { h.word(controls+3*ch,0); h.control(ch,255); }
-            h.c().data[lowpass_state]=uint8_t(history);
             std::copy_n(h.c().data.begin()+controls,16,h.c().data.begin()+update_controls);
             h.c().data[update]=uint8_t(packet);
             auto state=h.word(noise);
@@ -1436,109 +1553,17 @@ void mixer_profile(harness& h) {
             if(packet) stopped_pending=std::max(stopped_pending,cycles);
             else { stopped_min=std::min(stopped_min,cycles); stopped_max=std::max(stopped_max,cycles); }
         }
-        std::cout<<"mixer profile rate="<<selected<<" master="<<master<<" filter="<<level
+        std::cout<<"mixer profile rate="<<selected<<" master="<<master
             <<" ordinary="<<ordinary_min<<".."<<ordinary_max<<" pending="<<pending_max
             <<" stopped="<<stopped_min<<".."<<stopped_max<<" stopped_pending="<<stopped_pending<<"\n";
     }
-    h.command(15,0);
 }
 
-void lowpass_filter(harness& h) {
-    h.test("global tonal low-pass validation and lifetime",[&]{
-        h.command(15,2);
-        require(h.c().data[lowpass]==2 && h.c().data[lowpass_state]==128,"filter did not enable from silence");
-        h.c().data[lowpass_state]=91;
-        for(unsigned value=1;value<256;++value) {
-            h.command(15,value);
-            require(h.c().data[lowpass]==value && h.c().data[lowpass_state]==91,"byte coefficient changed history");
-        }
-        h.command(15,3);
-        require(h.c().data[lowpass_state]==91,"enabled level change reset history");
-        h.command(13,1);
-        require(h.c().data[lowpass_state]==91,"rate change reset history");
-        h.play({1,0,0x11,0x23,1,12,255,0,1});
-        auto phase=h.word(phases), cursor=h.word(music), wait=h.word(music+3);
-        h.command(15,1);
-        require(h.word(phases)==phase && h.word(music)==cursor && h.word(music+3)==wait,
-            "filter command changed phase or song position");
-        for(unsigned command : {3u,4u,2u,8u,7u,6u}) {
-            h.command(command);
-            require(h.c().data[lowpass]==1,"playback command reset filter level");
-        }
-        require(h.c().data[lowpass_state]==128,"output restart retained stale history");
-        h.command(15,0); h.c().data[lowpass_state]=255; h.command(15,1);
-        require(h.c().data[lowpass_state]==128,"OFF-to-enabled transition resurrected history");
-    });
-    h.test("tonal low-pass exact mixed reference and noise bypass",[&]{
-        unsigned count=0;
-        for(unsigned selected=0;selected<2;++selected) for(unsigned level : {1u,2u,32u,64u,128u,254u,255u}) {
-            h.command(13,selected); h.command(15,0); h.command(15,level);
-            int state=0;
-            for(unsigned n=0;n<512;++n) {
-                int tonal=0;
-                for(unsigned ch=0;ch<3;++ch) {
-                    unsigned amp=n>=384 ? 255 : std::array<unsigned,6>{{0,1,7,15,31,255}}[(n+ch)%6];
-                    unsigned wave=(n/7+ch)%3, duty=(n*37+ch*67)&255;
-                    unsigned phase=(n*31271+ch*19661)&65535, inc=(n*73+ch*7919)&65535;
-                    h.word(phases+2*ch,uint16_t(phase)); h.word(controls+3*ch,uint16_t(inc));
-                    h.control(ch,amp,duty,wave);
-                    if(amp==255) continue;
-                    unsigned high=((phase+inc)&65535)>>8;
-                    int sample=wave==2 ? int(high)-128 : wave==1 ? 2*int(std::min(high,255-high))-127 : high<duty ? 127 : -127;
-                    tonal+=int(std::floor((sample*int(amp)+64)/128.));
-                }
-                auto seed=uint16_t(n*39019); unsigned noise_amp=(n*17)%32;
-                h.word(noise,seed); h.control(3,noise_amp);
-                h.word(controls+9,uint16_t(n*1777));
-                seed=noise_next(seed);
-                unsigned coefficient=selected ? level : std::min(255u,2*level-(level*level>>8));
-                int delta=tonal-state, step=(std::abs(delta)*int(coefficient)+255)>>8;
-                state+=delta>=0 ? step : -step;
-                int filtered=state;
-                int expected=std::clamp(128+filtered+((seed&0x8000) ? -int(noise_amp) : int(noise_amp)),0,255);
-                h.c().data[0]=0x5a; h.c().data[1]=0xa5; h.c().data[2]=0x37;
-                unsigned flags=n&127;
-                h.c().data[reg::addr::SREG]=uint8_t(flags); h.c().prev_sreg=uint8_t(flags);
-                auto regs=h.c().data; auto sp=h.c().sp();
-                h.synth_sample();
-                require(h.c().data[lowpass_state]==128+state,"filter byte history differs from reference");
-                require(h.c().data[held_sample]==expected,"filter output or noise bypass differs from reference");
-                require(h.word(noise)==seed,"filter changed noise evolution");
-                for(unsigned r=0;r<32;++r) require(h.c().data[r]==regs[r],"filter corrupted an ISR register");
-                require((h.c().data[reg::addr::SREG]&127)==flags && h.c().sp()==sp,"filter corrupted flags or stack");
-                h.c().data[2]=0;
-                ++count;
-            }
-            require(state==0,"quiet filter tail did not settle to silence");
-        }
-        h.c().data[2]=0;
-        std::cout<<"tonal low-pass: "<<count<<" exact waveform/gain/noise/register/flag cases passed\n";
-    });
-    h.test("all byte coefficients, differences and half-rate preparation",[&]{
-        unsigned count=0;
+// Worst case: every voice on an edge of every waveform, with pending controls and reseeds.
+void isr_bounds(harness& h) {
+    h.test("interrupt bounds including pending controls and reseeds",[&]{
         for(unsigned selected=0;selected<2;++selected) {
             h.command(13,selected);
-            for(unsigned alpha=1;alpha<256;++alpha) {
-                h.command(15,alpha);
-                unsigned coefficient=selected ? alpha : std::min(255u,2*alpha-(alpha*alpha>>8));
-                require(h.c().data[lowpass_coefficient]==coefficient,"foreground coefficient preparation differs");
-                for(unsigned history : {35u,128u,221u}) for(unsigned target : {35u,36u,63u,64u,127u,128u,129u,159u,191u,192u,220u,221u}) {
-                    h.c().data[lowpass_state]=uint8_t(history); h.c().data[26]=uint8_t(target);
-                    h.c().pc=uint16_t(h.sym("audio_lowpass_begin"));
-                    h.until([&]{return h.c().pc==h.sym("audio_lowpass_end");});
-                    int delta=int(target)-int(history), step=(std::abs(delta)*int(coefficient)+255)>>8;
-                    unsigned expected=unsigned(int(history)+(delta>=0 ? step : -step));
-                    require(h.c().data[lowpass_state]==expected && h.c().data[26]==expected,
-                        "byte subtract/multiply/add or borrow/rounding differs");
-                    ++count;
-                }
-            }
-        }
-        std::cout<<"byte filter: "<<count<<" coefficient/difference/rate cases passed\n";
-    });
-    h.test("low-pass interrupt bounds including pending controls and reseeds",[&]{
-        for(unsigned selected=0;selected<2;++selected) for(unsigned level : {0u,128u,64u,32u,255u}) {
-            h.command(13,selected); h.command(15,level);
             uint64_t maximum=0;
             for(unsigned waves=0;waves<27;++waves) for(unsigned packet : {0u,128u,129u,130u}) {
                 unsigned bits=waves;
@@ -1550,8 +1575,8 @@ void lowpass_filter(harness& h) {
                 h.c().data[update]=uint8_t(packet); h.word(noise,1);
                 maximum=std::max(maximum,h.synth_sample());
             }
-            require(maximum<(selected ? 1024u : 2048u),"filtered ISR missed synthesis deadline");
-            std::cout<<"low-pass level "<<level<<", rate "<<selected<<": worst pending ISR "<<maximum<<" cycles\n";
+            require(maximum<(selected ? 1024u : 2048u),"ISR missed synthesis deadline");
+            std::cout<<"rate "<<selected<<": worst pending ISR "<<maximum<<" cycles\n";
         }
     });
 }
@@ -1576,7 +1601,7 @@ void sentinels(harness& h) {
             h.word(noise,seed_state(37));
             expected[3]=seed_state(37);
             for(unsigned n=0;n<128;++n) {
-                require(h.synth_sample()==79 && h.c().data[held_sample]==128,"stopped voice contributed to mix");
+                require(h.synth_sample()==74 && h.c().data[held_sample]==128,"stopped voice contributed to mix");
                 for(unsigned voice=0;voice<3;++voice)
                     require(h.word(phases+2*voice)==expected[voice],"stopped phase changed");
                 require(h.word(noise)==seed_state(37),"stopped LFSR changed");
@@ -1585,14 +1610,15 @@ void sentinels(harness& h) {
             require(h.amplitude(ch)==31,"reactivation did not replace sentinel with normal gain");
             uint16_t lfsr=seed_state(37);
             for(unsigned n=0;n<128;++n) {
-                if(ch<3) expected[ch]=uint16_t(expected[ch]+h.word(controls+3*ch));
+                uint16_t before=0, inc=0;
+                if(ch<3) { before=expected[ch]; inc=h.word(controls+3*ch); expected[ch]=uint16_t(before+inc); }
                 int contribution;
                 if(ch==3) {
                     lfsr=noise_next(lfsr); expected[3]=lfsr;
                     contribution=(lfsr&0x8000) ? -31 : 31;
                 } else {
                     unsigned p=expected[ch]>>8;
-                    int sample=wave==2 ? int(p)-128 : wave==1 ? int(2*std::min(p,255-p))-127 : p<71 ? 127 : -127;
+                    int sample=wave==2 ? int(p)-128 : wave==1 ? int(2*std::min(p,255-p))-127 : pulse_sample(before,inc,71,reciprocal(inc));
                     contribution=int(std::floor(sample*31/128.+0.5));
                 }
                 h.synth_sample();
@@ -1623,13 +1649,14 @@ void sentinels(harness& h) {
                     h.routine("audio_commit"); // publish the manually edited channel volume
                     require(h.amplitude(ch)==31,"unmute lost prepared gain");
                 }
-                if(ch<3) phase=uint16_t(phase+h.word(controls+3*ch));
+                uint16_t before=phase, inc=ch<3 ? h.word(controls+3*ch) : 0;
+                if(ch<3) phase=uint16_t(phase+inc);
                 else lfsr=noise_next(lfsr);
                 int amplitude=(master || n>=256) ? 31 : 0, contribution;
                 if(ch==3) contribution=(lfsr&0x8000) ? -amplitude : amplitude;
                 else {
                     unsigned p=phase>>8;
-                    int sample=wave==2 ? int(p)-128 : wave==1 ? int(2*std::min(p,255-p))-127 : p<71 ? 127 : -127;
+                    int sample=wave==2 ? int(p)-128 : wave==1 ? int(2*std::min(p,255-p))-127 : pulse_sample(before,inc,71,reciprocal(inc));
                     contribution=int(std::floor(sample*amplitude/128.+0.5));
                 }
                 h.synth_sample();
@@ -1865,11 +1892,13 @@ void handoff(harness& h) {
         for(bool seen : signs_seen) require(seen,"missing ISR sign combination");
         for(bool seen : noise_seen) require(seen,"missing ISR noise path");
         std::cout<<"pending ISR matrix: "<<cases<<" cases passed\n";
-        require(copymax==265 && reseedmax==269,"pending ISR cycle target changed");
-        require(ordinary_min[0]==182 && ordinary_max[0]==186,"pulse ISR cycle target changed");
-        require(ordinary_min[13]==185 && ordinary_max[13]==189,"triangle ISR cycle target changed");
-        require(ordinary_min[26]==179 && ordinary_max[26]==183,"saw ISR cycle target changed");
-        require(mask_min[15]==79 && mask_max[15]==79,"all-stopped ISR cycle target changed");
+        // The pulse range is three voices wholly high (183) to three wholly low with the high
+        // bytes tied (238); the matrix never lands on an edge, which the pulse path test covers.
+        require(copymax==321 && reseedmax==342,"pending ISR cycle target changed");
+        require(ordinary_min[0]==183 && ordinary_max[0]==238,"pulse ISR cycle target changed");
+        require(ordinary_min[13]==180 && ordinary_max[13]==184,"triangle ISR cycle target changed");
+        require(ordinary_min[26]==174 && ordinary_max[26]==178,"saw ISR cycle target changed");
+        require(mask_min[15]==74 && mask_max[15]==74,"all-stopped ISR cycle target changed");
         require(initial_sp-minsp==10,"pending ISR native stack changed");
         std::cout<<"worst pending ISR: copy "<<copymax<<", reseed "<<reseedmax
             <<" cycles; native stack "<<initial_sp-minsp<<" bytes\n";
@@ -2441,10 +2470,9 @@ void capture(char** args, bool select_rate, bool loop) {
 // Deterministic oracle: the real audio sequencer/foreground preparation and AVR
 // synthesis ISR, with event publication at exact logical 4ms boundaries.
 // Timer0 scheduling/PWM are intentionally isolated; --capture covers those.
-void render_logical(char** args, bool loop, unsigned filter) {
+void render_logical(char** args, bool loop) {
     char* firmware_args[]{args[0],args[2],args[3],args[4]};
     harness h(firmware_args,true,0);
-    require(filter<=255,"logical low-pass coefficient must be a byte");
     std::ifstream input(args[5],std::ios::binary);
     require(bool(input),"logical song unavailable");
     std::vector<uint8_t> song((std::istreambuf_iterator<char>(input)),{});
@@ -2455,7 +2483,6 @@ void render_logical(char** args, bool loop, unsigned filter) {
     h.command(13,selected);
     h.command(5,128);
     h.command(14,unsigned(loop));
-    h.command(15,filter);
     h.play(song,0x20000,false,0);
     for(unsigned ch=0;ch<3;++ch) h.word(phases+2*ch,0);
     h.word(noise,1);
@@ -2816,8 +2843,8 @@ void core_isa(char** args) {
 }
 void core_audio(char** args) {
     harness h(args); sequence(h); synthesis(h); sentinels(h); rates(h);
-    shared_gain(h); lowpass_filter(h); handoff(h); automatic(h);
-    std::cout<<"audio SRAM: 98 persistent bytes; native stack space: "<<0xb00-scratch_end<<" bytes\n";
+    shared_gain(h); isr_bounds(h); handoff(h); automatic(h);
+    std::cout<<"audio SRAM: 107 persistent bytes; native stack space: "<<0xb00-scratch_end<<" bytes\n";
     std::cout<<h.cases<<" native audio cases passed\n"
         <<"Timer1 including entry/vector: "<<h.isrmin<<".."<<h.isrmax<<" cycles; CPU "
         <<100.*h.isrmax/2048<<"%\nobserved idle service gap: "<<h.latencymax/16000.<<" ms\n";
@@ -2842,11 +2869,11 @@ int main(int argc,char** argv) {
             run_suite(argv[2],args); return 0;
         }
         if(argc==5 && std::string(argv[1])=="--mixer-check") {
-            harness h(argv+1); shared_gain(h); lowpass_filter(h); mixer_profile(h);
+            harness h(argv+1); shared_gain(h); isr_bounds(h); mixer_profile(h);
             return 0;
         }
         if(argc==5 && std::string(argv[1])=="--audio-check") {
-            harness h(argv+1); sequence(h); synthesis(h); sentinels(h); rates(h); shared_gain(h); lowpass_filter(h);
+            harness h(argv+1); sequence(h); synthesis(h); sentinels(h); rates(h); shared_gain(h); isr_bounds(h);
             return 0;
         }
         if(argc==5 && std::string(argv[1])=="--stopped-profile") {
@@ -2862,9 +2889,8 @@ int main(int argc,char** argv) {
             }
             return 0;
         }
-        if((argc>=9 && argc<=11) && std::string(argv[1])=="--render-logical") {
-            render_logical(argv,argc>=10 && std::stoul(argv[9])!=0,
-                argc==11 ? unsigned(std::stoul(argv[10])) : 0);
+        if((argc>=9 && argc<=10) && std::string(argv[1])=="--render-logical") {
+            render_logical(argv,argc>=10 && std::stoul(argv[9])!=0);
             return 0;
         }
         if(argc==5 && std::string(argv[1])=="--playlist") {

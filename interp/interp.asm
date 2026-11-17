@@ -99,17 +99,22 @@
 #define data_audio_sample            (data_audio_update+1)
 #define data_audio_rate              (data_audio_sample+1)
 #define data_audio_music_loop        (data_audio_rate+1)
-#define data_audio_lowpass           (data_audio_music_loop+1)
-; Biased uint8 tonal history: 128 means silence, matching the accumulator.
-#define data_audio_lowpass_state     (data_audio_lowpass+1)
-#define data_audio_lowpass_coefficient (data_audio_lowpass_state+1)
+; Pulse edges are placed within a sample, which needs 1/increment. Each tonal voice keeps
+; floor(2^24/increment) (zero for increments below 257), published with its increment.
+; The low bytes occupy the three bytes that used to hold the removed tonal low-pass, so every
+; address the guest runtime reads stays where it was; the high bytes follow the fade song.
+#define data_audio_recip_lo          (data_audio_music_loop+1)
 ; Independent owner attenuation, 0=mute / 255=full volume.
-#define data_audio_music_volume      (data_audio_lowpass_coefficient+1)
+#define data_audio_music_volume      (data_audio_recip_lo+3)
 #define data_audio_sfx_volume        (data_audio_music_volume+1)
 ; Nonzero saved gain arms the asynchronous fade; the queued pointer stays 24-bit.
 #define data_audio_fade_volume       (data_audio_sfx_volume+1)
 #define data_audio_fade_song         (data_audio_fade_volume+1)
-#define data_audio_end               (data_audio_fade_song+3)
+#define data_audio_recip_hi          (data_audio_fade_song+3)
+; The unpublished reciprocals, copied with the update controls.
+#define data_audio_update_recip_lo   (data_audio_recip_hi+3)
+#define data_audio_update_recip_hi   (data_audio_update_recip_lo+3)
+#define data_audio_end               (data_audio_update_recip_hi+3)
 
 ; Stream records share cursor/wait/status/mask; only music has a loop start.
 ; All program pointers are image-relative, little-endian uint24.
@@ -122,8 +127,8 @@
 .if (data_audio_noise != 0x0a2e) || (data_audio_noise_spare != 0x0a30) || (data_audio_music_notes != 0x0a31)
     .error "noise replacement must preserve the existing audio RAM layout"
 .endif
-.if (data_audio_end - data_audio_begin) != 98
-    .error "audio persistent SRAM must occupy 98 bytes"
+.if (data_audio_end - data_audio_begin) != 107
+    .error "audio persistent SRAM must occupy 107 bytes"
 .endif
 .if (data_audio_begin >> 8) != ((data_audio_end-1) >> 8)
     .error "audio compact pointers must fit in one SRAM page"
@@ -7588,8 +7593,7 @@ startup_func:
     ; only interpreter-private state that is not supplied by the image.
     ; Include inactive sprite/font caches so one loop initializes the complete
     ; contiguous region, including data_boot_hold. Data/save page pointers are
-    ; installed separately. This also initializes the tonal low-pass to OFF;
-    ; audio_init_func installs its biased neutral history value.
+    ; installed separately.
     ldi  r30, lo8(data_startup_flags)
     ldi  r31, hi8(data_startup_flags)
     ldi  r26, (data_audio_end-data_startup_flags)
@@ -15609,12 +15613,100 @@ audio_commit_prepare:
     ldi  r25, 255 ; reserved amplitude: stopped, not merely muted
     st   X+, r25
 .Laudio_stage_next:
+    cpi  r18, 3
+    brsh 1f ; noise has no edges to place
+    rcall audio_stage_recip
+1:
     lsr  r23
     inc  r18
     cpi  r18, 4
     brsh 1f
     rjmp .Laudio_stage
 1:
+    ret
+
+; Stage floor(2^24/increment) for tonal voice r18, whose increment was just staged through X
+; (X points past its three bytes). Increments of 256 and below, and silence, stage zero: the
+; synthesis then delays both edges by a sample. An unchanged increment reuses the published
+; value, so the division only runs when the pitch moves. Clobbers r19, r24, r25, r30, r31.
+audio_stage_recip:
+    push r16
+    push r17
+    push r22
+    movw r30, r26
+    sbiw r30, 3
+    ld   r24, Z+
+    ld   r25, Z ; staged increment
+    mov  r30, r18
+    lsl  r30
+    add  r30, r18
+    subi r30, lo8(-data_audio_controls)
+    ldi  r31, hi8(data_audio_controls)
+    ld   r16, Z+
+    ld   r17, Z ; published increment
+    cp   r16, r24
+    cpc  r17, r25
+    brne .Laudio_recip_divide
+    ldi  r30, lo8(data_audio_recip_lo)
+    add  r30, r18
+    ldi  r31, hi8(data_audio_recip_lo)
+    ld   r16, Z
+    ldi  r30, lo8(data_audio_recip_hi)
+    add  r30, r18
+    ld   r17, Z
+    mov  r24, r16
+    mov  r25, r17
+    rjmp .Laudio_recip_store
+.Laudio_recip_divide:
+    cpi  r25, 2
+    brsh 1f
+    cpi  r25, 1
+    brne .Laudio_recip_zero
+    tst  r24
+    breq .Laudio_recip_zero ; 256 itself: the quotient would not fit
+1:
+    ; Restoring division of 2^24 by r25:r24, starting from the top byte of the dividend (0x0100,
+    ; below the divisor). The quotient shifts into r22:r19; a seeded 1 leaves as carry after
+    ; sixteen bits.
+    ldi  r16, 0
+    ldi  r17, 1
+    ldi  r19, 1
+    clr  r22
+.Laudio_recip_bit:
+    lsl  r16
+    rol  r17
+    brcs 2f
+    cp   r16, r24
+    cpc  r17, r25
+    brlo 3f
+2:
+    sub  r16, r24
+    sbc  r17, r25
+    sec
+    rjmp 4f
+3:
+    clc
+4:
+    rol  r19
+    rol  r22
+    brcc .Laudio_recip_bit
+    mov  r24, r19
+    mov  r25, r22
+    rjmp .Laudio_recip_store
+.Laudio_recip_zero:
+    clr  r24
+    clr  r25
+.Laudio_recip_store:
+    ldi  r30, lo8(data_audio_update_recip_lo)
+    add  r30, r18
+    ldi  r31, hi8(data_audio_update_recip_lo)
+    st   Z, r24
+    ldi  r30, lo8(data_audio_update_recip_hi)
+    add  r30, r18
+    st   Z, r25
+    pop  r22
+    pop  r17
+    pop  r16
     ret
 
 ; Called after the PWM store by synthesis, or with its interrupt unavailable.
@@ -15625,6 +15717,14 @@ audio_apply_update:
     .rept 16
         lds r21, data_audio_update_controls+audio_control_offset
         sts data_audio_controls+audio_control_offset, r21
+        .set audio_control_offset, audio_control_offset+1
+    .endr
+    .set audio_control_offset, 0
+    .rept 3
+        lds r21, data_audio_update_recip_lo+audio_control_offset
+        sts data_audio_recip_lo+audio_control_offset, r21
+        lds r21, data_audio_update_recip_hi+audio_control_offset
+        sts data_audio_recip_hi+audio_control_offset, r21
         .set audio_control_offset, audio_control_offset+1
     .endr
     andi r20, 63
@@ -15700,10 +15800,6 @@ sys_audio_impl:
     brne 1f
     sts  data_audio_music_loop, VM_R4L
     rjmp .Laudio_command_done
-1:
-    cpi  r24, 15 ; tonal low-pass: uint8 coefficient, 0=bypass
-    brne 1f
-    rjmp .Laudio_lowpass
 1:
     cpi  r24, 10 ; direct SFX tone: r4 channel and pulse duty, r5 raw increment, r6 amplitude and waveform
     brne 1f
@@ -15783,41 +15879,6 @@ sys_audio_impl:
     audio_restore
     jmp seek_and_dispatch_func_disabled
 
-.Laudio_lowpass:
-    cli
-    lds  r24, data_audio_lowpass
-    tst  r24
-    brne 1f
-    ; Never resurrect history retained while bypassed. Publish atomically.
-    ldi  r24, 128
-    sts  data_audio_lowpass_state, r24
-1:
-    sts  data_audio_lowpass, VM_R4L
-    rcall audio_lowpass_prepare
-    sei
-    rjmp .Laudio_command_done
-
-; Foreground only, under CLI. At half the rate,
-; alpha8 = min(255, 2*alpha16 - floor(alpha16^2/256)) squares the decay pole.
-audio_lowpass_prepare:
-    lds  r24, data_audio_lowpass
-    mov  r21, r24
-    lds  r20, data_audio_rate
-    sbrc r20, 0
-    rjmp 1f
-    mul  r24, r24
-    lsl  r21
-    clr  r20
-    rol  r20
-    sub  r21, r1
-    sbc  r20, ZERO
-    tst  r20 ; SBC's cumulative Z also includes the low byte
-    breq 1f
-    ldi  r21, 255
-1:
-    sts  data_audio_lowpass_coefficient, r21
-    ret
-
 .Laudio_rate:
     cpi  VM_R4L, 2
     brsh .Laudio_command_done
@@ -15832,7 +15893,6 @@ audio_lowpass_prepare:
     cli
     clr  r20 ; rate changes preserve noise state; no transient retrigger command
     rcall audio_apply_update
-    rcall audio_lowpass_prepare
     sts  TCCR1B, ZERO
     ldi  r24, 255
     lds  r20, data_audio_rate
@@ -15855,7 +15915,6 @@ audio_enable:
     ldi  r24, 128
     sts  OCR4A, r24
     sts  data_audio_sample, r24
-    sts  data_audio_lowpass_state, r24
     sbi  DDRC, 6
     sbi  DDRC, 7
     ldi  r24, (_BV(COM4A0) | _BV(PWM4A))
@@ -16055,7 +16114,15 @@ bootloader_reset_wait:
 ; r2 may be borrowed by libm. Duty thresholds and amplitudes are separate.
 ; Signed samples are -128..127; round(sample * prepared_amplitude / 128).
 ; No SPI or sequencing. Amplitude 255 means stopped (increment zero).
-; Tonal paths: 33 pulse / 34 triangle / 32 saw cycles; stopped: 5 cycles.
+; A pulse is the average of the ideal waveform over the sample interval, so an edge is placed
+; between samples instead of on one: a sample that contains no edge is +127 or -127, and a
+; sample that contains one is 254*covered/255-127, where covered is the high fraction of the
+; interval, covered = x * floor(2^24/increment) >> 16 in 0..255. Rising edges (the phase wraps)
+; have x = min(phase, threshold); falling edges (the phase passes the threshold) have
+; x = phase - threshold and use 255 - covered. At most one edge per sample is modelled,
+; which holds while the increment stays below both the threshold and its complement.
+; Tonal paths: pulse 35 (wholly high), 40 (wholly low), 71 (rising edge), 87 (falling edge);
+; 34 triangle; 32 saw; stopped: 5 cycles.
 .macro audio_wave channel
 audio_wave_begin\channel:
     lds  r20, data_audio_controls+3*\channel+2
@@ -16078,17 +16145,29 @@ audio_wave_begin\channel:
     com  r21
     lsl  r21
     subi r21, 127
-    rjmp .Laudio_mix\@
+    rjmp audio_wave_mix\channel
 .Laudio_saw\@:
     subi r21, 128 ; signed ramp -128..127
-    rjmp .Laudio_mix\@
+    rjmp audio_wave_mix\channel
 .Laudio_pulse\@:
+    brcs .Laudio_pulse_rise\@ ; the phase wrapped: a rising edge is in this sample
     lds  r0, data_audio_duty+\channel
     cp   r21, r0
-    sbc  r21, r21 ; phase_high < duty -> 0xff, otherwise 0
-    andi r21, 0xfe
-    subi r21, 127 ; 0xfe-127 = +127, 0-127 = -127
-.Laudio_mix\@:
+    brsh .Laudio_pulse_low\@
+    ldi  r21, 127 ; wholly high
+    rjmp audio_wave_mix\channel
+.Laudio_pulse_low\@:
+    ; Time past the threshold is l = phase - duty*256. Wholly low when it spans the sample.
+    sub  r21, r0 ; l high byte
+    lds  r1, data_audio_controls+3*\channel+1
+    cp   r1, r21
+    brlo audio_wave_floor\channel ; l > increment
+    rjmp audio_pulse_fall\channel
+.Laudio_pulse_rise\@:
+    rjmp audio_pulse_rise\channel
+audio_wave_floor\channel:
+    ldi  r21, 0x81 ; wholly low, -127
+audio_wave_mix\channel:
     fmulsu r21, r20
     lsl  r0 ; round toward nearest, ties toward positive
     adc  r26, r1
@@ -16118,29 +16197,6 @@ timer1_endpoint_write:
     audio_wave 0
     audio_wave 1
     audio_wave 2
-
-audio_lowpass_begin:
-    lds  r20, data_audio_lowpass_coefficient
-    tst  r20
-    breq audio_lowpass_end
-    lds  r21, data_audio_lowpass_state
-    sub  r26, r21
-    breq .Laudio_lowpass_restore
-    brcc .Laudio_lowpass_positive
-    neg  r26 ; borrow identifies a negative difference; abs fits uint8
-    mul  r26, r20
-    neg  r0 ; C=1 iff the fractional product is nonzero: round toward target
-    sbc  r21, r1
-    rjmp .Laudio_lowpass_store
-.Laudio_lowpass_positive:
-    mul  r26, r20
-    neg  r0
-    adc  r21, r1
-.Laudio_lowpass_store:
-    sts  data_audio_lowpass_state, r21
-.Laudio_lowpass_restore:
-    mov  r26, r21
-audio_lowpass_end:
 
 audio_noise_begin:
     ; Active: 24 cycles; stopped: 5. Muted active voices still advance.
@@ -16220,6 +16276,58 @@ timer1_output_done:
     pop  r0
     reti
 
+; Pulse samples that contain an edge, out of line to keep the common samples short.
+; r21 = x high byte, x low byte = the voice's stored phase low byte; T = 1 for a falling edge.
+.macro audio_pulse_edges channel
+audio_pulse_fall\channel:
+    lds  r0, data_audio_phases+2*\channel ; l low byte
+    lds  r1, data_audio_controls+3*\channel
+    cp   r0, r1
+    lds  r1, data_audio_controls+3*\channel+1
+    cpc  r21, r1
+    brlo 1f
+    rjmp audio_wave_floor\channel ; l >= increment
+1:
+    set ; falling edge: the high fraction is 255 - covered(l)
+    rjmp audio_pulse_covered\channel
+audio_pulse_rise\channel:
+    lds  r0, data_audio_duty+\channel
+    cp   r21, r0
+    brlo 1f
+    mov  r21, r0 ; threshold below the phase: the whole high part fits in the sample
+1:
+    clt ; rising edge: the high fraction is covered(min(phase, threshold))
+audio_pulse_covered\channel:
+    ; covered = floor(x * R / 65536), with x = r21:phase low byte, as three byte products.
+    push r22
+    lds  r20, data_audio_recip_hi+\channel
+    mul  r21, r20
+    mov  r22, r0
+    lds  r20, data_audio_recip_lo+\channel
+    mul  r21, r20
+    add  r22, r1
+    mov  r21, r0
+    lds  r20, data_audio_recip_hi+\channel
+    lds  r0, data_audio_phases+2*\channel
+    mul  r0, r20
+    add  r22, r1
+    add  r21, r0
+    clr  r1
+    adc  r22, r1
+    mov  r21, r22
+    pop  r22
+    lds  r20, data_audio_controls+3*\channel+2
+    brtc 2f
+    com  r21
+2:
+    andi r21, 0xfe
+    subi r21, 127 ; 0xfe-127 = +127, 0-127 = -127
+    rjmp audio_wave_mix\channel
+.endm
+audio_pulse_edges 0
+audio_pulse_edges 1
+audio_pulse_edges 2
+
 ; Startup-only zero writes, in order. All timers below are stopped and masked
 ; before their remaining controls are reset. All addresses fit in data page 0;
 ; TC4H is cleared before writing TCNT4 and the Timer4 compare registers.
@@ -16272,7 +16380,6 @@ audio_init_func:
     sts  OCR4C, r24
     ldi  r24, 128
     sts  OCR4A, r24
-    sts  data_audio_lowpass_state, r24
     ldi  r24, 1
     sts  data_audio_noise, r24
     sts  data_audio_noise+1, ZERO

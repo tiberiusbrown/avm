@@ -14,11 +14,9 @@ static const uint8_t AVM_PROGMEM short_song[] = {1, 0, 0, 1};
 int avm_test_main(void) {
     char text[48];
     if(avm_audio_get_rate()!=AVM_AUDIO_RATE_16KHZ || avm_audio_get_music_loop()!=0 ||
-       avm_audio_get_lowpass()!=AVM_AUDIO_LOWPASS_DEFAULT ||
        avm_audio_get_fade_volume()!=0 || avm_audio_get_fade_song()!=0) return 19;
-    avm_audio_lowpass(AVM_AUDIO_LOWPASS_MILD);
     avm_audio_music_loop(3);
-    if(avm_audio_get_lowpass()!=AVM_AUDIO_LOWPASS_MILD || avm_audio_get_music_loop()!=3) return 20;
+    if(avm_audio_get_music_loop()!=3) return 20;
     avm_audio_play_fade(song); /* An inactive stream starts immediately at nonzero gain. */
     if(avm_audio_status()!=1) return 1;
     if(avm_audio_get_music()!=song || avm_audio_get_volume()!=128 ||
@@ -61,8 +59,7 @@ int avm_test_main(void) {
     avm_audio_stop_sfx();
     if(avm_audio_status()!=2) return 7;
     avm_audio_rate(AVM_AUDIO_RATE_8KHZ);
-    if(avm_audio_get_rate()!=AVM_AUDIO_RATE_8KHZ ||
-       avm_audio_get_lowpass()!=AVM_AUDIO_LOWPASS_MILD) return 23;
+    if(avm_audio_get_rate()!=AVM_AUDIO_RATE_8KHZ) return 23;
     avm_audio_resume();
     if(avm_audio_status()!=1) return 8;
     avm_audio_volume(16);
@@ -97,7 +94,6 @@ int avm_test_main(void) {
     if(avm_audio_status()!=0) return 9;
     if(avm_audio_get_music()!=0) return 17;
     avm_audio_disable();
-    avm_audio_lowpass(AVM_AUDIO_LOWPASS_DEFAULT);
-    if(avm_audio_get_music_loop()!=3 || avm_audio_get_lowpass()!=AVM_AUDIO_LOWPASS_DEFAULT) return 24;
+    if(avm_audio_get_music_loop()!=3) return 24;
     return 0;
 }

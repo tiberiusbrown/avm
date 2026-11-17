@@ -10,7 +10,6 @@ SYMBOL TABLE:
 00000000 l    d  .text.avm_audio_get_sfx_volume	00000000 .text.avm_audio_get_sfx_volume
 00000000 l    d  .text.avm_audio_get_rate	00000000 .text.avm_audio_get_rate
 00000000 l    d  .text.avm_audio_get_music_loop	00000000 .text.avm_audio_get_music_loop
-00000000 l    d  .text.avm_audio_get_lowpass	00000000 .text.avm_audio_get_lowpass
 00000000 l    d  .text.avm_audio_get_fade_volume	00000000 .text.avm_audio_get_fade_volume
 00000000 l    d  .text.avm_audio_get_fade_song	00000000 .text.avm_audio_get_fade_song
 00000000 l    d  .debug_frame	00000000 .debug_frame
@@ -23,7 +22,6 @@ SYMBOL TABLE:
 00000000 g     F .text.avm_audio_get_sfx_volume	00000005 avm_audio_get_sfx_volume
 00000000 g     F .text.avm_audio_get_rate	00000005 avm_audio_get_rate
 00000000 g     F .text.avm_audio_get_music_loop	00000005 avm_audio_get_music_loop
-00000000 g     F .text.avm_audio_get_lowpass	00000005 avm_audio_get_lowpass
 00000000 g     F .text.avm_audio_get_fade_volume	00000005 avm_audio_get_fade_volume
 00000000 g     F .text.avm_audio_get_fade_song	00000016 avm_audio_get_fade_song
 
@@ -106,13 +104,6 @@ Disassembly of section .text.avm_audio_get_music_loop:
 
 <avm_audio_get_music_loop>:
  c4 6d 0a              ldi16	r4, 0xa6d
- 40                    ld8u	r4, [r4]
- ef                    ret
-
-Disassembly of section .text.avm_audio_get_lowpass:
-
-<avm_audio_get_lowpass>:
- c4 6e 0a              ldi16	r4, 0xa6e
  40                    ld8u	r4, [r4]
  ef                    ret
 

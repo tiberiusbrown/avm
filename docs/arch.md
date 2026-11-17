@@ -3883,11 +3883,10 @@ or concurrent execution of a text or formatted-output service is unsupported.
 | 12 | Set SFX attenuation | Same range as command 11; includes direct tones |
 | 13 | Set synthesis rate | `low8(r4) = 0` (7812.5 Hz) or `1` (15625 Hz); other values ignored |
 | 14 | Set music looping | `low8(r4) = 0` disables, nonzero enables; default disabled; persists across playback controls |
-| 15 | Set global tonal low-pass | `low8(r4) = alpha`: 0 bypass (default), 1..255 coefficient; 128 mild, 64 medium, 32 strong |
 | 16 | Queue music with a fade | `q2[23:0] = program pointer`; a new fade saves the current music attenuation and reduces it by one per 4 ms, then restores it and uses normal music PLAY; an active fade replaces only the queued pointer |
 
 All inputs and architectural flags are preserved except the status result.
-Reserved commands have no command effect, but may service pending elapsed time.
+Reserved commands (including the unassigned 15) have no command effect, but may service pending elapsed time.
 Pointers retain the existing packed 24-bit program-space representation.
 At End, music stops or rewinds according to command 14; SFX always stops.
 Loop-setting changes preserve position, and enabling stopped music does not
@@ -3896,21 +3895,20 @@ Desired channel volumes remain 0..31. Foreground preparation rounds each
 owner's volume times its attenuation divided by 255 into a 0..31 amplitude,
 or uses 255 for a stopped voice. Commands 11/12 preserve phase and ownership,
 including when muted. Command 5 sets the shared output gain, default 128.
-Mixing and tonal filtering use biased bytes (128 means silence); four voices
-fit in 4..252. Gain applies after filtering and noise addition. The hardware
+Mixing uses biased bytes (128 means silence); four voices
+fit in 4..252. Gain applies after noise addition. The hardware
 multiply product is rounded, divided by 32, biased and saturated to PWM limits.
-Gain changes preserve phases, filter history, ownership and stream timing.
+Gain changes preserve phases, ownership and stream timing.
 Runtime getters read existing interpreter RAM directly: `avm_audio_get_music`
 returns the original packed 24-bit music asset pointer while playing or paused,
 or null when stopped. `avm_audio_get_volume`, `avm_audio_get_music_volume` and
 `avm_audio_get_sfx_volume` return the current gain/attenuation bytes. They do
 not issue SYS commands or allocate persistent state.
-`avm_audio_get_rate`, `avm_audio_get_music_loop` and `avm_audio_get_lowpass`
+`avm_audio_get_rate` and `avm_audio_get_music_loop`
 read the requested playback settings. `avm_audio_get_fade_volume` reads the
 saved gain that arms the fade; `avm_audio_get_fade_song` returns its packed
 24-bit queued pointer, or null when the saved gain is zero. These are also
-direct RAM reads; the low-pass getter returns the requested coefficient rather
-than the rate-adjusted internal coefficient.
+direct RAM reads.
 The public `avm_audio_play_fade` wrapper reads fade state and music status
 directly: an active fade, or playing/paused music, uses the raw queue command
 16. Otherwise it uses ordinary PLAY (command 0). Replacing an active queue

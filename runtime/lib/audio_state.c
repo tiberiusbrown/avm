@@ -7,7 +7,6 @@
 #define AUDIO_MUSIC_START (*(void const AVM_PROGMEM * const volatile *)0x0a50)
 #define AUDIO_RATE (*(uint8_t const volatile *)0x0a6c)
 #define AUDIO_MUSIC_LOOP (*(uint8_t const volatile *)0x0a6d)
-#define AUDIO_LOWPASS (*(uint8_t const volatile *)0x0a6e)
 #define AUDIO_VOLUME (*(uint8_t const volatile *)0x0a17)
 #define AUDIO_MUSIC_VOLUME (*(uint8_t const volatile *)0x0a71)
 #define AUDIO_SFX_VOLUME (*(uint8_t const volatile *)0x0a72)
@@ -45,10 +44,6 @@ uint8_t avm_audio_get_rate(void) {
 
 uint8_t avm_audio_get_music_loop(void) {
     return AUDIO_MUSIC_LOOP;
-}
-
-uint8_t avm_audio_get_lowpass(void) {
-    return AUDIO_LOWPASS;
 }
 
 uint8_t avm_audio_get_fade_volume(void) {

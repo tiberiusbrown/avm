@@ -46,12 +46,11 @@ void avm_audio_stop(void);
 void avm_audio_pause(void);
 void avm_audio_resume(void);
 /* Shared music/SFX output gain: default 128, 0=mute, 32=unity, 255=796.875%.
-   Gain applies after individual music/SFX attenuation, the tonal
-   low-pass and noise addition; the result rounds and saturates at PWM limits.
-   Gain edits preserve phase, filter history and timing. */
+   Gain applies after individual music/SFX attenuation and noise addition; the
+   result rounds and saturates at PWM limits. Gain edits preserve phase and timing. */
 void avm_audio_volume(uint8_t volume);
 /* Independent music/SFX attenuation: default 255, 0=mute, 255=full volume.
-   Rounded to each channel's 0..31 amplitude before mixing/filtering; low
+   Rounded to each channel's 0..31 amplitude before mixing; low
    volumes have coarse fade steps. SFX includes direct tones and retains its
    slots while muted. Edits preserve phase, timing and desired channel volumes.
    Settings persist across play, stop, pause and disable/enable. */
@@ -70,25 +69,6 @@ enum { AVM_AUDIO_RATE_8KHZ = 0, AVM_AUDIO_RATE_16KHZ = 1 };
    The selection persists across stop, pause and disable/enable. */
 void avm_audio_rate(uint8_t rate);
 uint8_t avm_audio_get_rate(void);
-enum {
-    AVM_AUDIO_LOWPASS_OFF = 0,
-    AVM_AUDIO_LOWPASS_MILD = 128,
-    AVM_AUDIO_LOWPASS_MEDIUM = 64,
-    AVM_AUDIO_LOWPASS_STRONG = 32,
-    AVM_AUDIO_LOWPASS_DEFAULT = AVM_AUDIO_LOWPASS_OFF
-};
-/* Global one-pole low-pass on the sum of tonal channels 0..2, including SFX;
-   noise channel 3 bypasses it. Default OFF bypasses smoothing.
-   alpha is a uint8 coefficient: 0=bypass, 1..255 gives alpha/256 at 15625 Hz;
-   smaller nonzero values smooth more. Set before play for per-song tuning.
-   The coefficient persists across play, stop, pause and disable/enable. History starts
-   at silence (biased byte 128) on startup, output restart and OFF-to-enabled transitions;
-   changes between nonzero coefficients and sample rates retain history.
-   Stop/pause allow a short tonal decay. Byte steps round toward the target;
-   the half-rate coefficient is prepared in foreground to retain decay time. */
-void avm_audio_lowpass(uint8_t alpha);
-/* Requested coefficient, before synthesis-rate adjustment. */
-uint8_t avm_audio_get_lowpass(void);
 void avm_audio_stop_sfx(void);
 /* bit 0=music playing, bit 1=music paused, bit 2=SFX playing. */
 uint8_t avm_audio_status(void);

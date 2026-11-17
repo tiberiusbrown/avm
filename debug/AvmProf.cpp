@@ -208,6 +208,10 @@ int main(int argc, char** argv) {
     if (argc < 2)
       throw std::invalid_argument("usage: avm-prof record|report|diff|inputs ...");
     std::string command(argv[1]);
+    if (command == "--help") {
+      std::cout << "usage: avm-prof record|report|diff|inputs ...\n";
+      return 0;
+    }
     std::vector<std::string> args(argv + 2, argv + argc);
     if (command == "record") return record(args);
     if (command == "report") return report(args);

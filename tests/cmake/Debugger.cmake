@@ -320,6 +320,14 @@ if(Python3_Interpreter_FOUND)
         USES_TERMINAL VERBATIM)
     add_dependencies(avm_tests_run avm_relax_debug_info_verify)
     if(AVM_BUILD_DEBUGGER)
+    avm_add_check(avm_sdk_relocation_run
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/debug/sdk_relocation.py"
+            --cmake "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}"
+            --fixture "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.elf"
+        DEPENDS avm_sdk avm_debug_images
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        USES_TERMINAL VERBATIM)
     avm_add_check(avm_prof_integration_run
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/debug/prof_integration.py"

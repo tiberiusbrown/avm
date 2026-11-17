@@ -22,6 +22,13 @@ ABI and the three-byte DWARF address representation are specified in
 From this checkout, build with `cmake --build build --config RelWithDebInfo
 --target avm_toolchain --parallel`. To install the SDK, use `cmake --install
 build --config RelWithDebInfo --component avm-sdk --prefix <directory>`.
+
+On Linux the installed `avm-lldb` and `avm-prof` resolve the accompanying `liblldb`
+relative to their own directory; no loader environment configuration is needed.
+`cmake --build build --config RelWithDebInfo --target avm_sdk_relocation_run`
+installs and moves a temporary SDK, clears loader overrides, verifies that both
+tools load the relocated library, and exercises debugging, native profiling and HTML output.
+
 When configuring the checkout, `AVM_WITH_ARDENS` defaults to ON if the
 `deps/Ardens` submodule is present and OFF otherwise. Use
 `cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo

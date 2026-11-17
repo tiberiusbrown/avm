@@ -36,10 +36,27 @@ target_include_directories(avm_prof PRIVATE
 target_link_libraries(avm_prof PRIVATE avm_profile liblldb)
 add_dependencies(avm_prof avm_sdk_tools avm_lldb)
 add_dependencies(avm_toolchain avm_prof)
+# liblldb is shipped beside the tools. Keep installed tools independent of the
+# build tree and of loader environment variables.
+if(APPLE)
+    set(AVM_DEBUG_INSTALL_RPATH "@loader_path")
+elseif(UNIX)
+    set(AVM_DEBUG_INSTALL_RPATH "$ORIGIN")
+endif()
+if(AVM_DEBUG_INSTALL_RPATH)
+    set_target_properties(avm_prof lldb PROPERTIES
+        INSTALL_RPATH "${AVM_DEBUG_INSTALL_RPATH}")
+endif()
 install(TARGETS avm_prof RUNTIME DESTINATION bin COMPONENT avm-sdk)
 install(FILES "${AVM_DEBUG_RUNTIME_ELF}"
     DESTINATION bin/avm COMPONENT avm-sdk)
-install(PROGRAMS "${AVM_LLDB_EXE}" DESTINATION bin COMPONENT avm-sdk)
+# Install the target so CMake rewrites its build RPATH before giving it the SDK
+# name. Installing the build-tree alias as a PROGRAM would retain absolute paths.
+install(TARGETS lldb RUNTIME DESTINATION bin COMPONENT avm-sdk)
+install(CODE "file(RENAME
+    \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_FILE_NAME:lldb>\"
+    \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/bin/avm-lldb${CMAKE_EXECUTABLE_SUFFIX}\")"
+    COMPONENT avm-sdk)
 install(FILES "${AVM_DEBUG_RUNTIME_BOUNDARY}"
     DESTINATION bin/avm COMPONENT avm-sdk)
 install(TARGETS liblldb RUNTIME DESTINATION bin COMPONENT avm-sdk

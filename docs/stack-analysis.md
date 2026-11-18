@@ -34,7 +34,10 @@ PHIs, internal function arguments and returns, scalar/aggregate globals, object
 fields, aliases, and constant-size memory copies. Full LTO makes this analysis
 operate on the combined program. Memory analysis tracks an allocation or global
 and a byte offset; writes to another field do not contaminate a pointer field.
-Variable offsets, partial pointer writes, volatile/atomic accesses, unsupported
+Variable offsets into immutable homogeneous pointer tables resolve to the union of
+whole elements when stride alignment and nonwrapping index arithmetic are proven.
+This includes packed groups of pointer arrays produced by constant splitting.
+Other variable offsets, partial pointer writes, volatile/atomic accesses, unsupported
 pointer representations, and unknown writers remain conservative. Escaping
 objects can be modified by unmodeled calls; their affected loads become unknown.
 

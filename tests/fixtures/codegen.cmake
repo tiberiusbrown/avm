@@ -92,6 +92,7 @@ avm_fixture(codegen/cpp/data_model.cpp KIND CXX SUITE core OPT_LEVELS ALL EXPECT
 avm_fixture(codegen/cpp/diamond_inheritance.cpp KIND CXX SUITE core OPT_LEVELS ALL EXPECT_PASS)
 avm_fixture(codegen/cpp/ff_fixed.cpp KIND CXX SUITE core OPT_LEVELS ALL COMPILE_OPTIONS -mllvm -verify-machineinstrs EXPECT_PASS)
 avm_fixture(codegen/cpp/flash_const.cpp KIND CXX SUITE core OPT_LEVELS ALL O2_OPTIONS -flto=full EXPECTED codegen/cpp/flash_const_output.txt)
+avm_fixture(codegen/cpp/flash_struct_pointer.cpp KIND CXX SUITE core OPT_LEVELS ALL EXPECT_PASS)
 avm_fixture(codegen/cpp/flash_literals.cpp KIND CXX SUITE core OPT_LEVELS ALL O2_OPTIONS -flto=full EXPECTED codegen/cpp/flash_literals_output.txt)
 avm_fixture(codegen/cpp/fpoly.cpp KIND CXX SUITE core OPT_LEVELS ALL EXPECT_PASS CXX_INCLUDE codegen/c/fpoly.c CXX_LINKAGE BLOCK)
 avm_fixture(codegen/cpp/global_lifetime.cpp KIND CXX SUITE core OPT_LEVELS ALL O2_OPTIONS -flto=full EXPECTED codegen/cpp/global_lifetime_output.txt)

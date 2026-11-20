@@ -70,6 +70,15 @@ endfunction()
 set(RUNTIME_SOURCES
     assert atexit audio_state audio_tone avm wctype wchar_string wchar_numeric wchar_time wchar_stream
     wchar_format wchar_scan ctype exit fenv font_5x7 font_br4 font_br5 font_br5d_x5 font_br5n
+    font_adafruit font_bangalor font_berkelium1541 font_berkelium64 font_birchleaf
+    font_blackletter font_blockkie font_bserif font_chunkysans6 font_chunkysans8
+    font_dungeon font_faithless font_glasgow font_gothicpixels font_gothicpixels2
+    font_laika font_m5x7 font_monogram font_monogramitalic font_oldstyle
+    font_pixcon font_pixdor font_pixel5 font_pixelgeorgia font_pixelgeorgiabold
+    font_pixeloidsans font_pixeloidsansbold font_pixeltimes font_pixeltimesbold font_pixolletta
+    font_rainyhearts font_retron2000 font_scimono font_scrawl font_signature
+    font_simplipixa font_slabserif font_thirddimension font_tubeofcorn font_uibold
+    font_uicondensed font_upheaval font_venice font_volter
     local_dtor immediate_exit inttypes locale malloc eh_cxa eh_unwind rtti_dynamic dynamic_cast
     dynamic_cast_void multibyte math math_standard math_c23 complex_standard pgmspace qsort
     bsearch runtime trap_lookup trap_report signal stdio stdio_control stdio_error stdio_files

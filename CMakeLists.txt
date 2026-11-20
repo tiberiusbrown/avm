@@ -245,6 +245,8 @@ install(DIRECTORY "${AVM_SYSROOT_DIR}/"
     PATTERN ".runtime-stamp" EXCLUDE PATTERN ".avm-headers" EXCLUDE)
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/deps/llvm-project/LICENSE.TXT"
     DESTINATION share/licenses/libc++ COMPONENT avm-sdk)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/runtime/font-notices.md"
+    DESTINATION share/licenses/avm COMPONENT avm-sdk)
 
 add_subdirectory(interp)
 include(AvmSdk)

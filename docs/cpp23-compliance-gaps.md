@@ -56,6 +56,14 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Algorithms, ranges, numerics, and random facilities
 
+- [ ] **`<valarray>` code generation at `-O0`:** Fix the segmentation fault in
+  `AVM DAG->DAG Pattern Instruction Selection` while compiling
+  `equal<int, 4>` in [`libcxx_valarray.cpp`](../tests/runtime/libcxx/cpp/libcxx_valarray.cpp).
+  Reproduced with Clang `24.0.0git` at LLVM revision
+  `4106dbf6864a03eafb8acea0b369a200b7cc479c` for `avm-unknown-arduboyfx`.
+  Reproduce with
+  `cmake --build build --config RelWithDebInfo --parallel --target tests/cpp/O0/libcxx_valarray.o`.
+  Verify compilation, linking, and execution of the fixture after fixing the backend.
 - [ ] **Range and iterator adaptors:** Provide C++23 `basic_const_iterator`, constant-iterator/sentinel factories, and the `as_const`, `chunk`, `slide`, and `cartesian_product` views. Stream iterators and stream views require the missing streams library.
 - [ ] **Execution-policy overloads:** Provide the remaining policy overloads for `copy_if`, partitioning, removal, uniqueness, `rotate`, partial sorting, `nth_element`, and `inplace_merge`, with their required exception and complexity semantics.
 - [ ] **Large-state random engines:** Provide storage and execution for the standard `mt19937`, `mt19937_64`, and `knuth_b` engines, whose required state exceeds AVM's 1 KiB static/heap region.

@@ -3651,6 +3651,13 @@ typedef struct __attribute__((packed)) {
 
 #### 49.28.2. Selected text state
 
+The runtime provides built-in fonts through `<avm.h>`. Select one with
+`avm_set_text_font(AVM_FONT_MONOGRAM)`, for example. Each font in the
+[ABC built-in font catalog](https://github.com/tiberiusbrown/abc/blob/ec76bf6d6fc3a97381594bdb72ecc6b09c224dcc/docs/builtin_fonts.md)
+is available under its name with the `AVM_` prefix. The SDK also provides
+`AVM_FONT_5X7`. Each font is a separate runtime archive member.
+See the [font notices](../runtime/font-notices.md) for sources and terms.
+
 Runtime startup has no selected font and uses white-transparent mode:
 
 ```text

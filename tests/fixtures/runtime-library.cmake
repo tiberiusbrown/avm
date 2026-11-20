@@ -1,6 +1,7 @@
 # Fixture sources, variants and expected results. Paths are relative to tests/.
 avm_fixture(runtime/library/c/assert_failure.c KIND C SUITE core OPT_LEVELS ALL EXPECTED runtime/library/c/assert_failure_output.txt)
 avm_fixture(runtime/library/c/atomic64.c KIND C SUITE core OPT_LEVELS ALL EXPECT_PASS)
+avm_fixture(runtime/library/c/builtin_fonts.c KIND C SUITE core OPT_LEVELS ALL EXPECT_PASS)
 avm_fixture(runtime/library/c/c23_checked_arithmetic.c KIND C SUITE core OPT_LEVELS ALL COMPILE_OPTIONS -std=c23 -pedantic-errors EXPECT_PASS)
 avm_fixture(runtime/library/c/c23_freestanding.c KIND C SUITE core OPT_LEVELS ALL COMPILE_OPTIONS -std=c23 -pedantic-errors EXPECT_PASS)
 avm_fixture(runtime/library/c/c23_headers.c KIND C SUITE core OPT_LEVELS ALL COMPILE_OPTIONS -std=c23 -pedantic-errors EXPECT_PASS)

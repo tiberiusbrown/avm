@@ -7,6 +7,46 @@ endif()
 
 project(avm LANGUAGES C CXX ASM)
 
+# llvm-avm-image writes ZIP archives and uses raw DEFLATE streams. Build the
+# compressor as a static dependency so SDK exports do not depend on a host
+# zlib shared library.
+include(FetchContent)
+set(ZLIB_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(ZLIB_BUILD_STATIC ON CACHE BOOL "" FORCE)
+set(ZLIB_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(zlib
+    GIT_REPOSITORY https://github.com/madler/zlib.git
+    GIT_TAG v1.3.1
+    GIT_SHALLOW TRUE)
+FetchContent_MakeAvailable(zlib)
+set(AVM_ZLIB_ARCHIVE_DIR "${CMAKE_BINARY_DIR}/avm-zlib")
+set_target_properties(zlibstatic PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${AVM_ZLIB_ARCHIVE_DIR}")
+foreach(AVM_ZLIB_CONFIG IN ITEMS Debug Release RelWithDebInfo MinSizeRel)
+    string(TOUPPER "${AVM_ZLIB_CONFIG}" AVM_ZLIB_CONFIG_UPPER)
+    set_target_properties(zlibstatic PROPERTIES
+        "ARCHIVE_OUTPUT_DIRECTORY_${AVM_ZLIB_CONFIG_UPPER}"
+        "${AVM_ZLIB_ARCHIVE_DIR}/${AVM_ZLIB_CONFIG}")
+endforeach()
+get_target_property(AVM_ZLIB_OUTPUT_NAME zlibstatic OUTPUT_NAME)
+if(NOT AVM_ZLIB_OUTPUT_NAME)
+    set(AVM_ZLIB_OUTPUT_NAME zlibstatic)
+endif()
+set(AVM_ZLIB_ARCHIVE
+    "${CMAKE_STATIC_LIBRARY_PREFIX}${AVM_ZLIB_OUTPUT_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}")
+add_library(avm_fetched_zlib STATIC IMPORTED GLOBAL)
+set_target_properties(avm_fetched_zlib PROPERTIES
+    OUTPUT_NAME "${AVM_ZLIB_OUTPUT_NAME}"
+    INTERFACE_INCLUDE_DIRECTORIES "${zlib_BINARY_DIR};${zlib_SOURCE_DIR}"
+    IMPORTED_LOCATION "${AVM_ZLIB_ARCHIVE_DIR}/RelWithDebInfo/${AVM_ZLIB_ARCHIVE}")
+foreach(AVM_ZLIB_CONFIG IN ITEMS Debug Release RelWithDebInfo MinSizeRel)
+    string(TOUPPER "${AVM_ZLIB_CONFIG}" AVM_ZLIB_CONFIG_UPPER)
+    set_target_properties(avm_fetched_zlib PROPERTIES
+        "IMPORTED_LOCATION_${AVM_ZLIB_CONFIG_UPPER}"
+        "${AVM_ZLIB_ARCHIVE_DIR}/${AVM_ZLIB_CONFIG}/${AVM_ZLIB_ARCHIVE}")
+endforeach()
+add_library(ZLIB::ZLIB ALIAS avm_fetched_zlib)
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AvmBuild)
 include(AvmTesting)

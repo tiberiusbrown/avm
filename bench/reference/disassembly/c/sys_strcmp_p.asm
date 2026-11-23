@@ -10,27 +10,27 @@ Disassembly of section .text:
  b0                    push16	r0
  f0 04 02 01           ldi16	r0, 0x102
  f1 20                 mov	r4, r0
- c6 ef 11              ldi16	r6, 0x11ef
+ c6 ee 11              ldi16	r6, 0x11ee
  c3 00                 ldi8	r7, 0x0
  c1 41                 ldi8	r5, 0x41
  d7 10                 sys	memcpy_p
  d7 01                 sys	debug_break
- c6 1a 11              ldi16	r6, 0x111a
+ c6 19 11              ldi16	r6, 0x1119
  c3 00                 ldi8	r7, 0x0
  c4 00 0b              ldi16	r4, 0xb00
  d7 14                 sys	strcmp_p
  f1 14                 mov	r2, r4
- c6 9d 11              ldi16	r6, 0x119d
+ c6 9c 11              ldi16	r6, 0x119c
  c3 00                 ldi8	r7, 0x0
  f1 20                 mov	r4, r0
  d7 14                 sys	strcmp_p
  f1 1c                 mov	r3, r4
- c6 5c 11              ldi16	r6, 0x115c
+ c6 5b 11              ldi16	r6, 0x115b
  c3 00                 ldi8	r7, 0x0
  f1 20                 mov	r4, r0
  d7 14                 sys	strcmp_p
  f1 0c                 mov	r1, r4
- c6 1b 11              ldi16	r6, 0x111b
+ c6 1a 11              ldi16	r6, 0x111a
  c3 00                 ldi8	r7, 0x0
  f1 20                 mov	r4, r0
  d7 14                 sys	strcmp_p
@@ -45,7 +45,7 @@ Disassembly of section .text:
  f2 25                 add	r5, r1
  f2 27                 add	r5, r3
  14                    add	r5, r4
- c6 de 11              ldi16	r6, 0x11de
+ c6 dd 11              ldi16	r6, 0x11dd
  c3 00                 ldi8	r7, 0x0
  f1 20                 mov	r4, r0
  d7 14                 sys	strcmp_p

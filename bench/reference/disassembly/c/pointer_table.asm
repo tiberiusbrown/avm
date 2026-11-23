@@ -10,7 +10,7 @@ Disassembly of section .text:
  b0                    push16	r0
  c4 12 01              ldi16	r4, 0x112
  f0 5c 02 01           stm16	[0x102], r4
- c6 7f 0e              ldi16	r6, 0xe7f
+ c6 7e 0e              ldi16	r6, 0xe7e
  c3 00                 ldi8	r7, 0x0
  c1 18                 ldi8	r5, 0x18
  d7 10                 sys	memcpy_p
@@ -18,41 +18,41 @@ Disassembly of section .text:
  f0 59 04 01           stm16	[0x104], r1
  f0 06 2a 01           ldi16	r2, 0x12a
  f1 22                 mov	r4, r2
- c6 97 0e              ldi16	r6, 0xe97
+ c6 96 0e              ldi16	r6, 0xe96
  c3 00                 ldi8	r7, 0x0
  d7 10                 sys	memcpy_p
  f0 04 a2 01           ldi16	r0, 0x1a2
  f0 58 06 01           stm16	[0x106], r0
  f0 07 42 01           ldi16	r3, 0x142
  f1 23                 mov	r4, r3
- c6 af 0e              ldi16	r6, 0xeaf
+ c6 ae 0e              ldi16	r6, 0xeae
  c3 00                 ldi8	r7, 0x0
  d7 10                 sys	memcpy_p
  f0 5a 08 01           stm16	[0x108], r2
  f1 21                 mov	r4, r1
- c6 c7 0e              ldi16	r6, 0xec7
+ c6 c6 0e              ldi16	r6, 0xec6
  c3 00                 ldi8	r7, 0x0
  d7 10                 sys	memcpy_p
  c4 72 01              ldi16	r4, 0x172
  f0 5c 0a 01           stm16	[0x10a], r4
- c6 df 0e              ldi16	r6, 0xedf
+ c6 de 0e              ldi16	r6, 0xede
  c3 00                 ldi8	r7, 0x0
  d7 10                 sys	memcpy_p
  f0 05 ba 01           ldi16	r1, 0x1ba
  f0 59 0c 01           stm16	[0x10c], r1
  f0 06 8a 01           ldi16	r2, 0x18a
  f1 22                 mov	r4, r2
- c6 f7 0e              ldi16	r6, 0xef7
+ c6 f6 0e              ldi16	r6, 0xef6
  c3 00                 ldi8	r7, 0x0
  d7 10                 sys	memcpy_p
  f0 5b 0e 01           stm16	[0x10e], r3
  f1 20                 mov	r4, r0
- c6 0f 0f              ldi16	r6, 0xf0f
+ c6 0e 0f              ldi16	r6, 0xf0e
  c3 00                 ldi8	r7, 0x0
  d7 10                 sys	memcpy_p
  f0 5a 10 01           stm16	[0x110], r2
  f1 21                 mov	r4, r1
- c6 27 0f              ldi16	r6, 0xf27
+ c6 26 0f              ldi16	r6, 0xf26
  c3 00                 ldi8	r7, 0x0
  d7 10                 sys	memcpy_p
  aa                    xor	r6, r6

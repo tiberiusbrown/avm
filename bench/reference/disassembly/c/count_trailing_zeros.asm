@@ -72,7 +72,6 @@ Disassembly of section .text:
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  17                    add	r5, r7
- f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f0 55 04 01           ldm16	r5, [0x104]
  f9 a9                 or	r5, r2
@@ -92,7 +91,6 @@ Disassembly of section .text:
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  17                    add	r5, r7
- f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f0 55 08 01           ldm16	r5, [0x108]
  f9 a9                 or	r5, r2
@@ -112,7 +110,6 @@ Disassembly of section .text:
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  17                    add	r5, r7
- f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f0 55 0c 01           ldm16	r5, [0x10c]
  f9 a9                 or	r5, r2
@@ -132,7 +129,6 @@ Disassembly of section .text:
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  17                    add	r5, r7
- f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f0 55 10 01           ldm16	r5, [0x110]
  f9 a9                 or	r5, r2
@@ -152,7 +148,6 @@ Disassembly of section .text:
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  17                    add	r5, r7
- f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f0 55 14 01           ldm16	r5, [0x114]
  f9 a9                 or	r5, r2
@@ -172,7 +167,6 @@ Disassembly of section .text:
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  17                    add	r5, r7
- f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f0 55 18 01           ldm16	r5, [0x118]
  f9 a9                 or	r5, r2
@@ -192,7 +186,6 @@ Disassembly of section .text:
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  17                    add	r5, r7
- f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f0 55 1c 01           ldm16	r5, [0x11c]
  f9 a9                 or	r5, r2
@@ -212,7 +205,6 @@ Disassembly of section .text:
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  17                    add	r5, r7
- f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f0 55 20 01           ldm16	r5, [0x120]
  f9 a9                 or	r5, r2
@@ -232,7 +224,6 @@ Disassembly of section .text:
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  17                    add	r5, r7
- f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f0 55 24 01           ldm16	r5, [0x124]
  f9 a9                 or	r5, r2
@@ -252,7 +243,6 @@ Disassembly of section .text:
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  17                    add	r5, r7
- f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f0 55 28 01           ldm16	r5, [0x128]
  f9 a9                 or	r5, r2
@@ -272,7 +262,6 @@ Disassembly of section .text:
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  17                    add	r5, r7
- f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f0 55 2c 01           ldm16	r5, [0x12c]
  f9 a9                 or	r5, r2
@@ -292,7 +281,6 @@ Disassembly of section .text:
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  17                    add	r5, r7
- f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f0 55 30 01           ldm16	r5, [0x130]
  f9 a9                 or	r5, r2
@@ -307,7 +295,7 @@ Disassembly of section .text:
  f2 2f                 add	r7, r3
  f4 b1                 dec16	r1
  f4 a1                 tst8	r1
- db 3b fe              brne16	-0x1c5 <L0>
+ db 53 fe              brne16	-0x1ad <L0>
  f0 5f 00 01           stm16	[0x100], r7
  d7 01                 sys	debug_break
  a0                    xor	r4, r4

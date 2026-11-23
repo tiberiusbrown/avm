@@ -164,9 +164,9 @@ Disassembly of section .text:
  f4 50                 stsp16	[sp+0x4], r4
  c4 04 01              ldi16	r4, 0x104
 <L1>:
- f0 3e 10              stsp16	[sp+0x10], r6
+ f4 72                 stsp16	[sp+0xc], r6
  f7 22                 ld16	r2, [r4+]
- f4 78                 stsp16	[sp+0xe], r4
+ f4 68                 stsp16	[sp+0xa], r4
  c0 08                 ldi8	r4, 0x8
  f1 2a                 mov	r6, r2
  ec f4                 srem16	r6, r4
@@ -184,8 +184,8 @@ Disassembly of section .text:
  f1 21                 mov	r4, r1
  fa bf                 asr16i	r4, 0xf
  a5                    xor	r5, r5
- f4 68                 stsp16	[sp+0xa], r4
- f4 71                 stsp16	[sp+0xc], r5
+ f4 78                 stsp16	[sp+0xe], r4
+ f0 3d 10              stsp16	[sp+0x10], r5
  fa 7c                 lsr16i	r4, 0xc
  f7 68                 add32	q2, q0
  0d                    mov	r7, r5
@@ -200,7 +200,6 @@ Disassembly of section .text:
  91                    or	r4, r5
  f4 58                 stsp16	[sp+0x6], r4
  03                    mov	r4, r7
- f4 09                 ldsp16	r5, [sp+0x2]
  fa b4                 asr16i	r4, 0x4
  f4 40                 stsp16	[sp+0x0], r4
  f4 18                 ldsp16	r4, [sp+0x6]
@@ -208,8 +207,9 @@ Disassembly of section .text:
  0e                    mov	r7, r6
  08                    mov	r6, r4
  f7 6d                 add32	q3, q1
- f4 28                 ldsp16	r4, [sp+0xa]
+ f4 38                 ldsp16	r4, [sp+0xe]
  fa 7e                 lsr16i	r4, 0xe
+ a5                    xor	r5, r5
  f7 68                 add32	q2, q0
  f0 06 fc ff           ldi16	r2, 0xfffc
  f0 07 ff ff           ldi16	r3, 0xffff
@@ -218,19 +218,19 @@ Disassembly of section .text:
  f7 71                 sub32	q0, q1
  f9 1a                 xor	r0, r6
  f9 3e                 xor	r1, r7
- f4 38                 ldsp16	r4, [sp+0xe]
+ f4 28                 ldsp16	r4, [sp+0xa]
  f4 11                 ldsp16	r5, [sp+0x4]
  c9 04                 addi.s8	r5, 0x4
  f4 51                 stsp16	[sp+0x4], r5
- f0 35 10              ldsp16	r5, [sp+0x10]
+ f4 31                 ldsp16	r5, [sp+0xc]
  f4 b5                 dec16	r5
  09                    mov	r6, r5
  f6 2d                 tst16	r5
- d1 85                 brne8	-0x7b <L1>
+ d1 87                 brne8	-0x79 <L1>
  f0 35 12              ldsp16	r5, [sp+0x12]
  f4 ad                 inc16	r5
  cd 14                 cmpi.s8	r5, 0x14
- db 6e ff              brne16	-0x92 <L0>
+ db 70 ff              brne16	-0x90 <L0>
  c4 00 01              ldi16	r4, 0x100
  f0 6b 08              st32	[r4], q0
  d7 01                 sys	debug_break

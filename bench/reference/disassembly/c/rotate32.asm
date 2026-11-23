@@ -30,7 +30,7 @@ Disassembly of section .text:
  a5                    xor	r5, r5
  c6 04 03              ldi16	r6, 0x304
  c7 02 01              ldi16	r7, 0x102
- e1 bd 0b              call16	__avm_mulsi3
+ e1 bc 0b              call16	__avm_mulsi3
  c6 78 56              ldi16	r6, 0x5678
  c7 34 12              ldi16	r7, 0x1234
  a8                    xor	r6, r4
@@ -68,12 +68,12 @@ Disassembly of section .text:
  f4 68                 stsp16	[sp+0xa], r4
  f4 71                 stsp16	[sp+0xc], r5
  f0 6c c1              ld8u	r6, [r0+]
- e1 09 0b              call16	__avm_rotlsi3
+ e1 08 0b              call16	__avm_rotlsi3
  f4 50                 stsp16	[sp+0x4], r4
  f4 59                 stsp16	[sp+0x6], r5
+ f4 33                 ldsp16	r7, [sp+0xc]
+ 0b                    mov	r6, r7
  f4 28                 ldsp16	r4, [sp+0xa]
- f4 31                 ldsp16	r5, [sp+0xc]
- 09                    mov	r6, r5
  fa 78                 lsr16i	r4, 0x8
  0e                    mov	r7, r6
  fa 68                 lsl16i	r7, 0x8

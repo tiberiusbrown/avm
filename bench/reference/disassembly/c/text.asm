@@ -8,7 +8,7 @@ Disassembly of section .text:
  b0                    push16	r0
  d6 fe                 adjsp	-0x2
  d7 01                 sys	debug_break
- c4 59 0d              ldi16	r4, 0xd59
+ c4 58 0d              ldi16	r4, 0xd58
  c1 00                 ldi8	r5, 0x0
  d7 31                 sys	set_text_font
  c5 e8 03              ldi16	r5, 0x3e8
@@ -16,18 +16,18 @@ Disassembly of section .text:
  ec 25                 udiv16	r4, r5
  f4 40                 stsp16	[sp+0x0], r4
  f0 12 00              leasp	r2, 0x0
- c6 ed 0c              ldi16	r6, 0xced
+ c6 ec 0c              ldi16	r6, 0xcec
  c3 00                 ldi8	r7, 0x0
  f2 30                 sub	r0, r0
  a0                    xor	r4, r4
  c1 08                 ldi8	r5, 0x8
  d7 36                 sys	draw_textfv_p
- c6 01 0d              ldi16	r6, 0xd01
+ c6 00 0d              ldi16	r6, 0xd00
  c3 00                 ldi8	r7, 0x0
  a0                    xor	r4, r4
  c1 11                 ldi8	r5, 0x11
  d7 34                 sys	draw_text_p
- c6 2d 0d              ldi16	r6, 0xd2d
+ c6 2c 0d              ldi16	r6, 0xd2c
  c3 00                 ldi8	r7, 0x0
  a0                    xor	r4, r4
  c1 2c                 ldi8	r5, 0x2c

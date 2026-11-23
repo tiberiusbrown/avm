@@ -10,12 +10,12 @@ Disassembly of section .text:
  b0                    push16	r0
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
- f0 06 17 16           ldi16	r2, 0x1617
+ f0 06 13 16           ldi16	r2, 0x1613
  f0 03 00              ldi8	r3, 0x0
  f0 05 00 01           ldi16	r1, 0x100
  d4 0d                 jmp8	0xd <L2>
 <L0>:
- e1 dc 0a              call16	lgammaf
+ e1 db 0a              call16	lgammaf
 <L1>:
  f0 6b 82              st32	[r1], q2
  f4 a8                 inc16	r0
@@ -32,7 +32,7 @@ Disassembly of section .text:
  f0 64 88              ldp32	q2, [q2]
  f0 0c 10              cmpi.s8	r0, 0x10
  d8 e1                 bruge8	-0x1f <L0>
- e1 6a 0f              call16	tgammaf
+ e1 69 0f              call16	tgammaf
  d4 df                 jmp8	-0x21 <L1>
 <L3>:
  d7 01                 sys	debug_break
@@ -924,7 +924,7 @@ Disassembly of section .text:
  f2 62                 mov32	q0, q2
  f7 63                 add32	q0, q3
  f0 69 c0              cmp32	q3, q0
- dd 89 00              bruge16	0x89 <L3>
+ dd 86 00              bruge16	0x86 <L3>
  f0 04 ff ff           ldi16	r0, 0xffff
  f0 01 7f              ldi8	r1, 0x7f
  f0 69 08              cmp32	q0, q2
@@ -949,11 +949,9 @@ Disassembly of section .text:
  fa 77                 lsr16i	r4, 0x7
  12                    add	r4, r6
  f1 2b                 mov	r6, r3
- af                    xor	r7, r7
  fa 97                 lsr16i	r6, 0x7
  18                    add	r6, r4
  f4 42                 stsp16	[sp+0x0], r6
- f4 4b                 stsp16	[sp+0x2], r7
  a0                    xor	r4, r4
  c5 80 3f              ldi16	r5, 0x3f80
  f9 82                 xor	r4, r0

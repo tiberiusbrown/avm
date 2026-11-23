@@ -42,7 +42,7 @@ Disassembly of section .text:
  f1 50                 stsp8	[sp+0x8], r4
  f0 14 18              leasp	r4, 0x18
  f0 15 08              leasp	r5, 0x8
- e1 57 0f              call16	cacoshf
+ e1 56 0f              call16	cacoshf
  f0 34 18              ldsp16	r4, [sp+0x18]
  f0 35 1a              ldsp16	r5, [sp+0x1a]
  f0 30 1c              ldsp16	r0, [sp+0x1c]
@@ -159,7 +159,7 @@ Disassembly of section .text:
  c5 80 7f              ldi16	r5, 0x7f80
  f4 1a                 ldsp16	r6, [sp+0x6]
  f4 23                 ldsp16	r7, [sp+0x8]
- e1 8c 05              call16	copysignf
+ e1 89 05              call16	copysignf
  ff 06                 fneg	q2
  f4 12                 ldsp16	r6, [sp+0x4]
  ca 04                 addi.s8	r6, 0x4
@@ -222,7 +222,7 @@ Disassembly of section .text:
  ff 14                 fcmp
  f1 16                 mov	r2, r6
  f2 68                 mov32	q2, q0
- e1 19 05              call16	sqrtf
+ e1 16 05              call16	sqrtf
  08                    mov	r6, r4
  0d                    mov	r7, r5
  c4 db 0f              ldi16	r4, 0xfdb
@@ -237,7 +237,7 @@ Disassembly of section .text:
 <L2>:
  f4 1a                 ldsp16	r6, [sp+0x6]
  f4 23                 ldsp16	r7, [sp+0x8]
- e1 e8 04              call16	copysignf
+ e1 e5 04              call16	copysignf
  f4 12                 ldsp16	r6, [sp+0x4]
 <L3>:
  f0 6b 0c              st32	[r6], q0
@@ -247,7 +247,7 @@ Disassembly of section .text:
 <L4>:
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 09                 ldsp16	r5, [sp+0x2]
- e1 19 05              call16	acosf
+ e1 16 05              call16	acosf
  f0 30 06              ldsp16	r0, [sp+0x6]
  f0 31 08              ldsp16	r1, [sp+0x8]
  ff 04                 fneg	q0
@@ -260,12 +260,12 @@ Disassembly of section .text:
 <L5>:
  f2 69                 mov32	q2, q1
  f2 6a                 mov32	q3, q0
- e1 4a 06              call16	fmaxf
+ e1 47 06              call16	fmaxf
  f2 62                 mov32	q0, q2
  f2 69                 mov32	q2, q1
  f4 3a                 ldsp16	r6, [sp+0xe]
  f0 37 10              ldsp16	r7, [sp+0x10]
- e1 d2 05              call16	fminf
+ e1 cf 05              call16	fminf
  f2 6a                 mov32	q3, q0
  ff 03                 fdiv
  f2 66                 mov32	q1, q2
@@ -275,7 +275,7 @@ Disassembly of section .text:
  f2 69                 mov32	q2, q1
  f2 6b                 mov32	q3, q1
  ff 02                 fmul
- e1 86 06              call16	log1pf
+ e1 83 06              call16	log1pf
  aa                    xor	r6, r6
  c7 00 3f              ldi16	r7, 0x3f00
  ff 02                 fmul
@@ -291,12 +291,12 @@ Disassembly of section .text:
  f0 35 10              ldsp16	r5, [sp+0x10]
  f4 02                 ldsp16	r6, [sp+0x0]
  f4 0b                 ldsp16	r7, [sp+0x2]
- e1 8c 07              call16	atan2f
+ e1 86 07              call16	atan2f
  f2 66                 mov32	q1, q2
  f2 68                 mov32	q2, q0
  f4 1a                 ldsp16	r6, [sp+0x6]
  f4 23                 ldsp16	r7, [sp+0x8]
- e1 6b 04              call16	copysignf
+ e1 68 04              call16	copysignf
  f4 12                 ldsp16	r6, [sp+0x4]
  f0 6b 4c              st32	[r6], q1
  ca 04                 addi.s8	r6, 0x4
@@ -361,7 +361,7 @@ Disassembly of section .text:
  aa                    xor	r6, r6
  c7 80 3f              ldi16	r7, 0x3f80
  ff 00                 fadd
- e1 09 04              call16	sqrtf
+ e1 06 04              call16	sqrtf
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0
@@ -424,7 +424,7 @@ Disassembly of section .text:
  aa                    xor	r6, r6
  c7 80 3f              ldi16	r7, 0x3f80
  ff 00                 fadd
- e1 8a 03              call16	sqrtf
+ e1 87 03              call16	sqrtf
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0
@@ -540,33 +540,33 @@ Disassembly of section .text:
 <L14>:
  02                    mov	r4, r6
  07                    mov	r5, r7
- e1 a5 02              call16	sqrtf
+ e1 a2 02              call16	sqrtf
  f2 62                 mov32	q0, q2
  f2 69                 mov32	q2, q1
  f4 2a                 ldsp16	r6, [sp+0xa]
  f4 33                 ldsp16	r7, [sp+0xc]
  ff 00                 fadd
- e1 98 02              call16	sqrtf
+ e1 95 02              call16	sqrtf
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0
  ff 02                 fmul
  f4 02                 ldsp16	r6, [sp+0x0]
  f4 0b                 ldsp16	r7, [sp+0x2]
- e1 8c 05              call16	atan2f
+ e1 86 05              call16	atan2f
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f0 30 12              ldsp16	r0, [sp+0x12]
  f0 31 14              ldsp16	r1, [sp+0x14]
  f2 68                 mov32	q2, q0
- e1 7c 02              call16	sqrtf
+ e1 79 02              call16	sqrtf
  f4 68                 stsp16	[sp+0xa], r4
  f4 71                 stsp16	[sp+0xc], r5
  aa                    xor	r6, r6
  c7 00 40              ldi16	r7, 0x4000
  f2 68                 mov32	q2, q0
  ff 00                 fadd
- e1 6d 02              call16	sqrtf
+ e1 6a 02              call16	sqrtf
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f4 28                 ldsp16	r4, [sp+0xa]
@@ -576,7 +576,7 @@ Disassembly of section .text:
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0
  ff 00                 fadd
- e1 35 04              call16	log1pf
+ e1 32 04              call16	log1pf
  f4 81                 lsl16.1	r1
  f9 21                 or	r1, r0
  f6 29                 tst16	r1
@@ -593,11 +593,11 @@ Disassembly of section .text:
  c5 80 3f              ldi16	r5, 0x3f80
  f2 6b                 mov32	q3, q1
  ff 01                 fsub
- e1 39 02              call16	sqrtf
+ e1 36 02              call16	sqrtf
  f2 62                 mov32	q0, q2
  f0 34 1e              ldsp16	r4, [sp+0x1e]
  f0 35 20              ldsp16	r5, [sp+0x20]
- e1 2e 02              call16	sqrtf
+ e1 2b 02              call16	sqrtf
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0
@@ -610,7 +610,7 @@ Disassembly of section .text:
 <L15>:
  f4 1a                 ldsp16	r6, [sp+0x6]
  f4 23                 ldsp16	r7, [sp+0x8]
- e1 03 02              call16	copysignf
+ e1 00 02              call16	copysignf
  f4 12                 ldsp16	r6, [sp+0x4]
  f0 30 00              ldsp16	r0, [sp+0x0]
  f0 31 02              ldsp16	r1, [sp+0x2]
@@ -663,7 +663,7 @@ Disassembly of section .text:
  f4 49                 stsp16	[sp+0x2], r5
  f2 68                 mov32	q2, q0
  f2 6b                 mov32	q3, q1
- e1 95 01              call16	copysignf
+ e1 92 01              call16	copysignf
  f4 13                 ldsp16	r7, [sp+0x4]
  0b                    mov	r6, r7
  ca 04                 addi.s8	r6, 0x4
@@ -771,7 +771,7 @@ Disassembly of section .text:
  f2 62                 mov32	q0, q2
  f7 63                 add32	q0, q3
  f0 69 c0              cmp32	q3, q0
- dd 89 00              bruge16	0x89 <L3>
+ dd 86 00              bruge16	0x86 <L3>
  f0 04 ff ff           ldi16	r0, 0xffff
  f0 01 7f              ldi8	r1, 0x7f
  f0 69 08              cmp32	q0, q2
@@ -796,11 +796,9 @@ Disassembly of section .text:
  fa 77                 lsr16i	r4, 0x7
  12                    add	r4, r6
  f1 2b                 mov	r6, r3
- af                    xor	r7, r7
  fa 97                 lsr16i	r6, 0x7
  18                    add	r6, r4
  f4 42                 stsp16	[sp+0x0], r6
- f4 4b                 stsp16	[sp+0x2], r7
  a0                    xor	r4, r4
  c5 80 3f              ldi16	r5, 0x3f80
  f9 82                 xor	r4, r0
@@ -1168,7 +1166,7 @@ Disassembly of section .text:
  02                    mov	r4, r6
  07                    mov	r5, r7
  f2 6a                 mov32	q3, q0
- e0 95 00              jmp16	149 <L3>
+ e0 92 00              jmp16	146 <L3>
 <L0>:
  aa                    xor	r6, r6
  c7 80 3f              ldi16	r7, 0x3f80
@@ -1177,7 +1175,7 @@ Disassembly of section .text:
  f2 62                 mov32	q0, q2
  f7 63                 add32	q0, q3
  f0 69 c0              cmp32	q3, q0
- dd 8b 00              bruge16	0x8b <L5>
+ dd 88 00              bruge16	0x88 <L5>
  f0 06 ff ff           ldi16	r2, 0xffff
  f0 03 7f              ldi8	r3, 0x7f
  f0 69 48              cmp32	q1, q2
@@ -1202,11 +1200,9 @@ Disassembly of section .text:
  fa 77                 lsr16i	r4, 0x7
  12                    add	r4, r6
  f1 29                 mov	r6, r1
- af                    xor	r7, r7
  fa 97                 lsr16i	r6, 0x7
  18                    add	r6, r4
  f4 42                 stsp16	[sp+0x0], r6
- f4 4b                 stsp16	[sp+0x2], r7
  a0                    xor	r4, r4
  c5 80 3f              ldi16	r5, 0x3f80
  f9 52                 xor	r2, r4

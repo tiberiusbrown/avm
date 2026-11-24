@@ -389,7 +389,7 @@ def relax_debug_checks(executable, relax_image):
 # is what the source computes: mixed = 6 ^ 3, scaled = 6 << 1, total = 5 + 12,
 # tail = 17 ^ 6, first = 6 + 1, second = 7 + 6, and the inlined fold results.
 RELAX_VARIABLE_STOPS = (
-    ("main", 0x0c, (("input", 6, "0x"),
+    ("main", 0x0b, (("input", 6, "0x"),
              ("*(volatile unsigned char *)$sp", 6, None))),
     ("relax_debug_outer", 0x06, (("seed", 6, "r0"),)),
     ("relax_debug_outer", 0x32, (("seed", 6, "r0"), ("mixed", 5, "r1"))),

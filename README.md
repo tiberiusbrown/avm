@@ -23,6 +23,17 @@ ctest --test-dir build -C RelWithDebInfo -L '^full$' --output-on-failure
 ctest --test-dir build -C RelWithDebInfo --rerun-failed --output-on-failure
 ```
 
+The code generator can be fuzzed with `llvm-isel-fuzzer`, and what it finds reduced with `llvm-reduce`. The `fuzz` preset configures an instrumented LLVM with assertions, AddressSanitizer, UndefinedBehaviorSanitizer and libFuzzer coverage under `build/fuzz`. It requires clang and is separate from the normal build, so CI does not build it:
+
+```sh
+cmake --preset fuzz -G Ninja
+cmake --build --preset fuzz-tools --parallel
+python3 tools/fuzz_backend.py seeds
+python3 tools/fuzz_backend.py run --time 1800
+```
+
+`run` triages afterwards. Each distinct failure gets a directory under `build/fuzz/work/findings` with a reduced reproducer. See [tools/fuzz_backend.py](tools/fuzz_backend.py) for the workflow and options.
+
 The host music compiler needs only Python's standard library. MIDI import, DSP tooling and validation have explicit extras in [pyproject.toml](pyproject.toml). For complete Python validation, install `.[test]` into an environment under `build/`, then set `Python3_EXECUTABLE` and `AVM_MATH_PYTHON_EXECUTABLE` when configuring CMake. `.[research]` adds the optional analysis dependencies.
 
 ## Repository ownership

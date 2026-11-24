@@ -34,6 +34,21 @@
       "cacheVariables": {
         "AVM_BUILD_DEBUGGER": "OFF"
       }
+    },
+    {
+      "name": "fuzz",
+      "displayName": "AVM backend fuzzing",
+      "description": "Sanitizer and coverage instrumented LLVM with assertions, for tools/fuzz_backend.py. Not part of CI.",
+      "inherits": "core",
+      "binaryDir": "${sourceDir}/build/fuzz",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "LLVM_ENABLE_ASSERTIONS": "ON",
+        "LLVM_ENABLE_ZLIB": "OFF",
+        "LLVM_USE_SANITIZE_COVERAGE": "ON",
+        "LLVM_USE_SANITIZER": "Address;Undefined"
+      }
     }
   ],
   "buildPresets": [
@@ -67,6 +82,18 @@
       "configuration": "RelWithDebInfo",
       "targets": [
         "avm_bench_run"
+      ]
+    },
+    {
+      "name": "fuzz-tools",
+      "configurePreset": "fuzz",
+      "configuration": "RelWithDebInfo",
+      "targets": [
+        "llvm-isel-fuzzer",
+        "llvm-reduce",
+        "llc",
+        "llvm-as",
+        "llvm-dis"
       ]
     }
   ],

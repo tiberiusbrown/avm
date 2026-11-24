@@ -170,6 +170,15 @@ add_subdirectory(deps/llvm-project/llvm llvm-build EXCLUDE_FROM_ALL)
 include(AvmLlvmPch)
 avm_enable_llvm_pch("${CMAKE_CURRENT_SOURCE_DIR}/deps/llvm-project/llvm")
 
+# libFuzzer drivers compile with -fsanitize=fuzzer, which clang rejects in a
+# precompiled header that was built without it.
+foreach(avm_fuzzer IN ITEMS llvm-isel-fuzzer llvm-opt-fuzzer)
+    if(TARGET ${avm_fuzzer})
+        set_target_properties(${avm_fuzzer} PROPERTIES
+            DISABLE_PRECOMPILE_HEADERS ON)
+    endif()
+endforeach()
+
 add_custom_target(avm_toolchain
     DEPENDS
         clang

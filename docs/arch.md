@@ -1685,6 +1685,17 @@ An assembler MAY expose additional aliases provided they lower to the normative 
 
 A normal call may replace `r4-r7` and `CC`. The callee MUST restore every used register from `r0-r3` and MUST restore `SP` before returning.
 
+Two cases save fewer registers, and both reduce the stack that the callee needs.
+A function that neither returns nor unwinds, such as `_start`, has no caller to
+restore registers for, so it saves none of `r0-r3`, with or without unwind
+tables. A function declared `__attribute__((preserve_none))` need not preserve
+`r0-r2`, and still preserves `r3` for callers that use it as a frame pointer.
+The runtime entry points call `main`, `setup`, `loop` and the test entry with
+that convention, because `_start` keeps nothing live across them. A definition
+marked `preserve_none` saves up to six bytes less stack, and an unmarked one
+still works. Only a caller that holds nothing in `r0-r2` across the call may
+use the convention for a callee that is marked.
+
 ## 41. Argument classification and register allocation
 
 Arguments are processed in source order using four 16-bit register units:

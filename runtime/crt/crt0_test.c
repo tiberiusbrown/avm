@@ -3,7 +3,8 @@
 
 #include "init_fini.h"
 
-extern int avm_test_main(void);
+/* _start holds no register across the call, so the test need not preserve any. */
+extern int avm_test_main(void) __attribute__((preserve_none));
 extern void __avm_terminate(void);
 
 static void test_putc(uint8_t value) {

@@ -2,7 +2,11 @@
 
 #include "init_fini.h"
 
-extern int main(void);
+/*
+ * _start holds no register across the call, so main need not preserve any.
+ * A main defined with preserve_none saves less; any other main still works.
+ */
+extern int main(void) __attribute__((preserve_none));
 extern void __avm_terminate(void);
 
 /*

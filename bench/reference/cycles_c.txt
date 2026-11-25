@@ -14,15 +14,15 @@
      9117172   byte_phi_stream.c
       228994   call_args.c
        41042   complex_cacosh.c
-       41690   complex_cacosh_O0.c
+       41874   complex_cacosh_O0.c
        57832   complex_casinh.c
-       58480   complex_casinh_O0.c
+       58664   complex_casinh_O0.c
        23019   complex_catanh.c
-       23667   complex_catanh_O0.c
-       48122   complex_cpow.c
-       49458   complex_cpow_O0.c
+       23851   complex_catanh_O0.c
+       48142   complex_cpow.c
+       49846   complex_cpow_O0.c
          811   complex_creal.c
-        1459   complex_creal_O0.c
+        1643   complex_creal_O0.c
       570889   conditional_fdiv_likely.c
       510848   conditional_fdiv_mixed.c
       455885   conditional_fdiv_skipped.c
@@ -51,7 +51,7 @@
       462838   divmod.c
        20889   draw_text.c
        20937   draw_text_P.c
-      697601   dynamic_stack.c
+      700289   dynamic_stack.c
       227136   fibonacci.c
      2758997   fir8.c
      6349429   fixed_point.c
@@ -62,7 +62,7 @@
     10421778   loop_control.c
      3284707   loop_shapes.c
       159669   math_acos.c
-      199499   math_acosh.c
+      200139   math_acosh.c
       156215   math_asin.c
       161559   math_asin_general.c
       201147   math_asinh.c
@@ -73,15 +73,15 @@
       208399   math_atanh.c
       214415   math_cbrt.c
        36892   math_ceil.c
-      120855   math_classify.c
-       50845   math_classify_fpclassify_exceptional.c
-       63817   math_classify_fpclassify_normal.c
+      122135   math_classify.c
+       51325   math_classify_fpclassify_exceptional.c
+       64457   math_classify_fpclassify_normal.c
        38621   math_classify_isfinite_exceptional.c
        38621   math_classify_isfinite_normal.c
        40349   math_classify_isinf_exceptional.c
        40349   math_classify_isinf_normal.c
-       38717   math_classify_isnan_exceptional.c
-       38717   math_classify_isnan_normal.c
+       39357   math_classify_isnan_exceptional.c
+       39357   math_classify_isnan_normal.c
        41405   math_classify_isnormal_exceptional.c
        41405   math_classify_isnormal_normal.c
        35933   math_classify_signbit_exceptional.c
@@ -329,12 +329,12 @@
       357096   sieve.c
       323145   small_memops.c
       152628   stack_array.c
-      241820   stack_base_nested.c
+      242004   stack_base_nested.c
      2330824   stack_frames.c
      6846913   state_machine.c
-     4189537   stdio_scan_float.c
-     4611841   stdio_scan_integer.c
-     2994977   stdio_scan_string.c
+     4190273   stdio_scan_float.c
+     4612577   stdio_scan_integer.c
+     3000865   stdio_scan_string.c
       152587   stdlib_abs.c
       921499   stdlib_atoi.c
      5768945   stdlib_atol.c
@@ -398,4 +398,4 @@
      1052805   wide_compare.c
      2075772   wide_divmod.c
       424742   wide_mul.c
-      179083   wide_shifts.c
+      179195   wide_shifts.c

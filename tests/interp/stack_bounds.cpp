@@ -196,7 +196,9 @@ void assignment_or_adjustment(harness_t& h, uint32_t pc, uint16_t sp,
         h.fatal();
     else {
         require(h.boundary() && guest_pc(h.cpu()) == pc + 2, "next instruction was not reached");
-        require(cycles == (reg >= 0 ? (h.checked ? 40 : 37) : 35), "incorrect SETSP/ADJSP timing");
+        // SETSP is runtime-decoded in the F1 overflow handler: one uniform latency for
+        // every source register (15 cycles above its former table entry).
+        require(cycles == (reg >= 0 ? (h.checked ? 55 : 52) : 35), "incorrect SETSP/ADJSP timing");
         h.instruction();
         require(word(h.cpu(), 8) == regs[7], "following guest instruction did not execute");
     }
@@ -329,7 +331,7 @@ int main(int argc, char** argv)
                   << "Measured ADJSP=35, CALL8=" << (h.checked ? 127 : 128)+h.seek_overhead
                   << ", CALL16=" << (h.checked ? 136 : 135)+h.seek_overhead
                   << ", CALLF=" << 150+h.seek_overhead << ", all CALLP=" << (h.checked ? 119 : 117)+h.seek_overhead
-                  << ", all SETSP=" << (h.checked ? 40 : 37) << ", RET=" << 110+h.seek_overhead << " cycles.\n";
+                  << ", all SETSP=" << (h.checked ? 55 : 52) << ", RET=" << 110+h.seek_overhead << " cycles.\n";
         return 0;
     } catch(std::exception const& error) {
         std::cerr << error.what() << '\n';

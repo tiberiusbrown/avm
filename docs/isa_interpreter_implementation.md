@@ -563,16 +563,18 @@ The C23 binary `%b` and `%B` conversions later raised both interpreters to 28,77
 
 The C23 `wN` and `wfN` length modifiers raise both interpreters to 28,876 bytes, which is 820 bytes below the limit. The parser reads N into `r19`, which `format_get_char` preserves, and accepts only N = 8, 16, 32, and 64 without a leading zero. N = 8 selects the `hh` class, N = 16 selects `h`, and N = 64 selects `ll`. N = 32 has a dedicated class because `l` is also accepted by the character, string, and floating-point conversions, which must reject `wN`. Integer decoding and `%n` treat that class as four bytes. Measured with `avm_bench --instruction-only`, 78 formatter rows moved by 1 to 7 cycles. Every conversion without a length modifier pays one cycle for the `w` test in the length parser. Default and `h` integer widths also pay two cycles for the `w32` comparison in integer decoding, so `%d`, `%#08x`, and `%*.*u` move by 3. `%ld` and `%lu` move by 1, and the mixed `%c %s %S %ld %#x` row moves by 7. The C++ benchmarks are unchanged.
 
-The 2026-11 interpreter timing pass changed only cycle counts, not behaviour, and left both interpreters at 29,336 bytes, 360 below the limit (the baseline was 29,332). Every change was found by recording the cycle of each `SPDR` write for every instruction benchmark: the gap between consecutive writes is 17 cycles (a dummy byte) or 18 (a meaningful byte) when nothing is wasted, so any larger gap marks removable slack. The changes, with the instruction-benchmark rows they moved (cycles before to after):
+The 2026-11 interpreter timing pass changed only cycle counts, not behaviour, and left both interpreters at 28,508 bytes, 1,188 below the limit (the baseline was 29,332). Every change was found by recording the cycle of each `SPDR` write for every instruction benchmark: the gap between consecutive writes is 17 cycles (a dummy byte) or 18 (a meaningful byte) when nothing is wasted, so any larger gap marks removable slack. The changes, with the instruction-benchmark rows they moved (cycles before to after):
 
 - **Seek restart.** The pending-audio-tick poll moved from in front of the command byte into the command-to-address gap, where it costs nothing; a pending tick waits out the command transfer, services the audio state, and restarts the seek (`audio_service_during_seek`). Every taken transfer, return and service exit is four cycles faster: `RET` and `JMPP` 114 to 110, `CALLP` 123 to 119, `JMP16` 139 to 135, `CALL16` 140 to 136, `JMPF`/`CALLF` 154 to 150, the flash-window and program-space loads and the `memcpy_P`-style services 4 faster. The idle seek is exactly 100 cycles, which the audio suite asserts.
 - **8-bit branches and jumps.** See Section 30: a taken branch is 132 to 118 including the seek change, a not-taken branch 35 to 34, `JMP8` 126 to 118.
 - **Secondary-page tails.** Handlers whose bodies already reach the dispatch late use the standard tail instead of the reverse one and drop padding that predated a faster decoder: `MOV`, `ZEXT8`, `SWAP8`, `GETSP`, `STSP8` (F1) 37 to 35; `ADD`, `SUB`, `MOV32` (F2) 38 to 36; `ST8`, widening multiplies, `LDSP8U` (F3) 38 to 37; shifts by one, `LSL16.1`, `NOT16`, `INC16`, `DEC16` (F4) 38 to 36; `SEXT8`, `BSWAP16`, `NEG16` (F6) 38 to 37; the flag-committing `CMP`, `TST8` and `TST16` lose one cycle, and the unused reverse and delay landings of Clusters A, B and C are gone (68 bytes). F4 has its own decoder (`f4_decode`) whose PC update fills the three cycles the generic width stub spends loading a multiplier, which takes the compact `LDSP16` and `STSP16` from 38 to 36.
 - **Cold stack forms.** `LDSP16` and `STSP16` 64 to 54, as described in Section 9.1.
 - **Absolute loads.** `LDM8U` 74 to 72 and `LDM16` 74 to 73.
+- **Rare trailing families (size).** `LDSP8U` (F3), `SWAP8`/`GETSP`/`SETSP` (F1) and `ASR32.1`/`BOOL` (F7) moved from dense table slots to runtime-decoded handlers (Section 30.3): 424 bytes smaller, 13 to 28 cycles slower for instructions the benchmark suite executes about 800 times in total.
+- **Float formatter (size).** The `%e`, `%f`, `%g` and `%a` conversions share one exponent spelling routine, one field-length routine, one field-start routine (the sign, then the `0x` prefix for `%a`, then zero padding), one fraction emitter, and one marker-and-exponent tail. The exponent is spelled once, before the field length is computed, into `data_format_digit_buffer+10` (clear of every fraction digit) with its length in the otherwise unused workspace byte `data_format_float_exp_length`; `%a` therefore no longer counts the digits and then recomputes them, and the `%e` two-digit special case (a retained negative zero after a rounding carry) lives in the shared routine, where the `%a` path never trips it because it never sets `FTOA_CARRY`. The `%a` classification also stores zero through the normal-value store path, derives the leading digit from bit 23 of the significand instead of a flag byte, and rounds with the guard bit held in the carry flag. The code that is specific to `%a` fell from 734 to 402 bytes, and with the shared routines counted the image is 404 bytes smaller (28,912 to 28,508). `%a` formatting is 15 to 66 cycles faster on the instruction benchmarks (about 1-4% of the call), `%f`, `%e` and `%g` are 9 to 41 cycles slower (0.4-1.8%) because they now reach the shared code through extra calls, and no C or C++ benchmark changes. Output is unchanged: a differential harness that formats 655 values (special values, 288 systematic rounding boundaries around every precision, tie parity and carry, and random patterns of six kinds) through 23 `%a` formats, and 540 values (special values, 252 decimal rounding boundaries, and random patterns) through 26 `%e`/`%f`/`%g` formats, produces identical hashes on the previous and the new interpreter.
 - **Sprite services.** The raw renderer is tail-called by its SYS wrapper and never returns. After a drawn bitmap it restores `r23-r20` while the final dummy transfer drains, then restores the other twelve saved registers inside the idle gaps of the stream restart (`sprite_exit_seek_func`, 68 bytes), which removes the 32 cycles of pops, the return and a jump: every drawn sprite service is 31 cycles faster, an invisible one 4. The renderer no longer saves `r17`, which it only reads (two more cycles), and the redundant copy of the draw mode in the SYS wrapper is gone.
 
-On the instruction benchmarks these changes move 393 of the 881 rows, none of them slower. On the compiled benchmarks the C total falls 4.9% (543.3 M to 516.9 M cycles; all 401 workloads are faster, and the 64-bit division and string-to-integer programs, which are dominated by `LDSP16` and `STSP16`, gain 6-8%) and the C++ total 3.0% (all nine faster). In the avm_rpg exploration replay (busy cycles excluding the vsync wait, in the 128 M-cycle window) the work falls from 88.09 M to 85.54 M cycles (-2.9%), with an identical final display hash.
+On the instruction benchmarks these changes move 397 of the 881 rows: 360 are faster and 37 are slower (the seven rare-family rows above and thirty decimal-float `debug_printfv_P` rows). On the compiled benchmarks the C total falls 4.9% (543.3 M to 516.9 M cycles; 400 of 401 workloads are faster, the exception being `complex_creal_O0` at 1,539 to 1,643 cycles because of the rare-family handlers, and the 64-bit division and string-to-integer programs, which are dominated by `LDSP16` and `STSP16`, gain 6-8%) and the C++ total 3.0% (all nine faster). In the avm_rpg exploration replay (busy cycles excluding the vsync wait, in the 128 M-cycle window) the work falls from 88.09 M to 85.54 M cycles (-2.9%), with an identical final display hash.
 
 The fixed setup costs of that deduplication are below, measured against `2282a60` with the same probe protocol. Per-byte streaming rates are unchanged. RAM `memcpy`, `memmove`, `strncpy`, and `strncat`, and every `memcmp_P`, `strcmp_P`, and `strlen_P` instruction row, are unchanged. The `sys_strncpy_p` and `sys_strncat_p` C workloads each drop by one cycle.
 
@@ -1265,16 +1267,16 @@ The direct-X store arrangement makes stores faster than corresponding loads and 
 
 ## 10. `F1`: bounded 2-word table
 
-Bounds: `secondary < 0x90`.
+Bounds: `secondary < 0x90`, with the dense table ending at `0x78`. `SWAP8`, `GETSP` and `SETSP` (`0x78-0x8F`) are rarely executed (about 200 executions in the whole benchmark suite), so they are handled by the runtime-decoded overflow handler described in Section 30.3 instead of 24 table slots (96 bytes).
 
 | Secondary | Instruction | Entries | Cycles |
 |---|---|---:|---:|
 | `00-2F` | `MOV rD,rS` excluding pairs where both operands are upper registers | 48 | 37 |
 | `30-6F` | `STSP8 [SP+u4],rS` | 64 | 37 |
 | `70-77` | `ZEXT8 rD` | 8 | 37 |
-| `78-7F` | `SWAP8 rD` | 8 | 37 |
-| `80-87` | `GETSP rD` | 8 | 37 |
-| `88-8F` | `SETSP rS` | 8 | 40 |
+| `78-7F` | `SWAP8 rD` | 8 | 48 (overflow handler) |
+| `80-87` | `GETSP rD` | 8 | 48 (overflow handler) |
+| `88-8F` | `SETSP rS` | 8 | 55 (overflow handler) |
 
 ```asm
 ; MOV rD,rS
@@ -1341,7 +1343,7 @@ register operands use their one-byte primary forms.
 
 ## 12. `F3`: bounded 3-word memory and widening-multiply table
 
-Bounds: `secondary < 0x80`. The multiply and stack-load operands, and pointer `rA`, are restricted to `r4-r7` where those families require upper registers.
+Bounds: `secondary < 0x80`, with the dense table ending at `0x40`. The multiply and stack-load operands, and pointer `rA`, are restricted to `r4-r7` where those families require upper registers. `LDSP8U` (`0x40-0x7F`) executes about 400 times in the whole benchmark suite, so it is handled by the runtime-decoded overflow handler described in Section 30.3 instead of 64 table slots (384 bytes).
 
 | Secondary | Instruction | Entries | Cycles |
 |---|---|---:|---:|
@@ -1349,7 +1351,7 @@ Bounds: `secondary < 0x80`. The multiply and stack-load operands, and pointer `r
 | `10-1F` | `MULU8.W rD,rS` | 16 | 38 |
 | `20-2F` | `MULS8.W rD,rS` | 16 | 38 |
 | `30-3F` | `MULSU8.W rD,rS` | 16 | 38 |
-| `40-7F` | `LDSP8U rD,[SP+u4]` | 64 | 38 |
+| `40-7F` | `LDSP8U rD,[SP+u4]` | 64 | 60 (overflow handler) |
 
 ```asm
 ; ST8 [rA],rS
@@ -1545,7 +1547,7 @@ A postincrement pointer in a lower register uses `F0 6D dddWaaaP` with `W=0` and
 
 ## 16. `F7`: bounded 5-word table A
 
-Bounds: `secondary < 0x90`. Pointer `rA` in the postincrement memory families is restricted to `r4-r7`.
+Bounds: `secondary < 0x90`, with the dense table ending at `0x84`. Pointer `rA` in the postincrement memory families is restricted to `r4-r7`. `ASR32.1` and `BOOL` (`0x84-0x8F`) execute about 200 times in the whole benchmark suite and are handled by the runtime-decoded overflow handler described in Section 30.3 instead of 12 table slots (120 bytes).
 
 | Secondary | Instruction | Entries | Final cadence |
 |---|---|---:|---:|
@@ -1555,8 +1557,8 @@ Bounds: `secondary < 0x90`. Pointer `rA` in the postincrement memory families is
 | `60-6F` | `ADD32 qD,qS` | 16 | 18 |
 | `70-7F` | `SUB32 qD,qS` | 16 | 18 |
 | `80-83` | `LSR32.1 qD` | 4 | 18 |
-| `84-87` | `ASR32.1 qD` | 4 | 18 |
-| `88-8F` | `BOOL rD` | 8 | 18 |
+| `84-87` | `ASR32.1 qD` | 4 | overflow handler: 66 cycles |
+| `88-8F` | `BOOL rD` | 8 | overflow handler: 58 cycles |
 
 ```asm
 ; LD8U rD,[rA+]
@@ -3764,6 +3766,21 @@ total                                          71 words / 142 bytes
 
 No existing service implementation is changed. Dispatch still performs one table `RJMP` per service ID, and the table remains 256 words, so existing SYS instruction timings are unchanged. The new block only shifts later code addresses; all static transfers remain within their original instruction forms.
 
+## 30.3. Runtime-decoded trailing families
+
+A dense page is a fixed-width table indexed by the secondary byte, so a rarely executed family costs its full slot width in every entry. Only families at the end of a page can leave the table without changing the encoding: the page's bound is lowered to the end of the last remaining family, and the bound check, instead of trapping, branches to `secondary_overflow_dispatch`. The dispatcher identifies the page from the limit register (`r25`), which is unique per page except that F3 and FE both use `0x40`; the table base in `Z` separates those two. A secondary beyond the family's own range is still an invalid-secondary trap. Each handler decodes its operands from the secondary byte at run time and ends in the standard dispatch; it starts after the bound check on cycle 25 or later, so the following opcode's read is always legal.
+
+| Page | Family | Secondaries | Table bytes removed | Cycles before | Cycles after | Suite executions |
+|---|---|---|---:|---:|---:|---:|
+| F3 | `LDSP8U rD,[SP+u4]` | `40-7F` | 384 | 37 | 60 | 376 |
+| F1 | `SWAP8 rD` | `78-7F` | 32 | 35 | 48 | 0 |
+| F1 | `GETSP rD` | `80-87` | 32 | 35 | 48 | 96 |
+| F1 | `SETSP rS` | `88-8F` | 32 | 40 | 55 | 96 |
+| F7 | `ASR32.1 qD` | `84-87` | 40 | 38 | 66 | 4 |
+| F7 | `BOOL rD` | `88-8F` | 80 | 38 | 58 | 218 |
+
+The handlers, dispatcher and trap trampoline occupy about 190 bytes against 600 bytes of removed table, a net saving of 424 bytes. Together the six families are 0.007% of the instructions executed by the benchmark suite and none appears in the avm_rpg exploration replay. A differential run of every (page, secondary) pair for F1-F7 and FE (2,048 pairs) against the interpreter before the change shows identical trap/execute outcomes, register file, stack pointer, architectural flags and stack memory.
+
 ## 31. Assembler selection rules
 
 Use the one-byte primary form whenever all required operands are upper
@@ -3824,23 +3841,23 @@ Excluded from the reference interpreter-core size estimate:
 ```text
 primary table                    2,048 bytes
 F0 veneer table                    220
-F1 table                           576
+F1 table                           480
 F2 table                           648
-F3 table                           768
+F3 table                           384
 F4 table                         1,104
 F5 table                           768
 F6 table                           640
-F7 table                         1,440
+F7 table                         1,320
 FA immediate jump table              26
 FA register forwarding table         192
 shared FB-FD move table             256
 FE forwarding table                256
 FF fixed-register table            120
                                   ------
-all executable tables            9,066 bytes
+all executable tables            8,466 bytes
 ```
 
-The secondary executable tables total **7,014 bytes**, including the 120-byte FF table. `EC`, `ED-EE`, `F8`, and `F9` have no executable tables. The 64-byte F8 decoder/dispatch is accounted for separately. Runtime-decoded `F0` subsystems and the 74-byte `ED-EE` handler are accounted for separately.
+The secondary executable tables total **6,414 bytes**, including the 120-byte FF table (the F1, F3 and F7 tables stop before their runtime-decoded trailing families, Section 30.3). `EC`, `ED-EE`, `F8`, and `F9` have no executable tables. The 64-byte F8 decoder/dispatch is accounted for separately. Runtime-decoded `F0` subsystems and the 74-byte `ED-EE` handler are accounted for separately.
 
 ## 34. Reference core-size estimate
 

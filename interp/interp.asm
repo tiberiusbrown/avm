@@ -214,6 +214,9 @@
 #define FORMAT_STATUS_FATAL_ERROR    3
 #define FORMAT_STATUS_SINK_TEXT      4
 #define FORMAT_STATUS_SINK_DEBUG     5
+; Set only for the raw-string text services, which share the formatter's
+; source setup and register frame but print the string without parsing it.
+#define FORMAT_STATUS_RAW_TEXT       6
 
 #define FORMAT_FLAG_LEFT             0
 #define FORMAT_FLAG_PLUS             1
@@ -954,7 +957,7 @@ sbi  AVM_FX_PORT, AVM_FX_BIT
 ; vector followed by the device interrupt vectors, including reserved slots,
 ; in datasheet order.
 __vectors:
-    jmp reset_handler       ;  0 RESET
+    jmp startup_func        ;  0 RESET
     jmp default_isr         ;  1 INT0
     jmp default_isr         ;  2 INT1
     jmp default_isr         ;  3 INT2
@@ -1003,9 +1006,6 @@ __vectors:
 default_isr:
     rjmp default_isr
 
-reset_handler:
-    jmp startup_func
-
 ; OLED boot commands precede the primary dispatch table.
 ; Commands follow Arduboy2's lcdBootProgram for the corresponding SPI display.
 oled_boot_program:
@@ -1033,7 +1033,247 @@ oled_boot_program:
 #endif
 oled_boot_program_end:
 
-; The former waveform page is unused; primary dispatch remains page aligned.
+; The primary table must start on a 512-byte boundary, which leaves the bytes
+; from here to PRIMARY_TABLE_ORG empty. They hold the run-once hardware startup
+; code instead of padding. The .org below fails the build if this block ever
+; outgrows the gap. Branches from here to the rest of startup go through the
+; absolute jumps after startup_func.
+.balign 2
+
+; Startup supports both Arduboy FX flashcart launches and development/emulator
+; placement at the end of the 16 MiB FX address space.
+;
+; Flashcart mode:
+;   * reserved interrupt-vector slots contain 0x9518 keys
+;   * data/save page numbers follow each key in big-endian byte order
+;
+; Development mode:
+;   * check the AVM tail at 0xFFFFF8 (no save sector)
+;   * otherwise check 0xFFEFF8 (final 4 KiB is the save sector)
+;   * imageBasePage = tailPage + 1 - imagePageCount
+;
+; Normal startup validates only the fields needed for safe initialization.
+startup_func:
+    cli
+
+    ; Native AVR hardware stack. The VM stack is held separately in Y.
+    ldi  r26, lo8(RAMEND)
+    out  SPL, r26
+    ldi  r26, hi8(RAMEND)
+    out  SPH, r26
+
+    ; Establish the immutable interpreter constants before any helper runs.
+    clr  ZERO
+    ldi  r26, 1
+    mov  ONE, r26
+    ldi  r26, 4
+    mov  FOUR, r26
+
+    ; Cathy3K detaches USB when starting a sketch but leaves USB interrupt
+    ; enables/controller state intact. A pending event would enter default_isr
+    ; at our first SEI, before the guest can draw its title. Detach, mask USB
+    ; interrupts, and reset the controller before reconfiguring the shared PLL.
+    sts  UDIEN, ZERO
+    ldi  r26, _BV(DETACH)
+    sts  UDCON, r26
+    ldi  r26, _BV(FRZCLK)
+    sts  USBCON, r26
+    sts  UDINT, ZERO
+    sts  USBINT, ZERO
+
+    ; Application static storage is initialized by copying the complete data
+    ; image below. There is no separate .bss region or SRAM-clear pass. Clear
+    ; only interpreter-private state that is not supplied by the image.
+    ; Include inactive sprite/font caches so one loop initializes the complete
+    ; contiguous region, including data_boot_hold. Data/save page pointers are
+    ; installed separately.
+    ldi  r30, lo8(data_startup_flags)
+    ldi  r31, hi8(data_startup_flags)
+    ldi  r26, (data_audio_end-data_startup_flags)
+.if (data_audio_end-data_startup_flags) > 255
+    .error "startup private-state clear must fit its byte counter"
+.endif
+1:
+    st   Z+, ZERO
+    dec  r26
+    brne 1b
+    ldi  r26, SPRITE_MODE_SELF_MASKED
+    sts  data_text_mode, r26
+
+    ; Initialize persistent architectural state. VM_FLAGS lives in low-I/O
+    ; GPIOR0; VM PC is loaded from the image header below.
+    ldi  VM_SPL, lo8(VM_SP_INITIAL_VALUE)
+    ldi  VM_SPH, hi8(VM_SP_INITIAL_VALUE)
+    out  VM_FLAGS, ZERO
+
+    ; Configure the complete Arduboy GPIO set before enabling SPI. This leaves
+    ; the OLED selected and held in reset, while keeping the FX flash deselected.
+    rcall hardware_init_pins_func
+
+    ; Initialize SPI. Startup uses SPIF polling; the bytecode interpreter uses
+    ; the fixed-cadence transfer pipeline after the first opcode is primed.
+    ; Mode 0, MSB first, f_CPU/2 matches Arduboy2 bootSPI().
+    ldi  r26, (_BV(SPE) | _BV(MSTR))
+    out  SPCR, r26
+    ldi  r26, _BV(SPI2X)
+    out  SPSR, r26
+
+    ; Reset and configure the selected SPI OLED controller. Pixel data is sent
+    ; only after the application data image has been initialized below.
+    rcall oled_startup_init_func
+
+    ; Release the W25Q128 from power-down.
+    fx_enable
+    ldi  r30, SFC_RELEASE_POWERDOWN
+    call fx_spi_transfer_blocking
+    fx_disable
+    rcall fx_startup_wake_delay
+
+    ; Prefer the page values installed by the FX flashcart bootloader.
+    ldi  r30, lo8(FX_VECTOR_KEY_POINTER)
+    ldi  r31, hi8(FX_VECTOR_KEY_POINTER)
+    lpm  r20, Z+
+    lpm  r21, Z+
+    cpi  r20, lo8(FX_VECTOR_KEY)
+    brne .Lstartup_find_development_far
+    cpi  r21, hi8(FX_VECTOR_KEY)
+    brne .Lstartup_find_development_far
+
+    ; The flashcart stores page words high byte first in program flash.
+    lpm  r27, Z+
+    lpm  r26, Z+
+    sts  data_page_data+0, r26
+    sts  data_page_data+1, r27
+
+    ; A save page is independently keyed and may be absent.
+    lpm  r20, Z+
+    lpm  r21, Z+
+    cpi  r20, lo8(FX_VECTOR_KEY)
+    brne .Lstartup_read_header_far
+    cpi  r21, hi8(FX_VECTOR_KEY)
+    brne .Lstartup_read_header_far
+    lpm  r27, Z+
+    lpm  r26, Z+
+    sts  data_page_save+0, r26
+    sts  data_page_save+1, r27
+    ldi  r26, _BV(STARTUP_SAVE_PAGE_VALID)
+    sts  data_startup_flags, r26
+    ; Falls through to the read-header jump.
+.Lstartup_read_header_far:
+    jmp  startup_read_header
+.Lstartup_find_development_far:
+    jmp  startup_find_development_image
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Device pin and OLED startup
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Establish the same supported-device idle levels used by Arduboy2 bootPins,
+; while changing only explicitly configured pins rather than replacing complete
+; PORT/DDR registers. The speaker pins remain untouched, as in Arduboy2.
+hardware_init_pins_func:
+    ; Shared ATmega32U4 hardware SPI bus: SCK and MOSI outputs low, MISO input
+    ; without a pull-up. These pins cannot be remapped by a device preset.
+    pin_output_low    PORTB, DDRB, PORTB1
+    pin_output_low    PORTB, DDRB, PORTB2
+    pin_input_floating PORTB, DDRB, PORTB3
+
+    ; Keep the serial flash inactive while the display is reset and configured.
+    pin_output_high AVM_FX_PORT, AVM_FX_DDR, AVM_FX_BIT
+
+    ; Arduboy2 starts with OLED CS asserted, D/C high, and reset asserted low.
+    pin_output_low  AVM_OLED_CS_PORT,  AVM_OLED_CS_DDR,  AVM_OLED_CS_BIT
+    pin_output_high AVM_OLED_DC_PORT,  AVM_OLED_DC_DDR,  AVM_OLED_DC_BIT
+    pin_output_low  AVM_OLED_RST_PORT, AVM_OLED_RST_DDR, AVM_OLED_RST_BIT
+
+#if AVM_INIT_RGB_LED
+    ; Active-low RGB channels off.
+    pin_output_high AVM_LED_RED_PORT,   AVM_LED_RED_DDR,   AVM_LED_RED_BIT
+    pin_output_high AVM_LED_GREEN_PORT, AVM_LED_GREEN_DDR, AVM_LED_GREEN_BIT
+    pin_output_high AVM_LED_BLUE_PORT,  AVM_LED_BLUE_DDR,  AVM_LED_BLUE_BIT
+#endif
+
+#if AVM_INIT_TX_RX_LEDS
+    ; Active-low USB activity LEDs off.
+    pin_output_high AVM_LED_TX_PORT, AVM_LED_TX_DDR, AVM_LED_TX_BIT
+    pin_output_high AVM_LED_RX_PORT, AVM_LED_RX_DDR, AVM_LED_RX_BIT
+#endif
+
+#if AVM_INIT_BUTTONS
+    ; All six buttons are active low and use internal pull-ups.
+    pin_input_pullup AVM_BUTTON_LEFT_PORT,  AVM_BUTTON_LEFT_DDR,  AVM_BUTTON_LEFT_BIT
+    pin_input_pullup AVM_BUTTON_RIGHT_PORT, AVM_BUTTON_RIGHT_DDR, AVM_BUTTON_RIGHT_BIT
+    pin_input_pullup AVM_BUTTON_UP_PORT,    AVM_BUTTON_UP_DDR,    AVM_BUTTON_UP_BIT
+    pin_input_pullup AVM_BUTTON_DOWN_PORT,  AVM_BUTTON_DOWN_DDR,  AVM_BUTTON_DOWN_BIT
+    pin_input_pullup AVM_BUTTON_A_PORT,     AVM_BUTTON_A_DDR,     AVM_BUTTON_A_BIT
+    pin_input_pullup AVM_BUTTON_B_PORT,     AVM_BUTTON_B_DDR,     AVM_BUTTON_B_BIT
+#endif
+
+#if AVM_INIT_RANDOM_SEED_ADC
+    ; Match Arduboy2's floating ADC1 random-seed input and initial mux choice.
+    pin_input_floating AVM_RANDOM_SEED_PORT, AVM_RANDOM_SEED_DDR, AVM_RANDOM_SEED_BIT
+    ldi  r26, (_BV(REFS0) | _BV(REFS1) | _BV(MUX0))
+    sts  ADMUX, r26
+#endif
+    ret
+
+; Approximately 5 ms at 16 MHz. Startup timing is intentionally conservative
+; and is not part of the bytecode interpreter's cycle contract.
+oled_reset_delay_5ms_func:
+    ldi  r24, 104
+1:
+    clr  r25
+2:
+    dec  r25
+    brne 2b
+    dec  r24
+    brne 1b
+    ret
+
+; Blocking SPI transfer used while Z walks the OLED command table.
+; Input/output: r26. Clobbers r27; preserves Z.
+oled_spi_transfer_blocking_func:
+    out  SPDR, r26
+1:
+    in   r27, SPSR
+    sbrs r27, SPIF
+    rjmp 1b
+    in   r26, SPDR
+    ret
+
+; Reset the OLED and send the Arduboy2-derived controller boot sequence.
+; No display RAM is written here.
+oled_startup_init_func:
+    rcall oled_reset_delay_5ms_func
+    sbi   AVM_OLED_RST_PORT, AVM_OLED_RST_BIT
+    rcall oled_reset_delay_5ms_func
+
+    display_enable
+    display_command_mode
+
+    ldi  r30, lo8(oled_boot_program)
+    ldi  r31, hi8(oled_boot_program)
+    ldi  r24, lo8(oled_boot_program_end - oled_boot_program)
+1:
+    lpm  r26, Z+
+    rcall oled_spi_transfer_blocking_func
+    dec  r24
+    brne 1b
+
+    ; Leave the shared SPI bus idle and ready for the FX flash transaction.
+    display_data_mode
+    display_disable
+    fx_disable
+    ret
+
+; Conservative post-wakeup delay. Startup is not cycle critical.
+fx_startup_wake_delay:
+    ldi  r26, 32
+1:
+    dec  r26
+    brne 1b
+    ret
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Primary dispatch machinery
@@ -3554,12 +3794,14 @@ sys_set_text_font_func:
 sys_set_text_mode_func:
     jmp   sys_set_text_mode_impl
 sys_draw_text_func:
-    ldi   PRIMARY_OPCODE, (1 << FORMAT_STATUS_SINK_TEXT)
-    jmp   sys_text_raw_impl
+    ldi   PRIMARY_OPCODE, ((1 << FORMAT_STATUS_SINK_TEXT) | \
+                           (1 << FORMAT_STATUS_RAW_TEXT))
+    jmp   sys_format_impl
 sys_draw_text_p_func:
     ldi   PRIMARY_OPCODE, ((1 << FORMAT_STATUS_SINK_TEXT) | \
-                           (1 << FORMAT_STATUS_SOURCE_PROGRAM))
-    jmp   sys_text_raw_impl
+                           (1 << FORMAT_STATUS_SOURCE_PROGRAM) | \
+                           (1 << FORMAT_STATUS_RAW_TEXT))
+    jmp   sys_format_impl
 sys_draw_textfv_func:
     ldi   PRIMARY_OPCODE, (1 << FORMAT_STATUS_SINK_TEXT)
     jmp   sys_format_impl
@@ -6526,7 +6768,7 @@ cluster_b_end:
 ; used only by the reserved postincrement-load alias entries in F7.
 secondary_tables_before_cluster_c:
 secondary_invalid_b_func:
-    jmp invalid_secondary_instruction_func
+    rjmp invalid_secondary_instruction_func
 
 f4_table:
     ; F4: bounded three-word stack, unary, and fixed-shift table
@@ -7549,130 +7791,6 @@ fx_seek_delay_7:
 ; Reset/startup
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Startup supports both Arduboy FX flashcart launches and development/emulator
-; placement at the end of the 16 MiB FX address space.
-;
-; Flashcart mode:
-;   * reserved interrupt-vector slots contain 0x9518 keys
-;   * data/save page numbers follow each key in big-endian byte order
-;
-; Development mode:
-;   * check the AVM tail at 0xFFFFF8 (no save sector)
-;   * otherwise check 0xFFEFF8 (final 4 KiB is the save sector)
-;   * imageBasePage = tailPage + 1 - imagePageCount
-;
-; Normal startup validates only the fields needed for safe initialization.
-startup_func:
-    cli
-
-    ; Native AVR hardware stack. The VM stack is held separately in Y.
-    ldi  r26, lo8(RAMEND)
-    out  SPL, r26
-    ldi  r26, hi8(RAMEND)
-    out  SPH, r26
-
-    ; Establish the immutable interpreter constants before any helper runs.
-    clr  ZERO
-    ldi  r26, 1
-    mov  ONE, r26
-    ldi  r26, 4
-    mov  FOUR, r26
-
-    ; Cathy3K detaches USB when starting a sketch but leaves USB interrupt
-    ; enables/controller state intact. A pending event would enter default_isr
-    ; at our first SEI, before the guest can draw its title. Detach, mask USB
-    ; interrupts, and reset the controller before reconfiguring the shared PLL.
-    sts  UDIEN, ZERO
-    ldi  r26, _BV(DETACH)
-    sts  UDCON, r26
-    ldi  r26, _BV(FRZCLK)
-    sts  USBCON, r26
-    sts  UDINT, ZERO
-    sts  USBINT, ZERO
-
-    ; Application static storage is initialized by copying the complete data
-    ; image below. There is no separate .bss region or SRAM-clear pass. Clear
-    ; only interpreter-private state that is not supplied by the image.
-    ; Include inactive sprite/font caches so one loop initializes the complete
-    ; contiguous region, including data_boot_hold. Data/save page pointers are
-    ; installed separately.
-    ldi  r30, lo8(data_startup_flags)
-    ldi  r31, hi8(data_startup_flags)
-    ldi  r26, (data_audio_end-data_startup_flags)
-.if (data_audio_end-data_startup_flags) > 255
-    .error "startup private-state clear must fit its byte counter"
-.endif
-1:
-    st   Z+, ZERO
-    dec  r26
-    brne 1b
-    ldi  r26, SPRITE_MODE_SELF_MASKED
-    sts  data_text_mode, r26
-
-    ; Initialize persistent architectural state. VM_FLAGS lives in low-I/O
-    ; GPIOR0; VM PC is loaded from the image header below.
-    ldi  VM_SPL, lo8(VM_SP_INITIAL_VALUE)
-    ldi  VM_SPH, hi8(VM_SP_INITIAL_VALUE)
-    out  VM_FLAGS, ZERO
-
-    ; Configure the complete Arduboy GPIO set before enabling SPI. This leaves
-    ; the OLED selected and held in reset, while keeping the FX flash deselected.
-    rcall hardware_init_pins_func
-
-    ; Initialize SPI. Startup uses SPIF polling; the bytecode interpreter uses
-    ; the fixed-cadence transfer pipeline after the first opcode is primed.
-    ; Mode 0, MSB first, f_CPU/2 matches Arduboy2 bootSPI().
-    ldi  r26, (_BV(SPE) | _BV(MSTR))
-    out  SPCR, r26
-    ldi  r26, _BV(SPI2X)
-    out  SPSR, r26
-
-    ; Reset and configure the selected SPI OLED controller. Pixel data is sent
-    ; only after the application data image has been initialized below.
-    rcall oled_startup_init_func
-
-    ; Release the W25Q128 from power-down.
-    fx_enable
-    ldi  r30, SFC_RELEASE_POWERDOWN
-    rcall fx_spi_transfer_blocking
-    fx_disable
-    rcall fx_startup_wake_delay
-
-    ; Prefer the page values installed by the FX flashcart bootloader.
-    ldi  r30, lo8(FX_VECTOR_KEY_POINTER)
-    ldi  r31, hi8(FX_VECTOR_KEY_POINTER)
-    lpm  r20, Z+
-    lpm  r21, Z+
-    cpi  r20, lo8(FX_VECTOR_KEY)
-    brne startup_find_development_image
-    cpi  r21, hi8(FX_VECTOR_KEY)
-    brne startup_find_development_image
-
-    ; The flashcart stores page words high byte first in program flash.
-    lpm  r27, Z+
-    lpm  r26, Z+
-    sts  data_page_data+0, r26
-    sts  data_page_data+1, r27
-
-    ; A save page is independently keyed and may be absent.
-    lpm  r20, Z+
-    lpm  r21, Z+
-    cpi  r20, lo8(FX_VECTOR_KEY)
-    brne startup_read_header
-    cpi  r21, hi8(FX_VECTOR_KEY)
-    brne startup_read_header
-    lpm  r27, Z+
-    lpm  r26, Z+
-    sts  data_page_save+0, r26
-    sts  data_page_save+1, r27
-    ldi  r26, _BV(STARTUP_SAVE_PAGE_VALID)
-    sts  data_startup_flags, r26
-    rjmp startup_read_header
-
-; Nearby landing for the header checks' short branches.
-startup_header_invalid:
-    rjmp startup_invalid_image
-
 startup_find_development_image:
     ; First try an image whose tail is at the physical end of flash. This form
     ; has no following save sector.
@@ -7710,21 +7828,21 @@ startup_read_header:
     ; magic[4]
     rcall fx_startup_read_byte
     cpi  r30, AVM_HEADER_MAGIC0
-    brne startup_header_invalid
+    brne startup_invalid_image
     rcall fx_startup_read_byte
     cpi  r30, AVM_HEADER_MAGIC1
-    brne startup_header_invalid
+    brne startup_invalid_image
     rcall fx_startup_read_byte
     cpi  r30, AVM_HEADER_MAGIC2
-    brne startup_header_invalid
+    brne startup_invalid_image
     rcall fx_startup_read_byte
     cpi  r30, AVM_HEADER_MAGIC3
-    brne startup_header_invalid
+    brne startup_invalid_image
 
     ; One coarse compatibility byte covers the ISA, ABI, and runtime services.
     rcall fx_startup_read_byte
     cpi  r30, AVM_RUNTIME_VERSION
-    brne startup_header_invalid
+    brne startup_invalid_image
 
     ; entryPoint, packed little-endian 24-bit image-relative address.
     rcall fx_startup_read_byte
@@ -7780,6 +7898,15 @@ startup_read_header:
     sbrs r26, STARTUP_SAVE_PAGE_VALID
     rjmp startup_invalid_image
 3:
+    rjmp startup_copy_data
+
+    ; Rejected image. This halt sits here so that every header check reaches it
+    ; with a short branch.
+startup_invalid_image:
+    cli
+    fx_disable
+startup_invalid_image_loop:
+    rjmp startup_invalid_image_loop
 
     ; Copy the complete data image, including explicitly stored zero bytes.
     ; No separate .bss clear is performed.
@@ -7825,32 +7952,8 @@ startup_clear_framebuffer_loop:
     call  display_update_func
 
     ; Timer0 is initialized only after the data image copy and initial display
-    ; blanking. Its compare interrupt becomes globally active at the SEI below.
-    rcall timer0_init_func
-    call  audio_init_func
-
-    ; VM_PCH:VM_PCM:VM_PCL already contains the image entry point. Seek to
-    ; it, consume the first primary opcode, and start the following transfer.
-    rcall fx_seek_to_pc
-    in   PRIMARY_OPCODE, SPDR
-    out  SPDR, ZERO
-    sei
-    delay_1
-    mul  PRIMARY_OPCODE, FOUR
-    movw r30, r0
-    subi r31, hi8(-(pm(primary_table)))
-    ijmp
-
-startup_invalid_image:
-    cli
-    fx_disable
-startup_invalid_image_loop:
-    rjmp startup_invalid_image_loop
-
-; Configure Timer0 for a 1 kHz compare-A interrupt at f_CPU = 16 MHz:
-;   CTC mode, prescaler 64, OCR0A = 249.
-; Global interrupts remain disabled until startup_enter_image executes SEI.
-timer0_init_func:
+    ; blanking: a 1 kHz compare-A interrupt at f_CPU = 16 MHz (CTC mode,
+    ; prescaler 64, OCR0A = 249) that becomes globally active at the SEI below.
     ; Clear both timer power gates before configuring the clock and audio.
     lds  r26, PRR0
     andi r26, (0xff ^ (_BV(PRTIM0) | _BV(PRTIM1)))
@@ -7874,7 +7977,83 @@ timer0_init_func:
     ; Start Timer0 at f_CPU/64.
     ldi  r26, (_BV(CS01) | _BV(CS00))
     out  TCCR0B, r26
-    ret
+
+    ; Audio, interrupts off. 96 MHz VCO / 1.5 = 64 MHz Timer4; the USB
+    ; postcaler remains 48 MHz (96 / 2). Datasheet sections 6.11 and 15.
+    ldi  r24, _BV(PINDIV)
+    out  PLLCSR, r24
+    ldi  r24, 0x6a
+    out  PLLFRQ, r24
+    ldi  r24, (_BV(PINDIV) | _BV(PLLE))
+    out  PLLCSR, r24
+    ; Wait at least 100 us before checking lock, as required by Timer4.
+    ldi  r24, 240 ; 1679 cycles = 104.9 us
+1:
+    delay_4
+    dec  r24
+    brne 1b
+1:
+    in   r24, PLLCSR
+    sbrs r24, PLOCK
+    rjmp 1b
+    ; Timer0 initialization already cleared Timer1's power gate in PRR0.
+    lds  r24, PRR1
+    andi r24, (0xff ^ _BV(PRTIM4))
+    sts  PRR1, r24
+    ldi  r30, lo8(audio_init_zero_registers)
+    ldi  r31, hi8(audio_init_zero_registers)
+    ldi  r27, 0
+    ldi  r24, (audio_init_zero_registers_end-audio_init_zero_registers)
+1:
+    lpm  r26, Z+
+    st   X, ZERO
+    dec  r24
+    brne 1b
+    ldi  r24, 127 ; default: 16 MHz / 8 / 128 = 15625 synthesis interrupts/s
+    sts  OCR1AL, r24
+    cbi  PORTC, 6
+    cbi  PORTC, 7
+    cbi  DDRC, 6
+    cbi  DDRC, 7
+    ldi  r24, 255 ; Timer4 retains its 250 kHz carrier and 8-bit duty range
+    sts  OCR4C, r24
+    ldi  r24, 128
+    sts  OCR4A, r24
+    ldi  r24, 1
+    sts  data_audio_noise, r24
+    sts  data_audio_noise+1, ZERO
+    sts  data_audio_rate, r24
+    ldi  r24, 128 ; default shared post-mix gain is four times unity
+    sts  data_audio_volume, r24
+    sts  data_audio_duty, r24
+    sts  data_audio_duty+1, r24
+    sts  data_audio_duty+2, r24
+    ldi  r24, 255
+    sts  data_audio_music_volume, r24
+    sts  data_audio_sfx_volume, r24
+
+    ; VM_PCH:VM_PCM:VM_PCL already contains the image entry point. Seek to
+    ; it, consume the first primary opcode, and start the following transfer.
+    rcall fx_seek_to_pc
+    in   PRIMARY_OPCODE, SPDR
+    out  SPDR, ZERO
+    sei
+    delay_1
+    mul  PRIMARY_OPCODE, FOUR
+    movw r30, r0
+    subi r31, hi8(-(pm(primary_table)))
+    ijmp
+
+
+; Startup-only zero writes, in order. All timers below are stopped and masked
+; before their remaining controls are reset. All addresses fit in data page 0;
+; TC4H is cleared before writing TCNT4 and the Timer4 compare registers.
+audio_init_zero_registers:
+    .byte TCCR3B, TIMSK3, TCCR3A, TCCR3C
+    .byte TCCR1B, TIMSK1, TCCR1A, TCCR1C, OCR1AH
+    .byte TCCR4B, TIMSK4, TCCR4A, TCCR4C, TCCR4D, TCCR4E
+    .byte DT4, TC4H, TCNT4
+audio_init_zero_registers_end:
 
 ; Try a development tail.
 ;
@@ -7954,117 +8133,6 @@ fx_spi_transfer_blocking:
     sbrs r31, SPIF
     rjmp 1b
     in   r30, SPDR
-    ret
-
-; Conservative post-wakeup delay. Startup is not cycle critical.
-fx_startup_wake_delay:
-    ldi  r26, 32
-1:
-    dec  r26
-    brne 1b
-    ret
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Device pin and OLED startup
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; Establish the same supported-device idle levels used by Arduboy2 bootPins,
-; while changing only explicitly configured pins rather than replacing complete
-; PORT/DDR registers. The speaker pins remain untouched, as in Arduboy2.
-hardware_init_pins_func:
-    ; Shared ATmega32U4 hardware SPI bus: SCK and MOSI outputs low, MISO input
-    ; without a pull-up. These pins cannot be remapped by a device preset.
-    pin_output_low    PORTB, DDRB, PORTB1
-    pin_output_low    PORTB, DDRB, PORTB2
-    pin_input_floating PORTB, DDRB, PORTB3
-
-    ; Keep the serial flash inactive while the display is reset and configured.
-    pin_output_high AVM_FX_PORT, AVM_FX_DDR, AVM_FX_BIT
-
-    ; Arduboy2 starts with OLED CS asserted, D/C high, and reset asserted low.
-    pin_output_low  AVM_OLED_CS_PORT,  AVM_OLED_CS_DDR,  AVM_OLED_CS_BIT
-    pin_output_high AVM_OLED_DC_PORT,  AVM_OLED_DC_DDR,  AVM_OLED_DC_BIT
-    pin_output_low  AVM_OLED_RST_PORT, AVM_OLED_RST_DDR, AVM_OLED_RST_BIT
-
-#if AVM_INIT_RGB_LED
-    ; Active-low RGB channels off.
-    pin_output_high AVM_LED_RED_PORT,   AVM_LED_RED_DDR,   AVM_LED_RED_BIT
-    pin_output_high AVM_LED_GREEN_PORT, AVM_LED_GREEN_DDR, AVM_LED_GREEN_BIT
-    pin_output_high AVM_LED_BLUE_PORT,  AVM_LED_BLUE_DDR,  AVM_LED_BLUE_BIT
-#endif
-
-#if AVM_INIT_TX_RX_LEDS
-    ; Active-low USB activity LEDs off.
-    pin_output_high AVM_LED_TX_PORT, AVM_LED_TX_DDR, AVM_LED_TX_BIT
-    pin_output_high AVM_LED_RX_PORT, AVM_LED_RX_DDR, AVM_LED_RX_BIT
-#endif
-
-#if AVM_INIT_BUTTONS
-    ; All six buttons are active low and use internal pull-ups.
-    pin_input_pullup AVM_BUTTON_LEFT_PORT,  AVM_BUTTON_LEFT_DDR,  AVM_BUTTON_LEFT_BIT
-    pin_input_pullup AVM_BUTTON_RIGHT_PORT, AVM_BUTTON_RIGHT_DDR, AVM_BUTTON_RIGHT_BIT
-    pin_input_pullup AVM_BUTTON_UP_PORT,    AVM_BUTTON_UP_DDR,    AVM_BUTTON_UP_BIT
-    pin_input_pullup AVM_BUTTON_DOWN_PORT,  AVM_BUTTON_DOWN_DDR,  AVM_BUTTON_DOWN_BIT
-    pin_input_pullup AVM_BUTTON_A_PORT,     AVM_BUTTON_A_DDR,     AVM_BUTTON_A_BIT
-    pin_input_pullup AVM_BUTTON_B_PORT,     AVM_BUTTON_B_DDR,     AVM_BUTTON_B_BIT
-#endif
-
-#if AVM_INIT_RANDOM_SEED_ADC
-    ; Match Arduboy2's floating ADC1 random-seed input and initial mux choice.
-    pin_input_floating AVM_RANDOM_SEED_PORT, AVM_RANDOM_SEED_DDR, AVM_RANDOM_SEED_BIT
-    ldi  r26, (_BV(REFS0) | _BV(REFS1) | _BV(MUX0))
-    sts  ADMUX, r26
-#endif
-    ret
-
-; Approximately 5 ms at 16 MHz. Startup timing is intentionally conservative
-; and is not part of the bytecode interpreter's cycle contract.
-oled_reset_delay_5ms_func:
-    ldi  r24, 104
-1:
-    clr  r25
-2:
-    dec  r25
-    brne 2b
-    dec  r24
-    brne 1b
-    ret
-
-; Blocking SPI transfer used while Z walks the OLED command table.
-; Input/output: r26. Clobbers r27; preserves Z.
-oled_spi_transfer_blocking_func:
-    out  SPDR, r26
-1:
-    in   r27, SPSR
-    sbrs r27, SPIF
-    rjmp 1b
-    in   r26, SPDR
-    ret
-
-; Reset the OLED and send the Arduboy2-derived controller boot sequence.
-; No display RAM is written here.
-oled_startup_init_func:
-    rcall oled_reset_delay_5ms_func
-    sbi   AVM_OLED_RST_PORT, AVM_OLED_RST_BIT
-    rcall oled_reset_delay_5ms_func
-
-    display_enable
-    display_command_mode
-
-    ldi  r30, lo8(oled_boot_program)
-    ldi  r31, hi8(oled_boot_program)
-    ldi  r24, lo8(oled_boot_program_end - oled_boot_program)
-1:
-    lpm  r26, Z+
-    rcall oled_spi_transfer_blocking_func
-    dec  r24
-    brne 1b
-
-    ; Leave the shared SPI bus idle and ready for the FX flash transaction.
-    display_data_mode
-    display_disable
-    fx_disable
     ret
 
 .p2align 2
@@ -11046,9 +11114,15 @@ save_fx_transfer:
     in    r30, SPDR
     ret
 
-; Read the image header's little-endian saveSize at image-relative offset 0x0A.
-; Output: r1:r0. Clobbers r24, r26, r27, r30, r31.
-fx_read_image_save_size_func:
+; Open the save log for reading at sector offset zero. Returns C=1, with no
+; read open, when the game has no save page or its header's saveSize is zero.
+; Otherwise returns C=0 with r1:r0 = saveSize (the little-endian value at
+; image-relative header offset 0x0A) and the log read command open.
+; Clobbers r24-r27, r30, r31.
+fx_save_open_log_func:
+    lds   r24, data_startup_flags
+    sbrs  r24, STARTUP_SAVE_PAGE_VALID
+    rjmp  .Lfx_save_open_none
     ldi   r26, AVM_HEADER_SAVE_SIZE_OFFSET
     lds   r27, data_page_data+0
     lds   r24, data_page_data+1
@@ -11069,6 +11143,17 @@ fx_read_image_save_size_func:
     rcall save_fx_transfer
     mov   r1, r30
     fx_disable
+    mov   r24, r0
+    or    r24, r1
+    breq  .Lfx_save_open_none
+    clr   r24
+    clr   r25
+    ldi   r30, SFC_READ
+    rcall fx_save_begin_command_func
+    clc
+    ret
+.Lfx_save_open_none:
+    sec
     ret
 
 ; Begin a blocking command at save-sector byte offset r25:r24.
@@ -11156,23 +11241,10 @@ fx_save_record_fits_func:
 ;   r27:r26  header/end/count, then SRAM source pointer X
 ;   r30:r31  blocking SPI scratch
 sys_save_impl:
-
-    lds   r24, data_startup_flags
-    sbrs  r24, STARTUP_SAVE_PAGE_VALID
-    rjmp   .Lsys_save_done
-
-    rcall fx_read_image_save_size_func
-    mov   r24, r0
-    or    r24, r1
-    brne  .Lsys_save_have_size
-    rjmp   .Lsys_save_done
-.Lsys_save_have_size:
-
     ; Scan the append log sequentially from sector offset zero.
-    clr   r24
-    clr   r25
-    ldi   r30, SFC_READ
-    rcall fx_save_begin_command_func
+    rcall fx_save_open_log_func
+    brcc  .Lsys_save_scan_header
+    rjmp  .Lsys_save_done
 
 .Lsys_save_scan_header:
     rcall save_fx_transfer
@@ -11286,20 +11358,8 @@ sys_save_impl:
 ;   SREG.T   whether at least one complete record was loaded
 sys_load_impl:
     clt
-
-    lds   r24, data_startup_flags
-    sbrs  r24, STARTUP_SAVE_PAGE_VALID
-    rjmp  .Lsys_load_done
-
-    rcall fx_read_image_save_size_func
-    mov   r24, r0
-    or    r24, r1
-    breq  .Lsys_load_done
-
-    clr   r24
-    clr   r25
-    ldi   r30, SFC_READ
-    rcall fx_save_begin_command_func
+    rcall fx_save_open_log_func
+    brcs  .Lsys_load_done
 
 .Lsys_load_header:
     rcall save_fx_transfer
@@ -11350,20 +11410,8 @@ sys_load_impl:
 ;   SREG.T   comparison result
 sys_save_exists_impl:
     clt
-
-    lds   r24, data_startup_flags
-    sbrs  r24, STARTUP_SAVE_PAGE_VALID
-    rjmp  .Lsys_save_exists_done
-
-    rcall fx_read_image_save_size_func
-    mov   r24, r0
-    or    r24, r1
-    breq  .Lsys_save_exists_done
-
-    clr   r24
-    clr   r25
-    ldi   r30, SFC_READ
-    rcall fx_save_begin_command_func
+    rcall fx_save_open_log_func
+    brcs  .Lsys_save_exists_done
     rcall save_fx_transfer
     mov   VM_R4L, r30
     rcall save_fx_transfer
@@ -11554,7 +11602,19 @@ sys_format_impl:
     brne  1f
     rjmp   text_finish
 1:
+    sbrs  r17, FORMAT_STATUS_RAW_TEXT
     rjmp  format_core
+
+    ; Raw string: print every character through the raw glyph sink, with no
+    ; format parsing and no argument consumption.
+.Lsys_text_raw_loop:
+    rcall format_get_char
+    tst   r24
+    breq  .Lsys_text_raw_finish
+    rcall text_emit_char_raw
+    rjmp  .Lsys_text_raw_loop
+.Lsys_text_raw_finish:
+    rjmp  text_finish
 
 ; Common normal/error finish. Preserve generated output and always terminate a
 ; nonzero-size destination. FX is unconditionally closed and bytecode fetch is
@@ -13185,82 +13245,6 @@ sys_set_text_mode_impl:
 .Lsys_set_text_mode_done:
     jmp   cluster_tail_18
 
-; Raw RAM/program string entry. Raw and formatted text share the reduced
-; text-only save contract and text_finish. VM_PC is advanced once,
-; and the speculative following byte is discarded before any independent FX
-; transaction begins.
-sys_text_raw_impl:
-    ; Retain source/text status in scratch until incoming r4 has been copied;
-    ; r17 is VM_R4H and must still contain the high byte of initial x here.
-    mov   r27, PRIMARY_OPCODE
-    sbrc  r27, FORMAT_STATUS_SOURCE_PROGRAM
-    rjmp  .Ltext_raw_init_program_source
-    cpi   VM_R6H, 0x0B           ; AS0 flash window: image-relative program source
-    brlo  .Ltext_raw_source_ram
-    ; r17 still holds VM_R4H here, so only scratch r27 and r24 are written.
-    ori   r27, (1 << FORMAT_STATUS_SOURCE_PROGRAM)
-    mov   r24, VM_R6H
-    subi  r24, 0x06
-    sts   data_format_program_next+0, VM_R6L
-    sts   data_format_program_next+1, r24
-    sts   data_format_program_next+2, ZERO
-    sts   data_format_cache_index, ZERO
-    sts   data_format_cache_length, ZERO
-    rjmp  .Ltext_raw_source_initialized
-.Ltext_raw_source_ram:
-    sts   data_format_ram_ptr+0, VM_R6L
-    sts   data_format_ram_ptr+1, VM_R6H
-    rjmp  .Ltext_raw_source_initialized
-.Ltext_raw_init_program_source:
-    sts   data_format_program_next+0, VM_R6L
-    sts   data_format_program_next+1, VM_R6H
-    sts   data_format_program_next+2, VM_R7L
-    sts   data_format_cache_index, ZERO
-    sts   data_format_cache_length, ZERO
-.Ltext_raw_source_initialized:
-
-    in    r24, SPDR
-    fx_disable
-    add   VM_PCL, ONE
-    adc   VM_PCM, ZERO
-    adc   VM_PCH, ZERO
-
-    ; Text returns q2, so incoming r5 is not part of the preservation contract.
-    ; This stack layout matches the formatted-text path and text_finish.
-    push  r8
-    push  r9
-    push  r10
-    push  r11
-    push  r12
-    push  r13
-    push  r14
-    push  r15
-    push  r20
-    push  r21
-    push  r22
-    push  r23
-    push  r28
-    push  r29
-
-    sts   data_text_initial_x+0, VM_R4L
-    sts   data_text_initial_x+1, VM_R4H
-    movw  r28, VM_R4
-    mov   r17, r27                  ; register-resident source/text status
-    set                              ; text sink/renderer contract for full call
-    sts   data_text_current_y+0, VM_R5L
-    sts   data_text_current_y+1, VM_R5H
-
-    lds   r24, data_text_line_height
-    tst   r24
-    breq  text_finish
-
-.Lsys_text_raw_loop:
-    rcall format_get_char
-    tst   r24
-    breq  text_finish
-    rcall text_emit_char_raw
-    rjmp  .Lsys_text_raw_loop
-
 ; Shared completion for raw and formatted text. The current cursor is captured
 ; before restoring the architectural register file, then installed as q2 after
 ; restoration. r6/r7, r2, CC, and SP therefore retain their input values;
@@ -13770,7 +13754,7 @@ format_float_emit_sign:
     lds   r24, data_format_sign
     tst   r24
     breq  1f
-    rcall format_emit_char
+    rjmp  format_emit_char
 1:
     ret
 
@@ -14416,7 +14400,7 @@ format_float_content_point_sign:
     tst   r26
     breq  1f
     mov   r26, ONE
-    rcall format_float_content_add_u8
+    rjmp  format_float_content_add_u8
 1:
     ret
 
@@ -16150,72 +16134,6 @@ audio_pulse_edges 0
 audio_pulse_edges 1
 audio_pulse_edges 2
 
-; Startup-only zero writes, in order. All timers below are stopped and masked
-; before their remaining controls are reset. All addresses fit in data page 0;
-; TC4H is cleared before writing TCNT4 and the Timer4 compare registers.
-audio_init_zero_registers:
-    .byte TCCR3B, TIMSK3, TCCR3A, TCCR3C
-    .byte TCCR1B, TIMSK1, TCCR1A, TCCR1C, OCR1AH
-    .byte TCCR4B, TIMSK4, TCCR4A, TCCR4C, TCCR4D, TCCR4E
-    .byte DT4, TC4H, TCNT4
-audio_init_zero_registers_end:
-
-; Startup only, interrupts off. 96 MHz VCO / 1.5 = 64 MHz Timer4;
-; USB postcaler remains 48 MHz (96 / 2). Datasheet sections 6.11 and 15.
-audio_init_func:
-    ldi  r24, _BV(PINDIV)
-    out  PLLCSR, r24
-    ldi  r24, 0x6a
-    out  PLLFRQ, r24
-    ldi  r24, (_BV(PINDIV) | _BV(PLLE))
-    out  PLLCSR, r24
-    ; Wait at least 100 us before checking lock, as required by Timer4.
-    ldi  r24, 240 ; 1679 cycles = 104.9 us
-1:
-    delay_4
-    dec  r24
-    brne 1b
-1:
-    in   r24, PLLCSR
-    sbrs r24, PLOCK
-    rjmp 1b
-    ; Timer0 initialization already cleared Timer1's power gate in PRR0.
-    lds  r24, PRR1
-    andi r24, (0xff ^ _BV(PRTIM4))
-    sts  PRR1, r24
-    ldi  r30, lo8(audio_init_zero_registers)
-    ldi  r31, hi8(audio_init_zero_registers)
-    ldi  r27, 0
-    ldi  r24, (audio_init_zero_registers_end-audio_init_zero_registers)
-1:
-    lpm  r26, Z+
-    st   X, ZERO
-    dec  r24
-    brne 1b
-    ldi  r24, 127 ; default: 16 MHz / 8 / 128 = 15625 synthesis interrupts/s
-    sts  OCR1AL, r24
-    cbi  PORTC, 6
-    cbi  PORTC, 7
-    cbi  DDRC, 6
-    cbi  DDRC, 7
-    ldi  r24, 255 ; Timer4 retains its 250 kHz carrier and 8-bit duty range
-    sts  OCR4C, r24
-    ldi  r24, 128
-    sts  OCR4A, r24
-    ldi  r24, 1
-    sts  data_audio_noise, r24
-    sts  data_audio_noise+1, ZERO
-    sts  data_audio_rate, r24
-    ldi  r24, 128 ; default shared post-mix gain is four times unity
-    sts  data_audio_volume, r24
-    sts  data_audio_duty, r24
-    sts  data_audio_duty+1, r24
-    sts  data_audio_duty+2, r24
-    ldi  r24, 255
-    sts  data_audio_music_volume, r24
-    sts  data_audio_sfx_volume, r24
-    ret
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Fatal trap dispatch (cold path). Entered with r25 = reason. Native r25 is
 ; interpreter scratch, not guest state. Guest SP and stack are never touched.
@@ -16293,30 +16211,22 @@ trap_dispatch_func:
     st   Z+, VM_SPH
     st   Z+, r26
     st   Z+, ZERO
-    st   Z+, r8
-    st   Z+, r9
-    st   Z+, r10
-    st   Z+, r11
-    st   Z+, r12
-    st   Z+, r13
-    st   Z+, r14
-    st   Z+, r15
-    st   Z+, r16
-    st   Z+, r17
-    st   Z+, r18
-    st   Z+, r19
-    st   Z+, r20
-    st   Z+, r21
-    st   Z+, r22
-    st   Z+, r23
+    ; r8-r23 are the register file's data-space addresses 0x08-0x17. r0, r24
+    ; and X are native scratch here (r24, r26 and r27 were saved above), and
+    ; both interrupt handlers preserve r0.
+    ldi  r26, 0x08
+    clr  r27
+    ldi  r24, 16
+2:
+    ld   r0, X+
+    st   Z+, r0
+    dec  r24
+    brne 2b
+    ldi  r24, 8
+1:
     st   Z+, ZERO
-    st   Z+, ZERO
-    st   Z+, ZERO
-    st   Z+, ZERO
-    st   Z+, ZERO
-    st   Z+, ZERO
-    st   Z+, ZERO
-    st   Z+, ZERO
+    dec  r24
+    brne 1b
 
     ; E. Jump, not call, to the handler through the shared seek path.
     pop  VM_PCH

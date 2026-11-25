@@ -49,8 +49,8 @@
      1615847   ctype_toupper.c
      1447149   div_pow2.c
       462838   divmod.c
-       20889   draw_text.c
-       20937   draw_text_P.c
+       20906   draw_text.c
+       20954   draw_text_P.c
       700289   dynamic_stack.c
       227136   fibonacci.c
      2758997   fir8.c
@@ -386,7 +386,7 @@
         2120   sys_strncpy.c
         3587   sys_strncpy_p.c
       468797   tail_calls.c
-       52059   text.c
+       52094   text.c
      3016364   tile_cache_render.c
        42480   tilesrect.c
        85822   tilessprite.c

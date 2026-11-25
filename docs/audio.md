@@ -1515,7 +1515,8 @@ The following is the complete interpreter-private timer/audio RAM layout from
 `interp/interp.asm`. Addresses are hexadecimal AVR data-space addresses;
 all multi-byte integers and 24-bit image-relative program pointers are
 little-endian and byte-aligned. Persistent state occupies 101 bytes. Startup
-clears it before `audio_init_func` sets the nonzero defaults noted below.
+clears it, and the audio initialization in the startup path then sets the nonzero
+defaults noted below.
 
 | Address(es) | Assembler symbol | Bytes | Encoding / purpose |
 | --- | --- | ---: | --- |

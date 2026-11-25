@@ -2662,8 +2662,7 @@ void retired_math(char** args) {
 }
 void format_fields(char** args) {
     harness h(args);
-    std::cout<<"startup to first opcode: "<<h.boot_cycles<<" cycles; audio init: "
-        <<h.routine("audio_init_func")<<" cycles\n";
+    std::cout<<"startup to first opcode: "<<h.boot_cycles<<" cycles\n";
     unsigned cases=0, minsp=0xaff;
     auto check=[&](std::string const& format, unsigned width, unsigned precision,
                    bool has_precision, bool program) {

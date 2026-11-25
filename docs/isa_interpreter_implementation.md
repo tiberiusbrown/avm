@@ -9,6 +9,9 @@ The F8 shared decoder is described in Section 17. Older physical-layout and
 reference-size examples below retain the former dense F8 table as design
 history.
 
+Proposed, unimplemented ISA and interpreter optimizations, including the free
+primary encodings, are recorded in [performance-ideas.md](performance-ideas.md).
+
 ---
 
 ## 1. Scope

@@ -58,10 +58,10 @@ def pc_costs(value):
 
 
 def main():
-    profiler, debugger, c_elf, cpp_elf, nodebug_elf, o2_elf, asm_elf, work = \
-        map(Path, sys.argv[1:9])
+    (profiler, debugger, c_elf, cpp_elf, nodebug_elf, o2_elf, asm_elf,
+     flash_window_elf, work) = map(Path, sys.argv[1:10])
     for path in (profiler, debugger, c_elf, cpp_elf, nodebug_elf, o2_elf,
-                 asm_elf):
+                 asm_elf, flash_window_elf):
         require(path.is_file(), f"missing test input: {path}")
     work.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="avm-prof-", dir=work) as raw:
@@ -174,6 +174,26 @@ def main():
                 sorted(asm_counts) == [1, 1, 1, 3, 3, 3] and
                 any(row["function"] == "_start" for row in assembly["pcs"]),
                 "assembly loop/branch execution contract failed")
+
+        # The executed program addresses overlap the data-space .flash section
+        # (0x0B00-0x0EFF). The profile must show the executed instructions, not
+        # the .flash bytes (0x02 decodes as `mov r4, r6`).
+        window_file = tmp / "flash-window.avmp"
+        run((profiler, "record", flash_window_elf, "--for", "10000cycles",
+             "-o", window_file), expected=2)
+        window_rows = sorted(profile(window_file)["pcs"],
+                             key=lambda row: row["pc"])
+        mnemonics = [row["assembly"].split()[0] for row in window_rows]
+        require(window_rows and all(0x0B00 <= row["pc"] < 0x0F00
+                                    for row in window_rows[1:]),
+                "flash-window fixture did not execute inside the .flash range")
+        require(mnemonics == ["jmp16", "ldi16", "ldi16", "dec16", "cmp",
+                              "brne8", "sys"],
+                "profiler disassembled .flash data instead of program code: "
+                + ", ".join(mnemonics))
+        require(all(row["function"] == "_start" for row in window_rows),
+                "profiler named a code address after a .flash data symbol: "
+                + ", ".join(row["function"] for row in window_rows))
 
         html = tmp / "profile.html"
         run((profiler, "report", plain_file, "--html", html))

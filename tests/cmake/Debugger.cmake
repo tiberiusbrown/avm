@@ -44,6 +44,19 @@ avm_add_image(
     ENTRY _start)
 avm_add_check(avm_prof_asm_fixture
     DEPENDS "${AVM_PROF_ASM_DIR}/fixture.elf")
+
+# Executed program-space code at addresses inside the data-space .flash window.
+avm_add_object(
+    OUTPUT "${AVM_PROF_ASM_DIR}/flash-window.o"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/debug/prof_flash_window_fixture.asm"
+    LANGUAGE ASM)
+avm_add_image(
+    OBJECTS "${AVM_PROF_ASM_DIR}/flash-window.o"
+    OUTPUT_ELF "${AVM_PROF_ASM_DIR}/flash-window.elf"
+    OUTPUT_IMAGE "${AVM_PROF_ASM_DIR}/flash-window.bin"
+    ENTRY _start)
+avm_add_check(avm_prof_flash_window_fixture
+    DEPENDS "${AVM_PROF_ASM_DIR}/flash-window.elf")
 avm_add_check(avm_debug_verify
     COMMAND "$<TARGET_FILE:llvm-dwarfdump>" --verify
         "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.elf"
@@ -338,10 +351,11 @@ if(Python3_Interpreter_FOUND)
             "${AVM_NODEBUG_DIR}/fixture.elf"
             "${CMAKE_CURRENT_BINARY_DIR}/debug/O2/fixture.elf"
             "${AVM_PROF_ASM_DIR}/fixture.elf"
+            "${AVM_PROF_ASM_DIR}/flash-window.elf"
             "${CMAKE_CURRENT_BINARY_DIR}/debug"
         DEPENDS avm_prof avm_lldb avm_debug_images
                 avm_debug_cpp_verify avm_debug_image_equivalence
-                avm_prof_asm_fixture
+                avm_prof_asm_fixture avm_prof_flash_window_fixture
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         USES_TERMINAL VERBATIM)
     avm_add_check(avm_lldb_integration_run

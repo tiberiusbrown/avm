@@ -12,6 +12,8 @@
 #include <lldb/API/SBInstruction.h>
 #include <lldb/API/SBInstructionList.h>
 #include <lldb/API/SBLineEntry.h>
+#include <lldb/API/SBModule.h>
+#include <lldb/API/SBSection.h>
 #include <lldb/API/SBSymbol.h>
 #include <lldb/API/SBSymbolContext.h>
 #include <lldb/API/SBTarget.h>
@@ -85,6 +87,40 @@ std::string hex_bytes(lldb::SBInstruction instruction, lldb::SBTarget target) {
     output << std::hex << std::setfill('0') << std::setw(2) << byte;
   }
   return output.str();
+}
+
+// Finds the code section that contains a program address. Leaf sections only:
+// container sections cover their children.
+bool find_code_section(lldb::SBSection section, uint64_t pc,
+                       lldb::SBSection& found) {
+  for (uint32_t i = 0; i < section.GetNumSubSections(); ++i)
+    if (find_code_section(section.GetSubSectionAtIndex(i), pc, found))
+      return true;
+  if (section.GetNumSubSections() != 0) return false;
+  if (section.GetSectionType() != lldb::eSectionTypeCode) return false;
+  uint64_t base = section.GetFileAddress();
+  if (base == LLDB_INVALID_ADDRESS || pc < base || pc - base >= section.GetByteSize())
+    return false;
+  found = section;
+  return true;
+}
+
+// A profile PC is a program-space address. The ELF keeps data-space sections
+// such as .flash at their raw data addresses (the debugger separates the two
+// spaces only in load addresses), so a bare file-address lookup can pick the
+// .flash section for a code address in the same numeric range, and the
+// instruction bytes, function and symbol would then come from data. Select the
+// code section explicitly and fall back to the file-address lookup otherwise.
+lldb::SBAddress resolve_program_address(lldb::SBTarget& target, uint32_t pc) {
+  for (uint32_t m = 0; m < target.GetNumModules(); ++m) {
+    lldb::SBModule module = target.GetModuleAtIndex(m);
+    for (uint32_t i = 0; i < module.GetNumSections(); ++i) {
+      lldb::SBSection code;
+      if (find_code_section(module.GetSectionAtIndex(i), pc, code))
+        return lldb::SBAddress(code, pc - code.GetFileAddress());
+    }
+  }
+  return target.ResolveFileAddress(pc);
 }
 
 std::string read_file(fs::path const& path) {
@@ -180,7 +216,7 @@ void symbolize_profile(ProfileDocument& profile, fs::path const& elf,
                              std::string(error.GetCString() ? error.GetCString() : "unknown error"));
   std::map<std::string, SourceFile> sources;
   for (auto& row : profile.pcs) {
-    lldb::SBAddress address = target.ResolveFileAddress(row.pc);
+    lldb::SBAddress address = resolve_program_address(target, row.pc);
     if (!address.IsValid()) {
       row.function = row.linkage = "<unmapped>";
       continue;
@@ -191,6 +227,11 @@ void symbolize_profile(ProfileDocument& profile, fs::path const& elf,
         lldb::eSymbolContextSymbol);
     lldb::SBFunction function = context.GetFunction();
     lldb::SBSymbol symbol = context.GetSymbol();
+    // The symbol table is searched by number alone, so a program address in the
+    // .flash window's range can match a data-space symbol. A code address is
+    // named only by a code symbol.
+    if (symbol.IsValid() && symbol.GetType() != lldb::eSymbolTypeCode)
+      symbol = lldb::SBSymbol();
     row.function = value_or_empty(function.IsValid() ? function.GetName()
                                                      : symbol.GetName());
     row.linkage = value_or_empty(function.IsValid() ? function.GetMangledName()

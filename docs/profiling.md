@@ -98,7 +98,9 @@ and end PCs, completed and partial cycles, discontinuities, completeness, stop
 reason, and native active/elapsed totals. `pcs` stores one row per hit AVM PC:
 cycles, execution count, instruction bytes and disassembly, function and
 linkage name, compilation unit, source file/line/column and hash, available
-source text, and an inline chain. `native_pcs` stores AVR byte addresses and
+source text, and an inline chain. A PC is a program-space address, so its bytes,
+disassembly and function come from the ELF's code section even where the number
+also lies inside the data-space `.flash` window. `native_pcs` stores AVR byte addresses and
 active-cycle costs. `identity` contains ELF, packaged image, interpreter,
 initial EEPROM and FX save hashes plus ADC and USB fields. The root also has
 the replay-event hash, optional replay provenance, end-display hash, and

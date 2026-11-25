@@ -32,7 +32,7 @@
 | Wider compare-and-branch fusion | under 1% | at least 1 KB | Rejected | |
 | Display loop at a 17-cycle byte cadence | at most 0.5 M cycles | about 0 | Unvalidated | Needs OLED timing validation |
 
-Interpreter flash is the shared constraint. The interpreter uses 28,112 of 29,696 bytes, leaving 1,584 bytes for ISA work. The experiments below used earlier builds with 364 bytes free. [Interpreter timing and size history](isa_interpreter_implementation.md#5-timing-model)
+Interpreter flash is the shared constraint. The interpreter uses 28,108 of 29,696 bytes, leaving 1,588 bytes for ISA work. The experiments below used earlier builds with 364 bytes free. [Interpreter timing and size history](isa_interpreter_implementation.md#5-timing-model)
 
 ## 4. `CALLT`: fused table call
 
@@ -284,9 +284,11 @@ Plus-mask data runs at 17.5 cycles per byte already. The address-high byte is la
 
 Calls that fall back to the general renderer pay for the test: 4 cycles for unaligned `y`, 4 to 18 for clipped or off-screen draws, 20 to 26 for a partial final page, a 1 x 1 or an empty sprite, and 4 to 6 in self-masked and erase mode. The instruction benchmarks have 22 rows faster (by 92 to 1,355 cycles) and 162 sprite rows slower by those amounts; on the compiled benchmarks `tile_cache_render` gains 0.6% and the four unaligned tile-sprite programs lose 0.4 to 0.7%.
 
-Not done, and why:
+Later setup changes save 19–20 cycles on frame zero by bypassing stride calculation. The aligned path starts the command six cycles earlier and translates the physical pointer while the command transfers. The generic path computes the framebuffer pointer from page parity and moves the top-row check after address-high, saving three cycles on a visible draw. Together the changes save four flash bytes and 3–26 cycles across the 184 single-sprite instruction benchmarks. [Instruction timings](../bench/reference/cycles_instruction.txt)
 
-- **Front end of the general renderer.** It is bounded by its own instruction count, not by the SPI bus, so moving work behind the address bytes gains nothing there; only removing work would.
+Remaining ideas:
+
+- **Front end of the general renderer.** Sending address-high earlier requires splitting source-pointer calculation from framebuffer setup and making room for the deferred work in the later SPI intervals.
 - **Cached stride in `set_sprite`** (about 10 cycles). The cached-sprite state sits inside the packed private RAM layout that the audio map depends on.
 - **Peeling the last byte** of the fast loops, about 12 cycles per fast draw (0.2% of the replay): today each loop starts one transfer past the frame and waits for it. A batch service gains it once per tile.
 - **Clipped and unaligned fast paths.** Extending the fast path to horizontally clipped aligned sprites would add about 0.5% of the replay for about 150 B. Unaligned sprites need the shift loops and registers; the general renderer already streams them at 18 cycles per byte.

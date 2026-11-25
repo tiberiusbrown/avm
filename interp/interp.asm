@@ -9324,6 +9324,11 @@ sys_draw_sprite_header_impl:
     fx_disable
 
 .Lsys_sprite_header_ready:
+    ; Frame zero already has its bitmap pointer, width and height.
+    mov   r27, VM_R6L
+    or    r27, VM_R6H
+    breq  .Lsprite_read_mode
+
     ; Preserve height while r0:r1 are used by the four partial products.
     push  r1
 
@@ -9345,13 +9350,8 @@ sys_draw_sprite_header_impl:
     rol   r31
 .Lsys_sprite_stride_ready:
 
-    ; Add low24(frame * stride) to sprite+2. Frame zero is overwhelmingly
-    ; common and skips all partial products. Frames below 256 skip the two
+    ; Add low24(frame * stride) to sprite+2. Frames below 256 skip the two
     ; high-frame-byte products. q1[31:24] is ignored.
-    mov   r27, VM_R6L
-    or    r27, VM_R6H
-    breq  .Lsys_sprite_frame_offset_done
-
     mul   VM_R6L, r30
     add   r24, r0
     adc   r25, r1
@@ -9374,6 +9374,7 @@ sys_draw_sprite_header_impl:
 .Lsys_sprite_frame_offset_done:
     pop   r1                         ; native raw-renderer height
     in    r0, GPIOR2                 ; native raw-renderer width
+.Lsprite_read_mode:
     in    r27, GPIOR1                ; native raw-renderer mode
 
 ; Interior page-aligned fast path for OVERWRITE and PLUS_MASK.
@@ -9448,17 +9449,17 @@ sprite_fast_try:
     rjmp  draw_bitmap_seek_func
 
 .Lsprite_fast_start:
-    ; Physical frame address: add the data page to the middle and high bytes,
-    ; then open the transaction. t0 is the cycle of the command OUT; the address
-    ; bytes follow at t0+18, +36 and +54, the first data transfer at t0+71, and
-    ; the first data byte is read at t0+89, the earliest the SPI bus allows.
+    ; While the command transfers, translate the frame pointer and prepare the
+    ; row counters. Address bytes go out at t0+18/+36/+54, the first dummy at
+    ; t0+71, and the first data byte is consumed at t0+89.
+    ldi   r30, SFC_READ
+    fx_enable
+    out   SPDR, r30                      ; t0: command
+
     lds   r30, data_page_data+0
     add   r25, r30
     lds   r30, data_page_data+1
     adc   r26, r30
-    ldi   r30, SFC_READ
-    fx_enable
-    out   SPDR, r30                      ; t0: command
 
     ; r31 = pages = (height + 7) / 8, r30 = columns left in this row,
     ; r1 = framebuffer advance from the end of one row to the next page.
@@ -9471,7 +9472,7 @@ sprite_fast_try:
     ldi   r27, 128
     sub   r27, r0
     mov   r1, r27
-    rcall sprite_delay_8
+    delay_2
     out   SPDR, r26                      ; t0+18: address high
 
     ; X = 0x0500 + (y / 8) * 128 + x. y is a multiple of eight below 64, so
@@ -9837,31 +9838,24 @@ draw_bitmap_seek_visible_text_func:
     mov   r16, r24
 .Lsprite_right_clip_done:
 
+    ; The command transfer is complete and its response is unused.
+    out   SPDR, r22                  ; physical address high
+
+    ; X = framebuffer + pageStart*128 + x. With x in 0..127, moving
+    ; pageStart's low bit into XL bit 7 leaves the other x bits intact.
+    ; ASR handles pageStart == -1, which starts one page before the display.
+    mov   r26, r31
+    lsl   r26
+    mov   r27, r19
+    asr   r27
+    ror   r26
+    subi  r27, hi8(-data_display)
+
     cpi   r19, 0xFF
     brne  .Lsprite_not_top_row
     ori   r23, (1 << SPRITE_FLAG_TOP)
 .Lsprite_not_top_row:
-
-    ; r20:r22 already holds the finalized physical visible-row pointer.
-    ; The command transfer has long since completed, so use the legal late
-    ; standard handoff: drain the command response, then transmit address high.
-    out   SPDR, r22                  ; physical address high
-
-    ; Preserve y low while r18 is reused as the unsigned 128 operand for the
-    ; signed page-index multiply below.
-    mov   r9, VM_R5L
-
-    ; Compute X = framebuffer + pageStart*128 + x with signed MULSU. A top
-    ; source row therefore begins one page before the framebuffer and is moved
-    ; forward by 128 in the common row dispatcher before its high contribution.
-    ldi   r18, 128
-    mulsu r19, r18
-    ldi   r26, lo8(data_display)
-    ldi   r27, hi8(data_display)
-    add   r26, r0
-    adc   r27, r1
-    add   r26, r31
-    adc   r27, ZERO
+    nop
 
     ; Clip source rows against the bottom. If the original final source page is
     ; removed, its partial-page mask is no longer relevant.
@@ -9895,7 +9889,7 @@ draw_bitmap_seek_visible_text_func:
     mov   r14, r24                  ; framebuffer row advance
 
     ; Fixed-time coefficient construction overlaps the middle-address byte.
-    mov   r24, r9
+    mov   r24, VM_R5L
     ldi   r18, 1
     sbrc  r24, 1
     ldi   r18, 4
@@ -10663,7 +10657,6 @@ sprite_delay_11:
     nop
 sprite_delay_10:
     delay_2
-sprite_delay_8:
     nop
 sprite_delay_7:
     ret

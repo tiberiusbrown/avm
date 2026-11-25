@@ -2,7 +2,7 @@
   "compiler_sha256": "b75c9477f7eadfcc96426192b507827f8ea66d8554bb95a1fc530d5ce23911f7",
   "compiler_version": "clang version 24.0.0git (https://github.com/tiberiusbrown/llvm-project.git 5245163936cf9de4db5f2f66f28b6cbcb95588db)",
   "configuration": "RelWithDebInfo",
-  "interpreter_sha256": "d63a3864de52635102e0bdb93011a9f24f0b6a7705e4905f8e2ff869c8ad3fa0",
+  "interpreter_sha256": "aba4226c00d580ffd18062626ac0a1e1532d586f9bcb493f9d83efd0c039b38e",
   "optimization": "-O2",
   "target_triple": "avm-unknown-arduboyfx",
   "workloads": {

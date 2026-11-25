@@ -32,7 +32,7 @@
 | Wider compare-and-branch fusion | under 1% | at least 1 KB | Rejected | |
 | Display loop at a 17-cycle byte cadence | at most 0.5 M cycles | about 0 | Unvalidated | Needs OLED timing validation |
 
-Interpreter flash is the shared constraint. After the 2026-11 interpreter timing pass ([interpreter guide, Section 5](isa_interpreter_implementation.md#5-timing-model)) the interpreter is 28,308 of 29,696 bytes, so 1,388 bytes are free for all ISA work combined (the figures in this document were measured when 364 were free; the pass cost four bytes net, and the later size trades of rare instructions, the float formatter, and cold startup and text code freed 1,332 more, the sprite fast path with its delay re-encoding then used 100, and the tile map service 204).
+Interpreter flash is the shared constraint. The interpreter uses 28,112 of 29,696 bytes, leaving 1,584 bytes for ISA work. The experiments below used earlier builds with 364 bytes free. [Interpreter timing and size history](isa_interpreter_implementation.md#5-timing-model)
 
 ## 4. `CALLT`: fused table call
 

@@ -116,7 +116,7 @@ int main(int argc, char** argv) {
         }
         check(loads == 6 && loop_counts == 3, "Setup/trailing instructions leaked into interval");
         check(divisions.size() == 2 && divisions[0] != divisions[1], "Operand-dependent divider costs lost");
-        check(std::min(divisions[0],divisions[1]) == 59 && std::max(divisions[0],divisions[1]) == 251,
+        check(std::min(divisions[0],divisions[1]) == 58 && std::max(divisions[0],divisions[1]) == 250,
               "Divider cycle attribution differs from independently measured instruction timings");
         auto broken = fixture; ++broken.cycles;
         fails([&] { avm_mix::reconcile(broken,baseline,normal); }, "baseline/boundary");

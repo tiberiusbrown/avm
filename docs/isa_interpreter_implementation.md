@@ -428,7 +428,7 @@ Taken control flow and program-space loads restart the external-flash stream and
 | Taken conditional branch | 118 |
 | Relative jump/call | 118 / 127 |
 | Near relative jump/call | 135 / 136 |
-| Far jump/call | 150 / 150 |
+| Far jump/call | 149 / 149 |
 | Indirect jump/call | 110 / 119 |
 | Return | 110 |
 | Program-space load | 281-348 |
@@ -441,7 +441,7 @@ In the reference schedule, both standard and reverse dispatch begin executing th
 The reference continuations and secondary decoders are scheduled from this cycle-9 entry point:
 
 - direct `00-BF` handlers use the 17- and 18-cycle cadences from Section 5.2, except checked `PUSH16`, which takes 19 cycles;
-- one-byte immediate slots execute their cycle-9 padding word before forwarding;
+- upper-register immediate slots preload the apply address and execute one padding word before forwarding;
 - two-byte primary continuations place their operand handoff on the earliest legal cycle-17 reverse or cycle-18 standard boundary;
 - the generic bounded decoder uses the standard `IN; OUT` handoff, while the shared width-two decoder uses the exact cycle-17 reverse handoff;
 - `EC` and `F9` perform useful pointer-high initialization before their reverse handoffs;
@@ -464,9 +464,9 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `F7 LD16+`, `F7 ST16+` | 40 |
 | Other `F7` forms | 38 |
 | `F8` | 41 |
-| `EC` 16-bit division/remainder | 56-265, data-dependent |
+| `EC` 16-bit division/remainder | 57-266, data-dependent |
 | `ED-EE` displaced byte / word memory | 54 / 55 |
-| `F9 AND` / `OR` / `XOR` | 52 / 53 / 54 |
+| `F9 AND` / `OR` / `XOR` | 49 / 50 / 51 |
 | `FB-FD` false / true | 36 / 37 |
 | `FE MUL16` | 46 |
 | `FF` floating-point page | operation- and helper-dependent |
@@ -597,6 +597,8 @@ The fixed setup costs of that deduplication are below, measured against `2282a60
 | Program `strncat_P`, `n=0` / empty + empty / empty + 3 / 8 + 3 / 8 + 7 NUL at bound / 8 + 32 truncated | 37 / 268 / 319 / 359 / 427 / 428 | 41 / 281 / 332 / 372 / 440 / 441 | nonzero copy exits +14 from the drain |
 | Flash `strncat`, same six cases | 43 / 275 / 326 / 366 / 434 / 435 | 46 / 286 / 337 / 377 / 445 / 446 | nonzero copy exits +14 from the drain |
 
+Sharing the startup seek and `JMP8` continuations, shortening operand decode, and simplifying the RAM string-copy loop bring the FX and FX-C images to **28,112 bytes**, leaving 1,584 bytes below the limit. Upper-register `LDI8` and `LDI16` now sustain 17 cycles per byte. The Arduboy FX instruction benchmark measures 120 cycles for an 8-byte truncating RAM `strncpy`, down from 137, and 90 cycles for RAM `strncat` into an empty destination with a three-character source, down from 98. [Instruction timings](../bench/reference/cycles_instruction.txt)
+
 ## 6. Primary opcode map
 
 | Primary range | Family | Bytes | Typical cycles |
@@ -614,15 +616,15 @@ The fixed setup costs of that deduplication are below, measured against `2282a60
 | `A0-AF` | `XOR rD,rS` | 1 | 17 |
 | `B0-B7` | `PUSH16 rN` | 1 | 19 |
 | `B8-BF` | `POP16 rN` | 1 | 18 |
-| `C0-C3` | `LDI8 rD,imm8` | 2 | 35 |
-| `C4-C7` | `LDI16 rD,imm16` | 3 | 52 |
+| `C0-C3` | `LDI8 rD,imm8` | 2 | 34 |
+| `C4-C7` | `LDI16 rD,imm16` | 3 | 51 |
 | `C8-CB` | `ADDI.S8 rD,simm8` | 2 | 35 |
 | `CC-CF` | `CMPI.S8 rL,simm8` | 2 | 35 |
 | `D0` | `BREQ8 rel8` | 2 | 35 not taken; 128 taken |
 | `D1` | `BRNE8 rel8` | 2 | 35 not taken; 128 taken |
 | `D2` | `BRULT8 rel8` | 2 | 35 not taken; 128 taken |
 | `D3` | `BRSLT8 rel8` | 2 | 35 not taken; 128 taken |
-| `D4` | `JMP8 rel8` | 2 | 122 |
+| `D4` | `JMP8 rel8` | 2 | 118 |
 | `D5` | `CALL8 rel8` | 2 | 127 |
 | `D6` | `ADJSP simm8` | 2 | 35 |
 | `D7` | `SYS service8` | 2 | 34 / 34 / 36 / 40 for services `00-03` |
@@ -636,11 +638,11 @@ The fixed setup costs of that deduplication are below, measured against `2282a60
 | `DF` | `BRSGE16 rel16` | 3 | 51 not taken; 135 taken |
 | `E0` | `JMP16 rel16` | 3 | 135 |
 | `E1` | `CALL16 rel16` | 3 | 136 |
-| `E2` | `JMPF target24` | 4 | 150 |
-| `E3` | `CALLF target24` | 4 | 150 |
+| `E2` | `JMPF target24` | 4 | 149 |
+| `E3` | `CALLF target24` | 4 | 149 |
 | `E4-E7` | `JMPP qN` | 1 | 110 |
 | `E8-EB` | `CALLP qN` | 1 | 119 |
-| `EC` | `UDIV16` / `UREM16` / `SDIV16` / `SREM16` runtime-decoded page | 2 | 56-265, data-dependent |
+| `EC` | `UDIV16` / `UREM16` / `SDIV16` / `SREM16` runtime-decoded page | 2 | 57-266, data-dependent |
 | `ED` | `LD8U` / `LD16 rD,[rA+disp]` | 3 | 54 / 55 |
 | `EE` | `ST8` / `ST16 [rA+disp],rS` | 3 | 54 / 55 |
 | `EF` | `RET` | 1 | 110 |
@@ -653,7 +655,7 @@ The fixed setup costs of that deduplication are below, measured against `2282a60
 | `F6` | Bounded dense 4-word page B | 2 | 38-39 |
 | `F7` | Bounded dense 5-word page A | 2 | 38-40 |
 | `F8` | Shared runtime simple-condition decoder | 2 | 41 |
-| `F9` | Dedicated runtime-decoded full-register bitwise page | 2 | 52-54 |
+| `F9` | Dedicated runtime-decoded full-register bitwise page | 2 | 49-51 |
 | `FA` | Upper-register immediate/register-count 16-bit shift page | 2 | count-dependent; 42-80 |
 | `FB` | `CMOV.EQ` / `CMOV.NE` condition-family prefix | 2 | 36 false; 37 true |
 | `FC` | `CMOV.ULT` / `CMOV.UGE` condition-family prefix | 2 | 36 false; 37 true |
@@ -863,9 +865,9 @@ The 32-bit cold operations are encoded as three-byte `F0` instructions:
 
 | Secondary | Instruction | Total bytes | Measured cycles |
 |---:|---|---:|---:|
-| `69` | `CMP32 qL,qR` followed by `RRSPEC` | 3 | 83 |
-| `6A` | `LD32 qD,[rA]` followed by `RRSPEC` | 3 | 82 |
-| `6B` | `ST32 [rA],qS` followed by `RRSPEC` | 3 | 81 |
+| `69` | `CMP32 qL,qR` followed by `RRSPEC` | 3 | 82 |
+| `6A` | `LD32 qD,[rA]` followed by `RRSPEC` | 3 | 83 in RAM |
+| `6B` | `ST32 [rA],qS` followed by `RRSPEC` | 3 | 80 |
 
 `BOOL rD` is encoded in `F7`, where its fixed-width upper-register implementation avoids runtime register decoding.
 
@@ -937,25 +939,24 @@ The new `OUT` occurs exactly seventeen cycles after the decoder launched `RRSPEC
     subi  XL, -8
     mov   XH, r2
 
-    ; Z = native register-file pointer for the low operand.
+    ; Z = low operand offset from register-file address 8.
     mov   ZL, spec
     andi  ZL, 0x0f
-    subi  ZL, -8
     mov   ZH, r2
 
     tst   secondary             ; operation index zero is CMP32
     breq  f0_cmp32
 ```
 
-Validation occupies three words and the two pointer decoders occupy nine words. Because `RRSPEC` is unavailable until the third encoded byte arrives, these cycles are exposed.
+Validation occupies three words and the two pointer decoders occupy eight words.
 
 #### 9.4.4. Shared memory-address capture
 
-For both memory operations, `Z` initially points to the selected 16-bit address register. The implementation captures the complete effective address before touching a potentially overlapping pair operand:
+Both memory operations load the selected 16-bit register using displacements 8 and 9. This captures the effective address before touching a potentially overlapping pair operand.
 
 ```asm
-    ld    r0, Z+
-    ld    r1, Z
+    ldd   r0, Z+8
+    ldd   r1, Z+9
     movw  Z, r0
 
     cpi   secondary, 1          ; operation index one is LD32
@@ -986,11 +987,11 @@ The transfer body is nine words and eighteen cycles including the final `RJMP`.
 Measured complete latency:
 
 ```text
-17  prefix-to-secondary interval
+18  prefix-to-secondary interval
 17  secondary-to-RRSPEC interval
-47  following-primary OUT-to-OUT execution interval
+45  following-primary OUT-to-OUT execution interval
 --
-81 cycles
+80 cycles
 ```
 
 #### 9.4.6. Shared `LD32`
@@ -999,6 +1000,8 @@ Measured complete latency:
 ; X = qD register-file pointer
 ; Z = captured data-space address
 f0_ld32:
+    cpi   ZH, 0x0b
+    brsh  f0_cold32_ld32_flash
     ld    r24, Z+
     st    X+, r24
     ld    r24, Z+
@@ -1013,14 +1016,14 @@ f0_ld32:
 Measured complete latency:
 
 ```text
-17  prefix-to-secondary interval
+18  prefix-to-secondary interval
 17  secondary-to-RRSPEC interval
 48  following-primary OUT-to-OUT execution interval
 --
-82 cycles
+83 cycles
 ```
 
-The additional cycle relative to `ST32` is the taken operation-selection branch.
+The taken operation-selection branch and the flash-window check account for the three additional cycles relative to `ST32`.
 
 #### 9.4.7. Shared `CMP32`
 
@@ -1037,13 +1040,13 @@ f0_cmp32:
     ld    r24, X+
     ld    r25, X
 
-    ld    r26, Z+
+    ldd   r26, Z+8
     cp    r0,  r26
-    ld    r26, Z+
+    ldd   r26, Z+9
     cpc   r1,  r26
-    ld    r26, Z+
+    ldd   r26, Z+10
     cpc   r24, r26
-    ld    r26, Z
+    ldd   r26, Z+11
     cpc   r25, r26
 
     in    r24, SREG
@@ -1056,11 +1059,11 @@ After all four left bytes are loaded, native `r26` may safely replace `XL` as ri
 Measured complete latency:
 
 ```text
-17  prefix-to-secondary interval
+18  prefix-to-secondary interval
 17  secondary-to-RRSPEC interval
-49  following-primary OUT-to-OUT execution interval
+47  following-primary OUT-to-OUT execution interval
 --
-83 cycles
+82 cycles
 ```
 
 #### 9.4.8. Invalid-specifier shim and exact code size
@@ -1076,15 +1079,16 @@ The current common subsystem is exactly:
 |---|---:|---:|
 | One-cycle normalization, `RRSPEC` consume, and stream restart | 8 | 16 |
 | Common validation | 3 | 6 |
-| Two register-file pointer decoders | 9 | 18 |
+| Two register-file pointer decoders | 8 | 16 |
 | CMP-versus-memory selection | 2 | 4 |
 | Shared address capture | 3 | 6 |
 | LD-versus-ST selection | 2 | 4 |
 | `ST32` transfer body | 9 | 18 |
-| `LD32` transfer body | 9 | 18 |
+| `LD32` RAM transfer and flash-window check | 11 | 22 |
+| `LD32` flash-window continuation | 12 | 24 |
 | `CMP32` extra validation and body | 17 | 34 |
 | Local invalid-specifier shim | 1 | 2 |
-| **Shared cold-32 subsystem** | **63** | **126** |
+| **Shared cold-32 subsystem** | **76** | **152** |
 
 The three one-word `F0` veneers occupy six bytes in the executable table but replace trap entries, so implementing the family does not enlarge the fixed veneer table.
 
@@ -1714,9 +1718,9 @@ f9_bitop_entry:
     sei
 ```
 
-The `OUT` lands exactly on cycle 17. Moving the two independent pointer-high clears before the handoff removes the need for pure delay and shortens the post-`OUT` decode path by two cycles. The complete handler remains exactly 39 words.
+The `OUT` lands on cycle 17. Clearing both pointer high bytes before the handoff fills the wait for the secondary byte.
 
-The resulting complete family latencies are 52 cycles for `AND`, 53 for `OR`, and 54 for `XOR`.
+The resulting complete family latencies are 49 cycles for `AND`, 50 for `OR`, and 51 for `XOR`.
 
 ### 18.2. Runtime register-file pointer decode
 
@@ -1725,10 +1729,10 @@ Use:
 ```text
 secondary = native r24
 X         = destination register-file pointer
-Z         = source register-file pointer
+Z         = doubled source register index
 r0:r1     = original destination value
 r25       = source low byte
-r27       = source high byte, temporarily replacing XH
+r31       = source high byte, reusing ZH after the last load
 ```
 
 Destination decoding:
@@ -1738,7 +1742,6 @@ Destination decoding:
     swap  XL
     andi  XL, 0x0e       ; bits 7:5 become 2*d
     subi  XL, -8
-    mov   XH, r2
 ```
 
 Source decoding:
@@ -1747,45 +1750,27 @@ Source decoding:
     mov   ZL, secondary
     lsr   ZL
     andi  ZL, 0x0e       ; bits 4:2 become 2*s
-    subi  ZL, -8
-    mov   ZH, r2
 ```
 
-Both pointers address the AVR register-file data-space mapping at native addresses `r8-r23`.
-
-The operation field is preserved without another scratch register:
-
-```asm
-    lsr   secondary
-```
-
-After this instruction:
-
-```text
-C                 = original operation bit 0
-secondary bit 0   = original operation bit 1
-```
-
-The subsequent `LD` instructions do not modify `SREG`, so both operation bits remain available for dispatch.
+The source loads use displacements 8 and 9 to reach the register file. `LSR ZL` saves operation bit 0 in carry and leaves bit 1 in the secondary byte. The mask and the operand loads preserve carry.
 
 ### 18.3. Capture both operands before modifying the destination
 
 ```asm
     ld    r0,  X+
     ld    r1,  X
-    ld    r25, Z+
-    ld    r27, Z
+    ldd   r25, Z+8
+    ldd   r31, Z+9
 ```
 
 The complete original destination is captured before any store, so `rD == rS` is valid.
 
-Loading the source high byte into native `r27` temporarily destroys `XH`. This is safe because the destination loads have completed and all architectural registers reside below data-space address `0x100`. `XH` is restored to zero immediately before the result stores.
+The last source load reuses `ZH` once the source address is dead.
 
 ### 18.4. Operation dispatch and shared writeback
 
 ```asm
-    ; secondary bit 0 is original op bit 1.
-    sbrc  secondary, 0
+    sbrc  secondary, 1
     rjmp  .Lf9_high_operation
 
     ; Low operation group: AND=00, OR=01.
@@ -1794,16 +1779,15 @@ Loading the source high byte into native `r27` temporarily destroys `XH`. This i
 
     ; OR
     or    r0, r25
-    or    r1, r27
+    or    r1, r31
     rjmp  .Lf9_store
 
 .Lf9_and:
     and   r0, r25
-    and   r1, r27
+    and   r1, r31
     ; fall through
 
 .Lf9_store:
-    mov   XH, r2
     st    X,  r1
     st    -X, r0
     rjmp  cluster_a_tail_18
@@ -1812,14 +1796,14 @@ Loading the source high byte into native `r27` temporarily destroys `XH`. This i
     ; High group: XOR=10, invalid=11.
     brcs  .Lf9_invalid
     eor   r0, r25
-    eor   r1, r27
+    eor   r1, r31
     rjmp  .Lf9_store
 
 .Lf9_invalid:
     rjmp  trap_entry
 ```
 
-The carry established by `LSR secondary` survives all four operand loads. No runtime bounds validation is needed for the register fields because three-bit indices always select `r0-r7`.
+Three-bit register indices always select `r0-r7`.
 
 ### 18.5. Exact handler size
 
@@ -1827,10 +1811,10 @@ The carry established by `LSR secondary` survives all four operand loads. No run
 |---|---:|---:|
 | PC update, pointer-high preclear, and reverse secondary handoff | 9 | 18 |
 | Destination pointer decode | 4 | 8 |
-| Source pointer decode | 4 | 8 |
-| Operation-state preparation and four operand loads | 5 | 10 |
-| Operation dispatch, three ALU paths, shared writeback, and invalid shim | 17 | 34 |
-| **Dedicated `F9` handler** | **39** | **78** |
+| Source index decode and operation-bit extraction | 3 | 6 |
+| Four operand loads | 4 | 8 |
+| Operation dispatch, three ALU paths, shared writeback, and invalid shim | 16 | 32 |
+| **Dedicated `F9` handler** | **36** | **72** |
 
 The primary slot is part of the fixed 2,048-byte primary table and adds no incremental bytes to this page-specific total.
 
@@ -1840,15 +1824,15 @@ The primary slot and pre-handoff work place the speculative following-primary `O
 
 | Operation | Complete instruction latency |
 |---|---:|
-| `AND rD,rS` | **52 cycles** |
-| `OR rD,rS` | **53 cycles** |
-| `XOR rD,rS` | **54 cycles** |
+| `AND rD,rS` | **49 cycles** |
+| `OR rD,rS` | **50 cycles** |
+| `XOR rD,rS` | **51 cycles** |
 
 These totals are measured from entry to the `F9` primary slot through entry to the following primary slot. Upper-register bitwise operations remain one-byte, 17-cycle instructions.
 
 ### 18.7. Size summary
 
-The dedicated `F9` handler occupies 39 AVR words / 78 bytes. It requires no secondary executable table, page stub, bounds check, or additional cadence cluster.
+The dedicated `F9` handler occupies 36 AVR words / 72 bytes. It requires no secondary executable table, page stub, bounds check, or additional cadence cluster.
 
 ---
 
@@ -2466,7 +2450,7 @@ The speculative following-primary `OUT` therefore lands exactly on cycle 17. Div
 The secondary byte is decoded arithmetically rather than through an executable table:
 
 ```text
-ZL = 8 + 2*ddd    destination/dividend register-file address
+ZL =     2*ddd    destination/dividend index, accessed at Z+8 and Z+9
 XL = 8 + 2*sss    source/divisor register-file address
 ```
 
@@ -2476,7 +2460,7 @@ After both architectural operands are captured, the native scratch allocation is
 r24:r25  shifting dividend and quotient
 r26:r27  unsigned divisor magnitude
 r0:r1    partial remainder
-r30      destination register-file address plus operation metadata
+r30      doubled destination register index plus operation metadata
 r31      sign scratch, magnitude-width test, then pair-iteration counter
 ```
 
@@ -2561,8 +2545,8 @@ For the eight-bit core, each zero quotient bit costs five arithmetic cycles and 
 The complete shared handler occupies exactly:
 
 ```text
-107 AVR words
-214 bytes
+105 AVR words
+210 bytes
 ```
 
 This is a 29-word / 58-byte increase over the single rolled sixteen-bit core. The increase consists of:
@@ -2580,18 +2564,18 @@ No executable operand table is required, and the `EC` primary slot remains part 
 For a nonzero divisor whose unsigned magnitudes both fit in eight bits, unsigned forms have the exact complete latency:
 
 ```text
-120 + popcount(unsigned 8-bit quotient) cycles
+121 + popcount(unsigned 8-bit quotient) cycles
 ```
 
-Therefore byte-magnitude `UDIV16` and `UREM16` span **120-128 cycles**.
+Therefore byte-magnitude `UDIV16` and `UREM16` span **121-129 cycles**.
 
 When either magnitude requires sixteen bits, unsigned forms have the exact complete latency:
 
 ```text
-217 + 2*popcount(unsigned 16-bit quotient) cycles
+218 + 2*popcount(unsigned 16-bit quotient) cycles
 ```
 
-Therefore true-16-bit `UDIV16` and `UREM16` span **217-249 cycles**. Relative to the original rolled core, this is a universal 21-cycle improvement on the general path and a 118-126-cycle improvement for byte-sized magnitudes.
+Therefore true-16-bit `UDIV16` and `UREM16` span **218-250 cycles**.
 
 For signed forms, let:
 
@@ -2604,18 +2588,18 @@ Qmag       = unsigned magnitude quotient
 For byte-sized magnitudes, exact complete latency is:
 
 ```text
-130 + 2*Nneg + popcount(Qmag) + 4*neg_result cycles
+131 + 2*Nneg + popcount(Qmag) + 4*neg_result cycles
 ```
 
-Byte-magnitude `SDIV16` spans **130-144 cycles**, and byte-magnitude `SREM16` spans **130-146 cycles**.
+Byte-magnitude `SDIV16` spans **131-145 cycles**, and byte-magnitude `SREM16` spans **131-147 cycles**.
 
 For true-16-bit magnitudes, exact complete latency is:
 
 ```text
-227 + 2*Nneg + 2*popcount(Qmag) + 4*neg_result cycles
+228 + 2*Nneg + 2*popcount(Qmag) + 4*neg_result cycles
 ```
 
-True-16-bit `SDIV16` spans **227-263 cycles**, and true-16-bit `SREM16` spans **227-265 cycles**. Division-by-zero exits are unchanged at **57 cycles** for quotient forms and **56 cycles** for remainder forms.
+True-16-bit `SDIV16` spans **228-264 cycles**, and true-16-bit `SREM16` spans **228-266 cycles**. Division-by-zero exits take **58 cycles** for quotient forms and **57 cycles** for remainder forms.
 
 The long arithmetic bodies do not require additional SPI transfers. The fastest nonzero byte-magnitude path still completes well after the prefetched following opcode is available, and every final handoff remains a legal late standard handoff.
 
@@ -2852,32 +2836,34 @@ One size-efficient organization is:
 ; Primary slot: one of four destination-specialized entries
 ldi   ZL, lo8(pm(ldi8_cD_apply))
 ldi   ZH, hi8(pm(ldi8_cD_apply))
-nop                               ; executed cycle-9 retiming padding
+nop                               ; retiming padding
 rjmp  fetch_imm8_then_ijmp
 
 ; Shared continuation
 fetch_imm8_then_ijmp:
     add   r4, r3
     adc   r5, r2
+    cli
+    out   SPDR, r2                 ; cycle 17
+    in    t0, SPDR
+    sei
     adc   r6, r2
-    in    t0, SPDR                 ; cycle 17
-    out   SPDR, r2                 ; cycle 18
     ijmp
 
 ldi8_cD_apply:
     mov   dL, t0
     clr   dH
-    rjmp  cluster_a_tail_18_delay_1
+    rjmp  immediate_result_tail_reverse_delay_3
 ```
 
-`LDI16` uses an analogous two-byte fetch continuation. `ADDI.S8` and `CMPI.S8` share the signed-immediate fetch path but use separate destination-specialized apply stubs. This avoids run-time register decoding while keeping the continuation code bounded.
+`LDI16` uses two reverse handoffs and writes the little-endian pair with `MOVW`. `ADDI.S8` and `CMPI.S8` share the signed-immediate fetch path and use separate destination-specialized apply stubs.
 
-In the reference layout, the `C0-CF` continuation and apply-stub block occupies **182 bytes**. Its complete latencies are:
+The `C0-CF` continuation and apply-stub block occupies **170 bytes**. Its complete latencies are:
 
 | Family | Cycles |
 |---|---:|
-| `LDI8 rD,imm8` | 35 |
-| `LDI16 rD,imm16` | 52 |
+| `LDI8 rD,imm8` | 34 |
+| `LDI16 rD,imm16` | 51 |
 | `ADDI.S8 rD,simm8` | 35 |
 | `CMPI.S8 rL,simm8` | 35 |
 
@@ -2938,16 +2924,16 @@ The reference interpreter uses the decode, table, forwarding, and shared-body st
 | Instruction class | Reference complete latency |
 |---|---|
 | `00-BF` direct one-byte instructions | Selected 17- or 18-cycle cadence; checked `PUSH16` takes 19 cycles (Sections 5 and 27) |
-| `C0-CF` immediate instructions | 35 / 52 / 35 / 35 by family |
+| `C0-CF` immediate instructions | 34 / 51 / 35 / 35 by family |
 | `D0-D7` branch/`ADJSP`/`SYS` | Exact values in Section 30 |
-| `E0-E3` multi-byte direct control | 135 for JMP16; 136 for CALL16; 150 for far forms |
+| `E0-E3` multi-byte direct control | 135 for JMP16, 136 for CALL16, 149 for far forms |
 | `E4-EB` `JMPP`/`CALLP` | 110 / 119 |
-| `EC` 16-bit division/remainder | 56-265 cycles; exact formulas in Section 21.2 |
+| `EC` 16-bit division/remainder | 57-266 cycles, with formulas in Section 21.2 |
 | `ED-EE` displaced memory | 54 cycles byte; 55 cycles word |
 | `EF` `RET` | 110 |
 | `F0-F7` dense pages | Fast forms use their page cadence; measured cold forms span 53-352 cycles by family |
 | `F8` shared CSET decoder | 41 cycles |
-| `F9` runtime bitwise page | AND 52, OR 53, XOR 54 cycles |
+| `F9` runtime bitwise page | AND 49, OR 50, XOR 51 cycles |
 | `FA` immediate and register-count shifts | Count-dependent values in Section 19; 42-80 cycles |
 | `FB-FD` conditional moves | 36 cycles false / 37 cycles true |
 | `FE MUL16` | 46 cycles |
@@ -3475,7 +3461,7 @@ The sequences shown in the page definitions illustrate efficient implementations
 | Other `F7` slots | 38 |
 | `F8` all conditions | 41 |
 | `ED-EE` byte / word memory | 54 / 55 |
-| `F9 AND` / `OR` / `XOR` | 52 / 53 / 54 |
+| `F9 AND` / `OR` / `XOR` | 49 / 50 / 51 |
 | `FB-FD` condition false / true | 36 / 37 |
 | `FE MUL16` | 46 |
 | `FF` floating point | operation- and helper-dependent |
@@ -3528,7 +3514,7 @@ Sections 9 and 19 give the cycle targets used when sizing and arranging the refe
 | `D1` | `BRNE8 rel8` | 2 | 35 not taken; 128 taken |
 | `D2` | `BRULT8 rel8` | 2 | 35 not taken; 128 taken |
 | `D3` | `BRSLT8 rel8` | 2 | 35 not taken; 128 taken |
-| `D4` | `JMP8 rel8` | 2 | 122 |
+| `D4` | `JMP8 rel8` | 2 | 118 |
 | `D5` | `CALL8 rel8` | 2 | 127 |
 | `D6` | `ADJSP simm8` | 2 | 35 |
 | `D7` | `SYS service8` | 2 | varies |
@@ -3542,13 +3528,13 @@ Sections 9 and 19 give the cycle targets used when sizing and arranging the refe
 | `DF` | `BRSGE16 rel16` | 3 | 51 not taken; 135 taken |
 | `E0` | `JMP16 rel16` | 3 | 135 |
 | `E1` | `CALL16 rel16` | 3 | 136 |
-| `E2` | `JMPF target24` | 4 | 150 |
-| `E3` | `CALLF target24` | 4 | 150 |
+| `E2` | `JMPF target24` | 4 | 149 |
+| `E3` | `CALLF target24` | 4 | 149 |
 | `E4-E7` | `JMPP qN` | 1 | 110 |
 | `E8-EB` | `CALLP qN` | 1 | 119 |
 | `EF` | `RET` | 1 | 110 |
 
-The measured jump and taken-branch values are one cycle above the earlier estimates because the shared seek/restart routine now preserves the required 18-cycle `OUT`-to-`OUT` cadence while transmitting the `SFC_READ` command and address bytes. Checked call schedules and their before/after measurements are detailed in Section 26.3. The measured `SYS` values include the complete service-table dispatch overhead.
+The shared seek/restart uses 18-cycle `OUT`-to-`OUT` spacing for the `SFC_READ` command and address bytes. `JMP8` shares the target decoder with taken short branches. Section 26.3 records the effect of stack checks on call schedules.
 
 All relative displacements are signed and relative to the address immediately following the complete instruction. The `rel8` branch forms use a signed 8-bit displacement; the corresponding `*16` forms use a signed 16-bit displacement. `JMP16` and `CALL16` retain the active code bank and use their signed 16-bit displacement to select the target within that bank. `JMPF` and `CALLF` carry an explicit 24-bit target and are separate opcodes.
 
@@ -3694,7 +3680,7 @@ Five additional contiguous services follow the program-memory forms:
 | `strncpy` | `0x1B` | `r4=dst/result`, `r5=src`, `r6=n` | original `dst` remains in `r4` |
 | `strncat` | `0x1C` | `r4=dst/result`, `r5=src`, `r6=n` | original `dst` remains in `r4` |
 
-The complete memory-service range is therefore `0x0F-0x1C`. The 256-entry SYS table remains unchanged in size: these five entries replace invalid-service entries and jump directly to a nearby 71-word implementation block. No absolute veneers are required.
+The memory services occupy SYS IDs `0x0F-0x1C`. The five data-memory string services have direct table entries and share an implementation block with relays for AS0 flash-window operands.
 
 `memcmp` with `n=0`, `strncpy` with `n=0`, and `strncat` with `n=0` return without accessing either input object. All five services preserve `VM_FLAGS` and every nondestination architectural input. As in C, overlapping source and destination objects for `strncpy` and `strncat` are not supported.
 
@@ -3709,7 +3695,7 @@ sbc   VM_R4H, ZERO           ; 0x00 or 0xFF sign extension
 rjmp  cluster_tail_18
 ```
 
-The result is therefore in the full range `-255..+255`, which is stronger than the C requirement to return only a negative, zero, or positive value. Equal terminal paths arrive with `r0=0` and carry clear and use the same result sequence. The `memcmp(n=0)` path establishes that state with `SUB r0,r0`.
+The result is in the full range `-255..+255`. Equal terminal paths arrive with `r0=0` and carry clear and use the same result sequence. The `memcmp(n=0)` path copies the zero count already in `r24:r25` into the result pair.
 
 The steady equal-byte costs inside the native RAM loops are:
 
@@ -3736,7 +3722,7 @@ A continuing byte costs eight native cycles. The 16-bit result is sufficient bec
 
 ### 30.2.3. Shared bounded RAM copy engine
 
-`strncpy` and `strncat` share one ten-word helper:
+`strncpy` and `strncat` share a six-word helper:
 
 ```text
 inputs:
@@ -3746,34 +3732,20 @@ inputs:
 
 outputs:
   X/Z       one byte past the copied bytes
-  r24:r25   unused count
-  T         one iff a NUL byte was copied
+  r24:r25   remaining count
+  r0        last byte copied
   native Z  one iff the remaining count is zero
 ```
 
-The helper copies one byte, decrements the count, and uses `CPSE byte,ZERO` without disturbing the native `Z` flag produced by `SBIW`. A continuing nonzero byte costs eleven cycles. `RET` preserves `SREG`, allowing `strncpy` to test the remaining-count `Z` flag immediately without another count instruction.
+The helper copies one byte, decrements the count, and uses `CPSE byte,ZERO` to skip the loop branch after a NUL. `CPSE` and `RET` preserve the native `Z` flag produced by `SBIW`, so `strncpy` can test the remaining count immediately. A continuing nonzero byte costs nine cycles.
 
 `strncpy` copies at most `n` bytes. When the source NUL is copied before count exhaustion, it pads every remaining destination byte with zero. When the count reaches zero first, no padding occurs.
 
-`strncat` first scans the destination for its existing NUL and moves `Z` back to that byte. It then uses the same bounded copy helper. If the helper returns with `T` clear, the source did not supply a NUL within the first `n` bytes, so the handler writes one additional terminator at `Z`. If `T` is set, the copied NUL is already the required terminator.
+`strncat` first scans the destination for its existing NUL and moves `Z` back to that byte. It then uses the same bounded copy helper and writes one additional terminator at `Z` if the last byte copied was nonzero.
 
 ### 30.2.4. Code size and existing-service impact
 
-The complete data-memory subsystem is exactly:
-
-```text
-shared exact comparison result and zero case   6 words /  12 bytes
-memcmp                                         13 words /  26 bytes
-strcmp                                          9 words /  18 bytes
-strlen                                         10 words /  20 bytes
-shared bounded copy helper                     10 words /  20 bytes
-strncpy                                        11 words /  22 bytes
-strncat                                        12 words /  24 bytes
-                                                ---------------------
-total                                          71 words / 142 bytes
-```
-
-No existing service implementation is changed. Dispatch still performs one table `RJMP` per service ID, and the table remains 256 words, so existing SYS instruction timings are unchanged. The new block only shifts later code addresses; all static transfers remain within their original instruction forms.
+The block occupies 95 AVR words (190 bytes), including the six-word copy helper and the AS0 flash-window relays.
 
 ## 30.3. Runtime-decoded trailing families
 

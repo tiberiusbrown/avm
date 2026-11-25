@@ -864,10 +864,6 @@ cbi  AVM_FX_PORT, AVM_FX_BIT
 sbi  AVM_FX_PORT, AVM_FX_BIT
 .endm
 
-.macro delay_1
-    nop
-.endm
-
 .macro delay_2
     .word 0xC000   ; rjmp .+0
 .endm
@@ -1825,7 +1821,15 @@ emit_primary_branch8 primary_D3_brslt8_rel8, sbic, SREG_S
 ; 0xD4-0xD7: relative control, ADJSP, and SYS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_rel8 primary_D4_jmp8_rel8,  jmp8_rel8_func
+; Match the taken conditional slot's one-cycle condition test so both can
+; consume the displacement and restart the stream through the same handler.
+primary_D4_jmp8_rel8:
+    nop
+    rjmp branch_rel8_taken_func
+    nop
+    nop
+    assert_primary_slot_width primary_D4_jmp8_rel8
+
 emit_primary_rel8 primary_D5_call8_rel8, call8_rel8_func
 emit_primary_rel8 primary_D6_adjsp,     adjsp_simm8_func
 
@@ -2170,8 +2174,7 @@ primary_flash_common:
     add   VM_PCL, ONE
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
-    mov   r24, r26              ; image-relative low = AS0 low
-    mov   r25, r27
+    movw  r24, r26              ; image-relative low = AS0 low
     subi  r25, 0x06             ; image-relative high = AS0 high - 0x06
     clr   r26
     clr   r31                   ; Z = destination register-file address
@@ -2283,8 +2286,7 @@ displaced_memory_store:
 ; opcode is one byte beyond it and is reached by the re-seek after the read.
 displaced_flash_load:
     mov   r0, DISPLACED_SPEC     ; keep the width bit for the count select
-    mov   r24, r30
-    mov   r25, r31
+    movw  r24, r30
     subi  r25, 0x06
     movw  r30, r26               ; Z = destination register-file address
     clr   r26
@@ -2301,8 +2303,8 @@ displaced_flash_load:
     rjmp  seek_and_dispatch_func_disabled
 
 displaced_memory_end:
-.if (displaced_memory_end - displaced_memory_start) != 112
-    .error "ED-EE displaced-memory handler must occupy exactly 56 AVR words"
+.if (displaced_memory_end - displaced_memory_start) != 110
+    .error "ED-EE displaced-memory handler must occupy exactly 55 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2428,8 +2430,8 @@ ff_sign_tail:
 ; that fit in eight bits use a dedicated byte core; all others use the word
 ; core. Both cores perform two quotient-bit iterations per loop branch.
 ; r24:r25 is the shifting dividend/quotient, r26:r27 is the unsigned divisor
-; magnitude, and r0:r1 is the partial remainder. r30 retains the destination
-; register-file address; its otherwise-unused high bits carry operation
+; magnitude, and r0:r1 is the partial remainder. r30 retains the doubled
+; destination register index; its otherwise-unused high bits carry operation
 ; metadata:
 ;
 ;   bit 7  signed operation
@@ -2457,12 +2459,11 @@ ec_divrem16_entry:
     in    SECONDARY_OPCODE, SPDR
     sei
 
-    ; Z = native register-file address of destination/dividend rD.
+    ; Z = doubled dividend register index; displacements 8 and 9 access rD.
     mov   r30, SECONDARY_OPCODE
     lsr   r30
     lsr   r30
     andi  r30, 0x0e
-    subi  r30, -8
 
     ; X = native register-file address of preserved source/divisor rS.
     mov   r26, SECONDARY_OPCODE
@@ -2471,8 +2472,8 @@ ec_divrem16_entry:
     subi  r26, -8
 
     ; Capture the original dividend without advancing Z. This permits rD == rS.
-    ld    r0, Z
-    ldd   r1, Z+1
+    ldd   r0, Z+8
+    ldd   r1, Z+9
 
     ; Preserve oo in the unused high bits of the destination address.
     andi  SECONDARY_OPCODE, 0xc0
@@ -2486,8 +2487,7 @@ ec_divrem16_entry:
     movw  r24, r0
 
     ; Define division by zero without entering the 16-iteration loop.
-    mov   r31, r26
-    or    r31, r27
+    sbiw  r26, 0
     breq  .Lec_divrem16_zero
 
     ; Signed forms convert both inputs to unsigned magnitudes. For quotient,
@@ -2579,10 +2579,10 @@ ec_divrem16_entry:
     ser   r25
 
 .Lec_divrem16_store:
-    andi  r30, 0x1f
+    andi  r30, 0x0e
     mov   r31, ZERO
-    st    Z+, r24
-    st    Z,  r25
+    std   Z+8, r24
+    std   Z+9, r25
     rjmp  cluster_a_tail_18
 
     ; Out-of-line byte-magnitude path. Four groups perform eight quotient-bit
@@ -2614,8 +2614,8 @@ ec_divrem16_entry:
     rjmp  .Lec_divrem16_select_result
 
 ec_divrem16_end:
-.if (ec_divrem16_end - ec_divrem16_entry) != 214
-    .error "EC 16-bit division/remainder handler must occupy exactly 107 AVR words"
+.if (ec_divrem16_end - ec_divrem16_entry) != 210
+    .error "EC 16-bit division/remainder handler must occupy exactly 105 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2654,25 +2654,21 @@ f9_bitop_entry:
     andi  r26, 0x0e
     subi  r26, -8
 
-    ; Z = native register-file address of source rS.
+    ; Z = doubled source register index; displacements 8 and 9 access rS.
     mov   r30, SECONDARY_OPCODE
     lsr   r30
     andi  r30, 0x0e
-    subi  r30, -8
 
-    ; Preserve operation bits without another scratch register:
-    ; carry = original bit 0, SECONDARY_OPCODE bit 0 = original bit 1.
-    lsr   SECONDARY_OPCODE
-
+    ; LSR left operation bit 0 in carry. The mask and loads preserve it.
     ; Capture both complete original operands before modifying rD.
     ld    r0,  X+
     ld    r1,  X
-    ld    r25, Z+
-    ld    r31, Z                   ; Z is dead after this non-updating load
+    ldd   r25, Z+8
+    ldd   r31, Z+9                 ; Z is dead after this non-updating load
 
-    ; SECONDARY_OPCODE bit 0 selects low (AND/OR) versus high
+    ; SECONDARY_OPCODE bit 1 selects low (AND/OR) versus high
     ; (XOR/invalid) operation groups.
-    sbrc  SECONDARY_OPCODE, 0
+    sbrc  SECONDARY_OPCODE, 1
     rjmp  .Lf9_high_operation
 
     ; Low group: carry selects AND=0 or OR=1.
@@ -2702,8 +2698,8 @@ f9_bitop_entry:
     rjmp  invalid_secondary_instruction_func
 
 f9_bitop_end:
-.if (f9_bitop_end - f9_bitop_entry) != 76
-    .error "dedicated F9 runtime bitwise handler must occupy exactly 38 AVR words"
+.if (f9_bitop_end - f9_bitop_entry) != 72
+    .error "dedicated F9 runtime bitwise handler must occupy exactly 36 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3182,15 +3178,16 @@ cluster_tail_18:
 ; starts the following primary opcode. The apply stubs use the available slack
 ; to reach an exact reverse-order 17-cycle handoff for that opcode.
 
-; Consume one unsigned immediate byte and start the following primary opcode.
-; From primary-slot entry to the OUT is eight cycles; including the preceding
-; dispatch, this preserves the normal 17/18-cycle SPI byte cadence.
+; Consume one unsigned immediate byte using a protected cycle-17 handoff.
+; Finish the PC carry chain after the handoff, before entering the apply stub.
 fetch_imm8_then_ijmp:
     add  VM_PCL, ONE
     adc  VM_PCM, ZERO
-    adc  VM_PCH, ZERO
-    in   PRIMARY_OPCODE, SPDR
+    cli
     out  SPDR, ZERO
+    in   PRIMARY_OPCODE, SPDR
+    sei
+    adc  VM_PCH, ZERO
     ijmp
 
 ; Consume one signed immediate byte, start the following primary opcode, and
@@ -3206,21 +3203,22 @@ fetch_simm8_then_ijmp:
     com  r25
     ijmp
 
-; Consume a little-endian 16-bit immediate. The low-byte handoff uses the
-; standard 18-cycle IN/OUT schedule. While the high byte transfers, complete
-; the second PC increment, use a callable delay for the remaining slack, and
-; perform an exact reverse-order 17-cycle handoff for the following opcode.
+; Consume a little-endian 16-bit immediate. Both reverse-order handoffs start
+; the next transfer on cycle 17. The second PC increment overlaps the high
+; byte's transfer.
 fetch_imm16_then_ijmp:
     add  VM_PCL, ONE
     adc  VM_PCM, ZERO
-    adc  VM_PCH, ZERO
-    in   PRIMARY_OPCODE, SPDR
+    cli
     out  SPDR, ZERO
+    in   PRIMARY_OPCODE, SPDR
+    sei
+    adc  VM_PCH, ZERO
 
     add  VM_PCL, ONE
     adc  VM_PCM, ZERO
     adc  VM_PCH, ZERO
-    rcall interp_delay_12
+    rcall interp_delay_9
     cli
     out  SPDR, ZERO
     in   r25, SPDR
@@ -3228,12 +3226,11 @@ fetch_imm16_then_ijmp:
     ijmp
 
 ; The apply paths have enough slack to use the reverse-order dispatch. These
-; shared entries contribute exactly six, four, or three cycles before entering
+; shared entries contribute five or three cycles before entering
 ; cluster_tail_17, whose PC update and protected OUT place the next transfer at
 ; the exact 17-cycle boundary.
-immediate_result_tail_reverse_delay_6:
-    delay_2
-immediate_result_tail_reverse_delay_4:
+immediate_result_tail_reverse_delay_5:
+    nop
     nop
 immediate_result_tail_reverse_delay_3:
     nop
@@ -3243,14 +3240,13 @@ immediate_result_tail_reverse_delay_3:
 \label:
     mov  \dstl, PRIMARY_OPCODE
     clr  \dsth
-    rjmp immediate_result_tail_reverse_delay_6
+    rjmp immediate_result_tail_reverse_delay_3
 .endm
 
-.macro emit_ldi16_apply label, dstl, dsth
+.macro emit_ldi16_apply label, dst
 \label:
-    mov  \dstl, PRIMARY_OPCODE
-    mov  \dsth, r25
-    rjmp immediate_result_tail_reverse_delay_4
+    movw \dst, PRIMARY_OPCODE
+    rjmp immediate_result_tail_reverse_delay_5
 .endm
 
 .macro emit_addi_s8_apply label, dstl, dsth
@@ -3273,10 +3269,10 @@ emit_ldi8_apply ldi8_r5_apply, VM_R5L, VM_R5H
 emit_ldi8_apply ldi8_r6_apply, VM_R6L, VM_R6H
 emit_ldi8_apply ldi8_r7_apply, VM_R7L, VM_R7H
 
-emit_ldi16_apply ldi16_r4_apply, VM_R4L, VM_R4H
-emit_ldi16_apply ldi16_r5_apply, VM_R5L, VM_R5H
-emit_ldi16_apply ldi16_r6_apply, VM_R6L, VM_R6H
-emit_ldi16_apply ldi16_r7_apply, VM_R7L, VM_R7H
+emit_ldi16_apply ldi16_r4_apply, VM_R4
+emit_ldi16_apply ldi16_r5_apply, VM_R5
+emit_ldi16_apply ldi16_r6_apply, VM_R6
+emit_ldi16_apply ldi16_r7_apply, VM_R7
 
 emit_addi_s8_apply addi_s8_r4_apply, VM_R4L, VM_R4H
 emit_addi_s8_apply addi_s8_r5_apply, VM_R5L, VM_R5H
@@ -3319,12 +3315,12 @@ branch_rel8_not_taken_func:
     delay_3
     rjmp cluster_tail_17
 
-; Taken: entered on cycle 12, with VM_PC still naming the opcode. The operand
-; transfer completes on cycle 17, and nothing else is in flight. Name the
-; operand byte and form the sign-extension high byte while waiting, then read
-; the operand and add it to VM_PC with a carry-in of one, which also supplies
-; the +1 from the operand's address to nextPC. A satisfied branch seeks on
-; cycle 25 instead of 35.
+; Taken conditional branch or JMP8: entered on cycle 12, with VM_PC still
+; naming the opcode. The operand transfer completes on cycle 17, and nothing
+; else is in flight. Advance VM_PC to the operand and prepare its sign
+; extension while waiting. Add the signed operand with carry-in one to
+; account for the step from the operand's address to nextPC. This starts
+; the seek on cycle 25.
 branch_rel8_taken_func:
     add  VM_PCL, ONE
     adc  VM_PCM, ZERO
@@ -3398,27 +3394,6 @@ branch_rel16_block_end:
 .if (branch_rel16_block_end - branch_rel16_decode_func) != (24 * 2)
     .error "16-bit conditional branch subsystem must occupy exactly 48 bytes"
 .endif
-
-; D4 and D5 use fully specialized continuations. Duplicating the operand
-; fetch, sign extension, next-PC calculation, and target addition removes the
-; shared opcode test and avoids RCALL/RET overhead on CALL8.
-jmp8_rel8_func:
-    ; The operand transfer was started by the preceding primary dispatch and
-    ; becomes readable on cycle 17. This continuation begins on cycle 14, so the
-    ; three cycles before the read prepare the sign-extension high byte and a
-    ; carry-in of one. VM_PC names the operand byte, so adding the signed
-    ; displacement with a carry-in of one yields nextPC + displacement in
-    ; modulo-2^24 arithmetic. SER and the SBRC skip leave the carry untouched.
-    clr  r25
-    sec
-    nop
-    in   r26, SPDR
-    sbrc r26, 7
-    ser  r25
-    adc  VM_PCL, r26
-    adc  VM_PCM, r25
-    adc  VM_PCH, r25
-    rjmp seek_and_dispatch_func
 
 call8_rel8_func:
     ; Advance to nextPC and push that 24-bit return address in the canonical
@@ -3568,8 +3543,7 @@ far_launch_high:
     ; legal cycle, then install the complete absolute image-relative target.
     rcall interp_delay_14
     in   r26, SPDR
-    mov  VM_PCL, r24
-    mov  VM_PCM, r25
+    movw VM_PCL, r24
     mov  VM_PCH, r26
     rjmp seek_and_dispatch_func
 
@@ -3945,10 +3919,8 @@ audio_service_during_seek:
     call audio_service_func
     rjmp seek_and_dispatch_func_disabled
 
-; Local fixed-delay ladder for pre-table interpreter paths. The large dense
-; secondary tables place the original fx_seek_delay_* ladder outside RCALL's
-; signed 12-bit word displacement. Each entry retains the same total delay,
-; measured from the calling RCALL through the returning RET.
+; Fixed-delay ladder for pre-table interpreter paths. Each entry names the
+; total delay from the calling RCALL through the returning RET.
 interp_delay_17:
     nop
 interp_delay_16:
@@ -4450,14 +4422,13 @@ cluster_a_end:
 ; that transfer. A body may perform setup before RCALL; that only delays the
 ; standard IN/OUT handoff and remains safe.
 ;
-; Both helpers return with VM_PC naming the final consumed operand and with the
+; These helpers return with VM_PC naming the final consumed operand and with the
 ; following primary opcode already in flight. The operation body must finish by
 ; entering an appropriate cadence tail, which advances VM_PC from the final
 ; operand to the following opcode.
 
 f0_fetch_u8_start:
 f0_fetch_spec:
-f0_fetch_s8:
 f0_fetch_u8:
     in   F0_OPERAND_LO, SPDR
     out  SPDR, ZERO
@@ -4469,6 +4440,17 @@ f0_fetch_u8_end:
 .if (f0_fetch_u8_end - f0_fetch_u8_start) != 12
     .error "shared F0 one-byte fetch helper must occupy exactly six AVR words"
 .endif
+
+; Signed immediates use the same SPI cadence and extend the byte before
+; returning, sharing the extension across all lower-register ADDI and CMPI forms.
+f0_fetch_s8:
+    in   F0_OPERAND_LO, SPDR
+    out  SPDR, ZERO
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    f0_sign_extend_operand
+    ret
 
 ; Fetch a stack displacement while preserving the F0 secondary long enough
 ; to decode its low three bits into an architectural-register pointer in X.
@@ -4569,20 +4551,16 @@ f0_fetch_addr16_decode_r_to_xz_end:
     rjmp  cluster_tail_17_delay_1
 .endm
 
-.macro emit_f0_ldi16_body label, dstl, dsth
+.macro emit_f0_ldi16_body label, dst
 \label:
     rcall f0_fetch_u16
-    mov   \dstl, F0_OPERAND_LO
-    mov   \dsth, F0_OPERAND_HI
-    rjmp  immediate_result_tail_reverse_delay_4
+    movw  \dst, F0_OPERAND_LO
+    rjmp  immediate_result_tail_reverse_delay_5
 .endm
 
 .macro emit_f0_addi_s8_body label, dstl, dsth
 \label:
     rcall f0_fetch_s8
-    clr   F0_OPERAND_HI
-    sbrc  F0_OPERAND_LO, 7
-    com   F0_OPERAND_HI
     add   \dstl, F0_OPERAND_LO
     adc   \dsth, F0_OPERAND_HI
     rjmp  cluster_tail_18_delay_1
@@ -4591,9 +4569,6 @@ f0_fetch_addr16_decode_r_to_xz_end:
 .macro emit_f0_cmpi_s8_body label, lhsl, lhsh
 \label:
     rcall f0_fetch_s8
-    clr   F0_OPERAND_HI
-    sbrc  F0_OPERAND_LO, 7
-    com   F0_OPERAND_HI
     cp    \lhsl, F0_OPERAND_LO
     cpc   \lhsh, F0_OPERAND_HI
     in    PRIMARY_OPCODE, SREG
@@ -4605,10 +4580,10 @@ emit_f0_ldi8_body    f0_ldi8_r1_body,    VM_R1L, VM_R1H
 emit_f0_ldi8_body    f0_ldi8_r2_body,    VM_R2L, VM_R2H
 emit_f0_ldi8_body    f0_ldi8_r3_body,    VM_R3L, VM_R3H
 
-emit_f0_ldi16_body   f0_ldi16_r0_body,   VM_R0L, VM_R0H
-emit_f0_ldi16_body   f0_ldi16_r1_body,   VM_R1L, VM_R1H
-emit_f0_ldi16_body   f0_ldi16_r2_body,   VM_R2L, VM_R2H
-emit_f0_ldi16_body   f0_ldi16_r3_body,   VM_R3L, VM_R3H
+emit_f0_ldi16_body   f0_ldi16_r0_body,   VM_R0
+emit_f0_ldi16_body   f0_ldi16_r1_body,   VM_R1
+emit_f0_ldi16_body   f0_ldi16_r2_body,   VM_R2
+emit_f0_ldi16_body   f0_ldi16_r3_body,   VM_R3
 
 emit_f0_addi_s8_body f0_addi_s8_r0_body, VM_R0L, VM_R0H
 emit_f0_addi_s8_body f0_addi_s8_r1_body, VM_R1L, VM_R1H
@@ -5132,9 +5107,8 @@ sys_progmem_image_prepare_func:
     adc   VM_PCH, ZERO
     rjmp  fx_start_program_read_func
 
-; Dual-engine comparison results. Its final transaction has already completed
-; and released CS, so these exits need no drain. strlen_P's NUL landing also uses
-; the shared finish, which is unchanged.
+; Dual-engine comparison results. The final transaction has already completed
+; and released CS, so these exits can restart with flash deselected.
 .Lsys_progmem_compare_greater:
     mov   VM_R4L, ONE
     mov   VM_R4H, ZERO
@@ -5147,8 +5121,7 @@ sys_progmem_image_prepare_func:
     clr   VM_R4L
     clr   VM_R4H
 .Lsys_progmem_finish:
-    fx_disable
-    rjmp  seek_and_dispatch_func
+    rjmp  seek_and_dispatch_func_disabled
 
 ; Streamed comparison results. The streamed loops always execute CP RAM byte,
 ; program byte, so C means the RAM byte is smaller. T is the entry-once
@@ -5279,8 +5252,7 @@ sys_memcmp_rhs_flash_impl:
     or    r27, r1
     breq  .Lsys_memcmp_p_zero
     movw  r30, VM_R4             ; Z = RAM lhs
-    mov   r24, VM_R5L
-    mov   r25, VM_R5H
+    movw  r24, VM_R5
     subi  r25, 0x06
     clr   r26
     clt                          ; RAM-left orientation for the shared loop
@@ -5295,8 +5267,7 @@ sys_strcmp_rhs_flash_impl:
     jmp   sys_strcmp_dual_impl
 .Lsys_pair_ok_1:
     movw  r30, VM_R4             ; Z = RAM lhs
-    mov   r24, VM_R5L
-    mov   r25, VM_R5H
+    movw  r24, VM_R5
     subi  r25, 0x06
     clr   r26
     clt                          ; RAM-left orientation for the shared loop
@@ -5320,8 +5291,7 @@ sys_memcmp_lhs_flash_impl:
     rjmp  .Lsys_memcmp_p_zero    ; zero bound: no read, no flash transaction
 .Lsys_memcmp_lhs_flash_start:
     movw  r30, VM_R5             ; Z = RAM rhs
-    mov   r24, VM_R4L
-    mov   r25, VM_R4H
+    movw  r24, VM_R4
     subi  r25, 0x06
     clr   r26
     set                          ; flash-left orientation for the shared loop
@@ -5336,8 +5306,7 @@ sys_strcmp_lhs_flash_impl:
     jmp   sys_strcmp_dual_impl
 .Lsys_pair_ok_3:
     movw  r30, VM_R5             ; Z = RAM rhs
-    mov   r24, VM_R4L
-    mov   r25, VM_R4H
+    movw  r24, VM_R4
     subi  r25, 0x06
     clr   r26
     set                          ; flash-left orientation for the shared loop
@@ -5369,16 +5338,14 @@ sys_memcmp_dual_impl:
     sts   data_compare_remaining+0, VM_R6L
     sts   data_compare_remaining+1, VM_R6H
     sts   data_compare_mode, ZERO
-    mov   r24, VM_R5L
-    mov   r25, VM_R5H
+    movw  r24, VM_R5
     subi  r25, 0x06
     clr   r26
     rjmp  .Lsys_dual_store
 
 sys_strcmp_dual_impl:
     sts   data_compare_mode, ONE
-    mov   r24, VM_R5L
-    mov   r25, VM_R5H
+    movw  r24, VM_R5
     subi  r25, 0x06
     clr   r26
     rjmp  .Lsys_dual_store
@@ -5395,15 +5362,13 @@ sys_memcmp_dual_p_impl:
     sts   data_compare_remaining+0, VM_R5L
     sts   data_compare_remaining+1, VM_R5H
     sts   data_compare_mode, ZERO
-    mov   r24, VM_R6L
-    mov   r25, VM_R6H
+    movw  r24, VM_R6
     mov   r26, VM_R7L
     rjmp  .Lsys_dual_store
 
 sys_strcmp_dual_p_impl:
     sts   data_compare_mode, ONE
-    mov   r24, VM_R6L
-    mov   r25, VM_R6H
+    movw  r24, VM_R6
     mov   r26, VM_R7L
 
 .Lsys_dual_store:
@@ -5437,23 +5402,20 @@ sys_strcmp_dual_p_impl:
     cp    r24, r25
     brne  .Lsys_dual_compare_mismatch
 
-    lds   r24, data_compare_mode
-    tst   r24
+    lds   r26, data_compare_mode
+    tst   r26
     brne  .Lsys_dual_strcmp_equal
 
     ; memcmp: a reached zero bound is equal, and NUL is an ordinary byte.
     lds   r24, data_compare_remaining+0
     lds   r25, data_compare_remaining+1
-    subi  r24, 1
-    sbci  r25, 0
+    sbiw  r24, 1
     sts   data_compare_remaining+0, r24
     sts   data_compare_remaining+1, r25
-    or    r24, r25
     brne  .Lsys_dual_advance
     rjmp  .Lsys_progmem_compare_equal
 
 .Lsys_dual_strcmp_equal:
-    lds   r24, data_compare_left_byte
     tst   r24
     brne  .Lsys_dual_advance
     rjmp  .Lsys_progmem_compare_equal
@@ -5504,8 +5466,7 @@ sys_dual_increment24_func:
 ; AS0 strlen from the flash window. r4 names the source and receives the count;
 ; the source is translated before r4 is cleared.
 sys_strlen_flash_impl:
-    mov   r24, VM_R4L
-    mov   r25, VM_R4H
+    movw  r24, VM_R4
     subi  r25, 0x06
     clr   r26
     clr   VM_R4L
@@ -5673,8 +5634,8 @@ sys_strncat_flash_impl:
     rjmp  cluster_tail_18
 
 sys_progmem_services_end:
-.if (sys_progmem_services_end - sys_progmem_services_start) != 732
-    .error "program-memory SYS subsystem must occupy exactly 366 AVR words"
+.if (sys_progmem_services_end - sys_progmem_services_start) != 704
+    .error "program-memory SYS subsystem must occupy exactly 352 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -5690,7 +5651,7 @@ sys_progmem_services_end:
 ;
 ; Comparison services return the exact signed unsigned-byte difference.
 ; strncpy and strncat retain the original destination in r4. The bounded copy
-; engine is shared by both string-copy services and returns NUL status in T.
+; engine is shared by both string-copy services and returns the last byte copied.
 ; All services preserve VM_FLAGS and every nondestination architectural input.
 
 sys_ram_string_services_start:
@@ -5704,8 +5665,8 @@ sys_ram_string_services_start:
     sbc   VM_R4H, ZERO
     rjmp  cluster_tail_18
 .Lsys_ram_compare_zero:
-    sub   r0, r0                 ; zero r0 and clear carry
-    rjmp  .Lsys_ram_compare_store_difference
+    movw  VM_R4, r24             ; remaining count is already zero
+    rjmp  cluster_tail_18
 
 ; int memcmp(void const *lhs, void const *rhs, uint16_t n)
 ;   r4 = lhs/result, r5 = rhs, r6 = n
@@ -5778,19 +5739,14 @@ sys_strlen_impl:
 
 ; Shared bounded RAM copy-until-NUL engine for strncpy and strncat.
 ; Inputs: X=source, Z=destination, r24:r25=nonzero maximum count.
-; Outputs: X/Z one past copied bytes, r24:r25 unused count, T=1 iff a NUL
-; was copied. CPSE preserves the native Z flag produced by SBIW.
+; Outputs: X/Z one past copied bytes, r24:r25 remaining count, r0 last byte
+; copied. CPSE preserves the native Z flag produced by SBIW for the caller.
 sys_copy_string_n_func:
-    clt
 .Lsys_copy_string_n_loop:
     ld    r0, X+
     st    Z+, r0
     sbiw  r24, 1
     cpse  r0, ZERO
-    rjmp  .Lsys_copy_string_n_nonzero
-    set
-    ret
-.Lsys_copy_string_n_nonzero:
     brne  .Lsys_copy_string_n_loop
     ret
 
@@ -5836,7 +5792,7 @@ sys_strncat_impl:
 
     movw  r26, VM_R5
     rcall sys_copy_string_n_func
-    brts  .Lsys_ram_string_done
+    cpse  r0, ZERO
     st    Z, ZERO                ; count exhausted before source NUL
 .Lsys_ram_string_done:
     rjmp  cluster_tail_18
@@ -5844,8 +5800,8 @@ sys_strncat_impl:
     jmp   sys_strncat_flash_impl
 
 sys_ram_string_services_end:
-.if (sys_ram_string_services_end - sys_ram_string_services_start) != 198
-    .error "data-memory string SYS subsystem must occupy exactly 99 AVR words"
+.if (sys_ram_string_services_end - sys_ram_string_services_start) != 190
+    .error "data-memory string SYS subsystem must occupy exactly 95 AVR words"
 .endif
 
 
@@ -6003,7 +5959,7 @@ sys_display_service_end:
 ; Valid q offsets are 0,4,8,12 and valid r offsets are 0,2,...,14. Common
 ; validation rejects a non-q high operand or an odd low operand; CMP32 also
 ; rejects a low operand that is not q-aligned. X addresses the high operand
-; and Z addresses the low operand.
+; and Z holds the low operand's offset from register-file address 8.
 ;
 ; The generic width-one F0 decoder launches RRSPEC at cycle 9 after F0-slot
 ; entry and reaches this one-word veneer body at cycle 23. The one required
@@ -6041,10 +5997,9 @@ f0_cold32:
     subi  r26, -8
     mov   r27, ZERO
 
-    ; Z = native register-file pointer for the low operand.
+    ; Access the low operand with displacements from Z to avoid adding 8.
     mov   r30, F0_COLD32_SPEC
     andi  r30, 0x0f
-    subi  r30, -8
     mov   r31, ZERO
 
     ; Operation index zero selects CMP32; memory forms share address capture.
@@ -6053,8 +6008,8 @@ f0_cold32:
 
     ; Capture the effective data-space address before reading/writing a
     ; potentially overlapping q operand.
-    ld    r0, Z+
-    ld    r1, Z
+    ldd   r0, Z+8
+    ldd   r1, Z+9
     movw  Z, r0
 
     ; Operation index one is LD32; index two falls through to ST32.
@@ -6096,13 +6051,13 @@ f0_cold32_cmp32:
     ld    r24, X+
     ld    r25, X
 
-    ld    r26, Z+
+    ldd   r26, Z+8
     cp    r0,  r26
-    ld    r26, Z+
+    ldd   r26, Z+9
     cpc   r1,  r26
-    ld    r26, Z+
+    ldd   r26, Z+10
     cpc   r24, r26
-    ld    r26, Z
+    ldd   r26, Z+11
     cpc   r25, r26
 
     in    r24, SREG
@@ -6115,8 +6070,7 @@ f0_cold32_invalid:
 ; Four contiguous flash bytes land at the destination register quad. Z is the
 ; captured effective address and X the destination; one transaction copies all.
 f0_cold32_ld32_flash:
-    mov   r24, r30
-    mov   r25, r31
+    movw  r24, r30
     subi  r25, 0x06
     movw  r30, r26               ; Z = destination register-file address
     clr   r26
@@ -6130,8 +6084,8 @@ f0_cold32_ld32_flash:
     rjmp  seek_and_dispatch_func_disabled
 
 f0_cold32_end:
-.if (f0_cold32_end - f0_cold32_start) != 156
-    .error "F0 cold-32 subsystem must occupy exactly seventy-eight AVR words"
+.if (f0_cold32_end - f0_cold32_start) != 152
+    .error "F0 cold-32 subsystem must occupy exactly seventy-six AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -6219,8 +6173,7 @@ f0_coldmem_flash:
     push  r1
     push  r30
     push  r31
-    mov   r24, r30
-    mov   r25, r31
+    movw  r24, r30
     subi  r25, 0x06
     movw  r30, r26               ; Z = destination register-file address
     clr   r26
@@ -6276,8 +6229,8 @@ f0_coldmem_store:
     rjmp  cluster_a_tail_18
 
 f0_coldmem_end:
-.if (f0_coldmem_end - f0_coldmem_start) != 166
-    .error "F0 general-pointer subsystem must occupy exactly eighty-three AVR words"
+.if (f0_coldmem_end - f0_coldmem_start) != 164
+    .error "F0 general-pointer subsystem must occupy exactly eighty-two AVR words"
 .endif
 
 ; F0 retains one-word veneers for every cold form. All valid secondaries
@@ -7721,49 +7674,6 @@ fe_mul16_bodies_end:
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; External-flash bytecode stream positioning
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; Seek to the current 24-bit image-relative VM PC and prime one byte. The
-; physical W25Q128 address is (data_page_data << 8) + VM_PC, modulo 24 bits.
-fx_seek_to_pc:
-    fx_disable
-    ldi  r30, SFC_READ
-    fx_enable
-    out  SPDR, r30
-
-    lds  r26, data_page_data+0
-    add  r26, VM_PCM
-    lds  r27, data_page_data+1
-    adc  r27, VM_PCH
-
-    ; A meaningful transmitted address byte must avoid cycle 17, where the
-    ; AVR transmits zero. Match the common seek path's 18-cycle first gap.
-    rcall fx_seek_delay_11
-    out  SPDR, r27
-    rcall fx_seek_delay_17
-    out  SPDR, r26
-    rcall fx_seek_delay_17
-    out  SPDR, VM_PCL
-    rcall fx_seek_delay_17
-    out  SPDR, ZERO
-
-    ; Wait 16 cycles by tail-jumping into the ladder (2 + 10 + 4 from its RET).
-    ; The addressed byte is ready in SPDR when this routine returns.
-    rjmp fx_seek_delay_17
-
-; Fixed delay ladder. Each name denotes total cycles from the calling RCALL
-; through the returning RET. It uses LPM, which overwrites r0: its only user,
-; fx_seek_to_pc, runs once during startup, where r0 is dead.
-fx_seek_delay_17:
-    delay_3
-    delay_3
-fx_seek_delay_11:
-    nop
-    delay_3
-    ret
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Reset/startup
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -7832,9 +7742,9 @@ startup_read_header:
     ; image size, including bytes whose initial value is zero. It is also the
     ; number of bytes copied from image offset 0x0100 to SRAM address 0x0100.
     rcall fx_startup_read_byte
-    mov  r16, r30
+    mov  r24, r30
     rcall fx_startup_read_byte
-    mov  r17, r30
+    mov  r25, r30
 
     ; saveSize at header offset 0x0A. Startup uses it only for validation;
     ; persistence services reread it from the image header on every call.
@@ -7849,31 +7759,29 @@ startup_read_header:
 
     ; saveSize <= dataSize because the saved region is part of the data image
     ; copied into SRAM.
-    cp   r16, r20
-    cpc  r17, r21
+    cp   r24, r20
+    cpc  r25, r21
     brlo startup_invalid_image
 1:
 
     ; dataSize <= 1024. Values below 0x0400 are accepted; 0x0400 itself is
     ; accepted only when the low byte is zero.
-    cpi  r17, 0x04
+    cpi  r25, 0x04
     brlo 1f
     brne startup_invalid_image
 2:
-    tst  r16
+    tst  r24
     brne startup_invalid_image
 1:
 
     ; A nonzero save request requires either a keyed flashcart save page or the
     ; development layout with a final 4 KiB save sector. The preceding checks
-    ; already imply saveSize <= 1024.
-    cp   r20, ZERO
-    cpc  r21, ZERO
-    breq 3f
+    ; already imply saveSize <= 1024. Both saveSize bytes are dead after this test.
+    or   r20, r21
+    breq startup_copy_data
     lds  r26, data_startup_flags
     sbrs r26, STARTUP_SAVE_PAGE_VALID
     rjmp startup_invalid_image
-3:
     rjmp startup_copy_data
 
     ; Rejected image. This halt sits here so that every header check reaches it
@@ -7887,8 +7795,7 @@ startup_invalid_image_loop:
     ; Copy the complete data image, including explicitly stored zero bytes.
     ; No separate .bss clear is performed.
 startup_copy_data:
-    cp   r16, ZERO
-    cpc  r17, ZERO
+    sbiw r24, 0
     breq startup_enter_image
 
     ; Static initializers always begin at image offset 0x0100, one page after
@@ -7906,8 +7813,7 @@ startup_copy_data:
 startup_copy_data_loop:
     rcall fx_startup_read_byte
     st   X+, r30
-    subi r16, 1
-    sbci r17, 0
+    sbiw r24, 1
     brne startup_copy_data_loop
     fx_disable
 
@@ -8008,17 +7914,10 @@ startup_clear_framebuffer_loop:
     sts  data_audio_music_volume, r24
     sts  data_audio_sfx_volume, r24
 
-    ; VM_PCH:VM_PCM:VM_PCL already contains the image entry point. Seek to
-    ; it, consume the first primary opcode, and start the following transfer.
-    rcall fx_seek_to_pc
-    in   PRIMARY_OPCODE, SPDR
-    out  SPDR, ZERO
-    sei
-    delay_1
-    mul  PRIMARY_OPCODE, FOUR
-    movw r30, r0
-    subi r31, hi8(-(pm(primary_table)))
-    ijmp
+    ; VM_PC contains the image entry point. The shared seek primes dispatch
+    ; and enables interrupts at its opcode handoff. No audio tick can be
+    ; pending yet because startup cleared the count with interrupts masked.
+    jmp  seek_and_dispatch_func
 
 
 ; Startup-only zero writes, in order. All timers below are stopped and masked
@@ -8057,19 +7956,17 @@ startup_try_tail:
 
     ; imagePageCount, little-endian. Zero is never valid.
     rcall fx_startup_read_byte
-    mov  r0, r30
+    mov  r24, r30
     rcall fx_startup_read_byte
-    mov  r1, r30
+    mov  r25, r30
     fx_disable
-    cp   r0, ZERO
-    cpc  r1, ZERO
+    sbiw r24, 0
     breq startup_try_tail_fail_disabled
 
     ; imageBasePage = pageAfterTail - imagePageCount.
-    mov  r26, r20
-    mov  r27, r21
-    sub  r26, r0
-    sbc  r27, r1
+    movw r26, r20
+    sub  r26, r24
+    sbc  r27, r25
     sts  data_page_data+0, r26
     sts  data_page_data+1, r27
     sec
@@ -8420,8 +8317,7 @@ ff_poly:
     rol   r25
     lsl   r24
     rol   r25
-    subi  r24, -1
-    sbci  r25, 0xFF
+    adiw  r24, 1
     add   VM_PCL, r24
     adc   VM_PCM, r25
     adc   VM_PCH, ZERO
@@ -9170,8 +9066,7 @@ sys_memmove_impl:
     movw  r26, VM_R5             ; X = source
     movw  r24, VM_R6             ; r25:r24 = remaining count
 
-    mov   r0, r24
-    or    r0, r25
+    sbiw  r24, 0
     breq  .Lsys_memcpy_done
 
     cp    r30, r26
@@ -9217,8 +9112,7 @@ sys_memcpy_impl:
     movw  r30, VM_R4             ; Z = destination
     movw  r26, VM_R5             ; X = source
     movw  r24, VM_R6             ; r25:r24 = remaining count
-    mov   r1, r24
-    or    r1, r25
+    sbiw  r24, 0
     breq  .Lsys_memcpy_done
 .Lsys_memcpy_loop:
     ; Native T retains the low count bit while r24:r25 counts byte pairs.
@@ -9284,10 +9178,8 @@ sys_memset_impl:
     movw  r30, VM_R4             ; Z = destination
     movw  r24, VM_R6             ; r25:r24 = remaining count
     mov   r0, VM_R5L             ; low8(val), as required by C memset
-    mov   r1, r24
-    or    r1, r25
+    sbiw  r24, 0
     breq  .Lsys_memset_done
-.Lsys_memset_loop:
     ; Handle two bytes per count update, then the optional odd byte.
     bst   r24, 0
     lsr   r25
@@ -9802,8 +9694,7 @@ draw_bitmap_seek_visible_text_func:
     push  r23
 
 .Lsprite_raw_registers_ready:
-    mov   r8, r0                    ; source width, later current row mask
-    mov   r9, r1                    ; source height, later overwrite low mask
+    movw  r8, r0                    ; source width and height
     movw  r20, r24
     mov   r22, r26                  ; selected frame image-relative pointer
 
@@ -14775,8 +14666,7 @@ format_conversion_float_hex:
     lsl   r20
     rol   r21
     rol   r22
-    subi  r26, 1
-    sbci  r27, 0
+    sbiw  r26, 1
     rjmp  .Lformat_float_hex_subnormal_loop
 .Lformat_float_hex_subnormal_ready:
 
@@ -15441,8 +15331,7 @@ audio_read_event:
 audio_event_finish:
     ld   r24, X+
     clr  r25
-    subi r24, -1
-    sbci r25, -1
+    adiw r24, 1
     movw r30, r16
     std  Z+AUDIO_WAIT, r24
     std  Z+AUDIO_WAIT+1, r25

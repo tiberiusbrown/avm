@@ -208,7 +208,7 @@ struct call_t { char const* name; char const* target; unsigned bytes, opcode, be
 constexpr call_t calls[] = {
     {"call8_site", "call8_target", 2, 0xd5, 128, 127},
     {"call16_site", "call16_target", 3, 0xe1, 135, 136},
-    {"callf_site", "callf_target", 4, 0xe3, 150, 150},
+    {"callf_site", "callf_target", 4, 0xe3, 150, 149},
     {"callp_site_0", "callp_target", 1, 0xe8, 117, 119},
     {"callp_site_1", "callp_target", 1, 0xe9, 117, 119},
     {"callp_site_2", "callp_target", 1, 0xea, 117, 119},
@@ -330,7 +330,8 @@ int main(int argc, char** argv)
                   << " stack-bound cases: all calls/RET/carries, signed ADJSP, SETSP r0-r7, C/Z/S, memory and fatal paths.\n"
                   << "Measured ADJSP=35, CALL8=" << (h.checked ? 127 : 128)+h.seek_overhead
                   << ", CALL16=" << (h.checked ? 136 : 135)+h.seek_overhead
-                  << ", CALLF=" << 150+h.seek_overhead << ", all CALLP=" << (h.checked ? 119 : 117)+h.seek_overhead
+                  << ", CALLF=" << (h.checked ? 149 : 150)+h.seek_overhead
+                  << ", all CALLP=" << (h.checked ? 119 : 117)+h.seek_overhead
                   << ", all SETSP=" << (h.checked ? 55 : 52) << ", RET=" << 110+h.seek_overhead << " cycles.\n";
         return 0;
     } catch(std::exception const& error) {

@@ -5,5 +5,5 @@
       549628   member_pointers.cpp
      8469238   ranges_sort.cpp
       623037   scoped_lifetime.cpp
-     1818071   template_specialization.cpp
+     1813463   template_specialization.cpp
       688752   virtual_dispatch.cpp

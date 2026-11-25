@@ -5736,98 +5736,6 @@ sys_display_service_end:
 ; CMP32 captures the complete left operand before reusing XL as scratch, so
 ; qL == qR is fully defined.
 
-; CMP32 has its own entry. Eight of the sixteen valid operand pairs account for
-; nearly all executions (the six most frequent alone for four fifths), so they compare the register-file quads
-; directly (no pointer decode and no byte loads); the rest take the generic path
-; below. The CLR is the cadence slot that SUBI occupies for LD32/ST32 and
-; leaves the operation index zero for that fallback. The tests are ordered by
-; frequency; the first pair's IN reaches its legal cycle exactly, later pairs
-; add two cycles each.
-f0_cmp32_entry:
-    clr   SECONDARY_OPCODE
-    add   VM_PCL, ONE
-    cli
-    out   SPDR, ZERO
-    in    F0_COLD32_SPEC, SPDR
-    sei
-    adc   VM_PCM, ZERO
-    adc   VM_PCH, ZERO
-
-    cpi   F0_COLD32_SPEC, 0xC4    ; q3 vs q1
-    breq  .Lf0_cmp32_q3_q1
-    cpi   F0_COLD32_SPEC, 0x48    ; q1 vs q2
-    breq  .Lf0_cmp32_q1_q2
-    cpi   F0_COLD32_SPEC, 0xC0    ; q3 vs q0
-    breq  .Lf0_cmp32_q3_q0
-    cpi   F0_COLD32_SPEC, 0x4C    ; q1 vs q3
-    breq  .Lf0_cmp32_q1_q3
-    cpi   F0_COLD32_SPEC, 0x84    ; q2 vs q1
-    breq  .Lf0_cmp32_q2_q1
-    cpi   F0_COLD32_SPEC, 0x40    ; q1 vs q0
-    breq  .Lf0_cmp32_q1_q0
-    cpi   F0_COLD32_SPEC, 0x80    ; q2 vs q0
-    breq  .Lf0_cmp32_q2_q0
-    cpi   F0_COLD32_SPEC, 0x04    ; q0 vs q1
-    breq  .Lf0_cmp32_q0_q1
-    rjmp  f0_cold32_validate
-
-.Lf0_cmp32_q3_q1:
-    cp    r20, r12
-    cpc   r21, r13
-    cpc   r22, r14
-    cpc   r23, r15
-    in    r24, SREG
-    rjmp  flags_commit_b_18
-.Lf0_cmp32_q1_q2:
-    cp    r12, r16
-    cpc   r13, r17
-    cpc   r14, r18
-    cpc   r15, r19
-    in    r24, SREG
-    rjmp  flags_commit_b_18
-.Lf0_cmp32_q3_q0:
-    cp    r20, r8
-    cpc   r21, r9
-    cpc   r22, r10
-    cpc   r23, r11
-    in    r24, SREG
-    rjmp  flags_commit_b_18
-.Lf0_cmp32_q1_q3:
-    cp    r12, r20
-    cpc   r13, r21
-    cpc   r14, r22
-    cpc   r15, r23
-    in    r24, SREG
-    rjmp  flags_commit_b_18
-.Lf0_cmp32_q2_q1:
-    cp    r16, r12
-    cpc   r17, r13
-    cpc   r18, r14
-    cpc   r19, r15
-    in    r24, SREG
-    rjmp  flags_commit_b_18
-.Lf0_cmp32_q1_q0:
-    cp    r12, r8
-    cpc   r13, r9
-    cpc   r14, r10
-    cpc   r15, r11
-    in    r24, SREG
-    rjmp  flags_commit_b_18
-.Lf0_cmp32_q2_q0:
-    cp    r16, r8
-    cpc   r17, r9
-    cpc   r18, r10
-    cpc   r19, r11
-    in    r24, SREG
-    rjmp  flags_commit_b_18
-.Lf0_cmp32_q0_q1:
-    cp    r8, r12
-    cpc   r9, r13
-    cpc   r10, r14
-    cpc   r11, r15
-    in    r24, SREG
-    rjmp  flags_commit_b_18
-
 f0_cold32_start:
 f0_cold32_delay_1:
     subi  SECONDARY_OPCODE, 0x69  ; 0=CMP32, 1=LD32, 2=ST32
@@ -5841,7 +5749,6 @@ f0_cold32:
     adc   VM_PCH, ZERO
 
     ; Common validity: high operand must be q-aligned and low operand r-aligned.
-f0_cold32_validate:
     mov   r26, F0_COLD32_SPEC
     andi  r26, 0x31
     brne  f0_cold32_invalid
@@ -6179,7 +6086,7 @@ f0_veneer_table:
     rjmp  f0_ldp32_post_body
 
     ; 69-6B: CMP32 / LD32 / ST32; trailing byte is pre-scaled RRSPEC.
-    rjmp  f0_cmp32_entry
+    rjmp  f0_cold32_delay_1
     rjmp  f0_cold32_delay_1
     rjmp  f0_cold32_delay_1
 
@@ -7302,15 +7209,6 @@ secondary_tables_after_cluster_c:
     mov   \dstl, \dsth
     clr   \dsth
     andi  r26, 7
-    breq  .Lfa_lsr_done_\@
-    ; Shifts by 15 are the most common right shift; after the byte move only the
-    ; old sign bit remains, so three instructions replace seven loop passes.
-    cpi   r26, 7
-    brne  .Lfa_lsr_loop_\@
-    lsl   \dstl
-    clr   \dstl
-    rol   \dstl
-    rjmp  cluster_c_tail_18
 .Lfa_lsr_no8_\@:
     breq  .Lfa_lsr_done_\@
 .Lfa_lsr_loop_\@:
@@ -7321,8 +7219,8 @@ secondary_tables_after_cluster_c:
 .Lfa_lsr_done_\@:
     rjmp  cluster_c_tail_18
 .Lfa_lsr_end_\@:
-    .if (.Lfa_lsr_end_\@ - \label) != 38
-        .error "FA LSR16V shared body is not exactly nineteen AVR words"
+    .if (.Lfa_lsr_end_\@ - \label) != 24
+        .error "FA LSR16V shared body is not exactly twelve AVR words"
     .endif
 .endm
 
@@ -7335,12 +7233,6 @@ secondary_tables_after_cluster_c:
     lsl   \dsth
     sbc   \dsth, \dsth
     andi  r26, 7
-    breq  .Lfa_asr_done_\@
-    ; Shifts by 15 leave only the sign: the high byte already holds it.
-    cpi   r26, 7
-    brne  .Lfa_asr_loop_\@
-    mov   \dstl, \dsth
-    rjmp  cluster_c_tail_18
 .Lfa_asr_no8_\@:
     breq  .Lfa_asr_done_\@
 .Lfa_asr_loop_\@:
@@ -7351,8 +7243,8 @@ secondary_tables_after_cluster_c:
 .Lfa_asr_done_\@:
     rjmp  cluster_c_tail_18
 .Lfa_asr_end_\@:
-    .if (.Lfa_asr_end_\@ - \label) != 36
-        .error "FA ASR16V shared body is not exactly eighteen AVR words"
+    .if (.Lfa_asr_end_\@ - \label) != 26
+        .error "FA ASR16V shared body is not exactly thirteen AVR words"
     .endif
 .endm
 
@@ -7446,8 +7338,8 @@ emit_fa_asr_body fa_asr_r6, r20, r21
 emit_fa_asr_body fa_asr_r7, r22, r23
 
 fa_shift_bodies_end:
-.if (fa_shift_bodies_end - fa_forward_table_end) != ((4 * 12 + 4 * 19 + 4 * 18) * 2)
-    .error "FA shared shift bodies must occupy exactly 384 bytes"
+.if (fa_shift_bodies_end - fa_forward_table_end) != ((8 * 12 + 4 * 13) * 2)
+    .error "FA shared shift bodies must occupy exactly 296 bytes"
 .endif
 
 cmov_table:

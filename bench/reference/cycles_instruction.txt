@@ -72,13 +72,13 @@
    70   LSR16V r4,r5 (count 6)
    75   LSR16V r4,r5 (count 7)
    44   LSR16V r4,r5 (count 8)
-   50   LSR16V r4,r5 (count 9)
-   55   LSR16V r4,r5 (count 10)
-   60   LSR16V r4,r5 (count 11)
-   65   LSR16V r4,r5 (count 12)
-   70   LSR16V r4,r5 (count 13)
-   75   LSR16V r4,r5 (count 14)
-   48   LSR16V r4,r5 (count 15)
+   47   LSR16V r4,r5 (count 9)
+   52   LSR16V r4,r5 (count 10)
+   57   LSR16V r4,r5 (count 11)
+   62   LSR16V r4,r5 (count 12)
+   67   LSR16V r4,r5 (count 13)
+   72   LSR16V r4,r5 (count 14)
+   77   LSR16V r4,r5 (count 15)
    42   ASR16V r4,r5 (count 0)
    45   ASR16V r4,r5 (count 1)
    50   ASR16V r4,r5 (count 2)
@@ -88,13 +88,13 @@
    70   ASR16V r4,r5 (count 6)
    75   ASR16V r4,r5 (count 7)
    45   ASR16V r4,r5 (count 8)
-   51   ASR16V r4,r5 (count 9)
-   56   ASR16V r4,r5 (count 10)
-   61   ASR16V r4,r5 (count 11)
-   66   ASR16V r4,r5 (count 12)
-   71   ASR16V r4,r5 (count 13)
-   76   ASR16V r4,r5 (count 14)
-   47   ASR16V r4,r5 (count 15)
+   48   ASR16V r4,r5 (count 9)
+   53   ASR16V r4,r5 (count 10)
+   58   ASR16V r4,r5 (count 11)
+   63   ASR16V r4,r5 (count 12)
+   68   ASR16V r4,r5 (count 13)
+   73   ASR16V r4,r5 (count 14)
+   78   ASR16V r4,r5 (count 15)
    44   LSL16I r4,0
    47   LSL16I r4,1
    52   LSL16I r4,2
@@ -120,13 +120,13 @@
    72   LSR16I r4,6
    77   LSR16I r4,7
    46   LSR16I r4,8
-   52   LSR16I r4,9
-   57   LSR16I r4,10
-   62   LSR16I r4,11
-   67   LSR16I r4,12
-   72   LSR16I r4,13
-   77   LSR16I r4,14
-   50   LSR16I r4,15
+   49   LSR16I r4,9
+   54   LSR16I r4,10
+   59   LSR16I r4,11
+   64   LSR16I r4,12
+   69   LSR16I r4,13
+   74   LSR16I r4,14
+   79   LSR16I r4,15
    44   ASR16I r4,0
    47   ASR16I r4,1
    52   ASR16I r4,2
@@ -136,13 +136,13 @@
    72   ASR16I r4,6
    77   ASR16I r4,7
    47   ASR16I r4,8
-   53   ASR16I r4,9
-   58   ASR16I r4,10
-   63   ASR16I r4,11
-   68   ASR16I r4,12
-   73   ASR16I r4,13
-   78   ASR16I r4,14
-   49   ASR16I r4,15
+   50   ASR16I r4,9
+   55   ASR16I r4,10
+   60   ASR16I r4,11
+   65   ASR16I r4,12
+   70   ASR16I r4,13
+   75   ASR16I r4,14
+   80   ASR16I r4,15
    38   MUL8 r4,r5
    37   MULU8.W r4,r5
    37   MULS8.W r4,r5
@@ -319,7 +319,7 @@
   464   FMA (retained product residual)
    18   CMP r4,r5 (upper one-byte)
    38   CMP r0,r1 (full F5)
-   67   CMP32 q0,q1 (cold F0)
+   83   CMP32 q0,q1 (cold F0)
    35   CMPI.S8 r4,simm8 (upper)
    55   CMPI.S8 r0,simm8 (cold lower)
    36   TST8 r0

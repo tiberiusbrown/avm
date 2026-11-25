@@ -182,7 +182,7 @@ rjmp  flags_commit_18_delay_1
 
 The landing pad performs the additional `OUT GPIOR0,flag_tmp` and uses the selected cadence delay. This keeps the one-byte `CMP` inside its four-word primary slot and keeps every fixed-width secondary slot unchanged.
 
-Compared with storing flags in a GPR, writers gain one native cycle for the `OUT`. One-byte and ordinary 16-bit flag writers fit within an 18-cycle final cadence. Cold `CMP32` commits `GPIOR0` after its comparison: eight common operand pairs compare the register-file quads directly (53-67 cycles), and the remaining pairs use the runtime-decoded path (97 cycles).
+Compared with storing flags in a GPR, writers gain one native cycle for the `OUT`. One-byte and ordinary 16-bit flag writers fit within an 18-cycle final cadence. Cold `CMP32` commits `GPIOR0` inline after its runtime-decoded comparison and has an approximately 81-cycle complete instruction latency.
 
 ### 3.2. Flag consumers
 
@@ -563,17 +563,16 @@ The C23 binary `%b` and `%B` conversions later raised both interpreters to 28,77
 
 The C23 `wN` and `wfN` length modifiers raise both interpreters to 28,876 bytes, which is 820 bytes below the limit. The parser reads N into `r19`, which `format_get_char` preserves, and accepts only N = 8, 16, 32, and 64 without a leading zero. N = 8 selects the `hh` class, N = 16 selects `h`, and N = 64 selects `ll`. N = 32 has a dedicated class because `l` is also accepted by the character, string, and floating-point conversions, which must reject `wN`. Integer decoding and `%n` treat that class as four bytes. Measured with `avm_bench --instruction-only`, 78 formatter rows moved by 1 to 7 cycles. Every conversion without a length modifier pays one cycle for the `w` test in the length parser. Default and `h` integer widths also pay two cycles for the `w32` comparison in integer decoding, so `%d`, `%#08x`, and `%*.*u` move by 3. `%ld` and `%lu` move by 1, and the mixed `%c %s %S %ld %#x` row moves by 7. The C++ benchmarks are unchanged.
 
-The 2026-11 interpreter timing pass changed only cycle counts, not behaviour, and left both interpreters at 29,580 bytes, 116 below the limit (the baseline was 29,332). Every change was found by recording the cycle of each `SPDR` write for every instruction benchmark: the gap between consecutive writes is 17 cycles (a dummy byte) or 18 (a meaningful byte) when nothing is wasted, so any larger gap marks removable slack. The changes, with the instruction-benchmark rows they moved (cycles before to after):
+The 2026-11 interpreter timing pass changed only cycle counts, not behaviour, and left both interpreters at 29,336 bytes, 360 below the limit (the baseline was 29,332). Every change was found by recording the cycle of each `SPDR` write for every instruction benchmark: the gap between consecutive writes is 17 cycles (a dummy byte) or 18 (a meaningful byte) when nothing is wasted, so any larger gap marks removable slack. The changes, with the instruction-benchmark rows they moved (cycles before to after):
 
 - **Seek restart.** The pending-audio-tick poll moved from in front of the command byte into the command-to-address gap, where it costs nothing; a pending tick waits out the command transfer, services the audio state, and restarts the seek (`audio_service_during_seek`). Every taken transfer, return and service exit is four cycles faster: `RET` and `JMPP` 114 to 110, `CALLP` 123 to 119, `JMP16` 139 to 135, `CALL16` 140 to 136, `JMPF`/`CALLF` 154 to 150, the flash-window and program-space loads and the `memcpy_P`-style services 4 faster. The idle seek is exactly 100 cycles, which the audio suite asserts.
 - **8-bit branches and jumps.** See Section 30: a taken branch is 132 to 118 including the seek change, a not-taken branch 35 to 34, `JMP8` 126 to 118.
 - **Secondary-page tails.** Handlers whose bodies already reach the dispatch late use the standard tail instead of the reverse one and drop padding that predated a faster decoder: `MOV`, `ZEXT8`, `SWAP8`, `GETSP`, `STSP8` (F1) 37 to 35; `ADD`, `SUB`, `MOV32` (F2) 38 to 36; `ST8`, widening multiplies, `LDSP8U` (F3) 38 to 37; shifts by one, `LSL16.1`, `NOT16`, `INC16`, `DEC16` (F4) 38 to 36; `SEXT8`, `BSWAP16`, `NEG16` (F6) 38 to 37; the flag-committing `CMP`, `TST8` and `TST16` lose one cycle, and the unused reverse and delay landings of Clusters A, B and C are gone (68 bytes). F4 has its own decoder (`f4_decode`) whose PC update fills the three cycles the generic width stub spends loading a multiplier, which takes the compact `LDSP16` and `STSP16` from 38 to 36.
 - **Cold stack forms.** `LDSP16` and `STSP16` 64 to 54, as described in Section 9.1.
-- **Cold `CMP32`.** 83 to 67 for the benchmark's `q0,q1` and 53 for the most frequent pair, as described in Section 9.4. `LDM8U` 74 to 72 and `LDM16` 74 to 73.
-- **Shifts by 15.** The `LSR` and `ASR` bodies handle a remaining count of seven after the byte move with one short sequence (`LSR16I r4,15` 79 to 50, `ASR16I r4,15` 80 to 49); counts 9-14 pay three cycles for the extra test. Shifts by 15 are 47% of the right shifts and shifts by 8 are 92% of the left shifts in the benchmark suite.
+- **Absolute loads.** `LDM8U` 74 to 72 and `LDM16` 74 to 73.
 - **Sprite services.** The raw renderer is tail-called by its SYS wrapper and never returns. After a drawn bitmap it restores `r23-r20` while the final dummy transfer drains, then restores the other twelve saved registers inside the idle gaps of the stream restart (`sprite_exit_seek_func`, 68 bytes), which removes the 32 cycles of pops, the return and a jump: every drawn sprite service is 31 cycles faster, an invisible one 4. The renderer no longer saves `r17`, which it only reads (two more cycles), and the redundant copy of the draw mode in the SYS wrapper is gone.
 
-On the instruction benchmarks these changes move 422 of the 881 rows; the only slower rows are counts 9-14 of `LSR16I`, `ASR16I`, `LSR16V` and `ASR16V` (three cycles each, 24 rows) and, in programs but not in the benchmark, the `CMP32` operand pairs outside the eight listed (14 cycles). On the compiled benchmarks the C total falls 6.4% (543.3 M to 508.4 M cycles; all 401 workloads are faster, and the 64-bit division and string-to-integer programs, which are dominated by `LDSP16`, `STSP16` and `CMP32`, gain 9-13%) and the C++ total 3.0% (all nine faster). In the avm_rpg exploration replay (busy cycles excluding the vsync wait, 399 frames in the 128 M-cycle window) the work falls from 88.09 M to 85.54 M cycles (220,780 to 214,386 per frame, -2.9%), with an identical final display hash.
+On the instruction benchmarks these changes move 393 of the 881 rows, none of them slower. On the compiled benchmarks the C total falls 4.9% (543.3 M to 516.9 M cycles; all 401 workloads are faster, and the 64-bit division and string-to-integer programs, which are dominated by `LDSP16` and `STSP16`, gain 6-8%) and the C++ total 3.0% (all nine faster). In the avm_rpg exploration replay (busy cycles excluding the vsync wait, in the 128 M-cycle window) the work falls from 88.09 M to 85.54 M cycles (-2.9%), with an identical final display hash.
 
 The fixed setup costs of that deduplication are below, measured against `2282a60` with the same probe protocol. Per-byte streaming rates are unchanged. RAM `memcpy`, `memmove`, `strncpy`, and `strncat`, and every `memcmp_P`, `strcmp_P`, and `strlen_P` instruction row, are unchanged. The `sys_strncpy_p` and `sys_strncat_p` C workloads each drop by one cycle.
 
@@ -853,13 +852,11 @@ The 32-bit cold operations are encoded as three-byte `F0` instructions:
 
 | Secondary | Instruction | Total bytes | Measured cycles |
 |---:|---|---:|---:|
-| `69` | `CMP32 qL,qR` followed by `RRSPEC` | 3 | 53-67 (eight operand pairs), 97 (other pairs) |
+| `69` | `CMP32 qL,qR` followed by `RRSPEC` | 3 | 83 |
 | `6A` | `LD32 qD,[rA]` followed by `RRSPEC` | 3 | 82 |
 | `6B` | `ST32 [rA],qS` followed by `RRSPEC` | 3 | 81 |
 
 `BOOL rD` is encoded in `F7`, where its fixed-width upper-register implementation avoids runtime register decoding.
-
-`CMP32` has its own veneer target. Eight of its sixteen valid operand pairs account for about 96 percent of executions in the benchmark suite (`q3,q1`, `q1,q2`, `q3,q0`, `q1,q3`, `q2,q1`, `q1,q0`, `q2,q0` and `q0,q1`, in that order of frequency), so the entry tests the `RRSPEC` byte against those eight constants and compares the register-file quads directly with `CP`/`CPC`/`CPC`/`CPC`, then commits the flags through the Cluster B landing. The first pair launches the following opcode at the first legal cycle and costs 53 cycles; each later pair adds two cycles to 67 for `q0,q1`. Any other operand pair, including every invalid encoding, pays the 14 cycles of failed tests and then takes the generic runtime-decoded path described below (97 cycles). `LD32` and `ST32` are unchanged.
 
 #### 9.4.1. `RRSPEC` encoding
 

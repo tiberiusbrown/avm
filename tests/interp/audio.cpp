@@ -2140,9 +2140,13 @@ void automatic(harness& h) {
     h.test("seek overhead and SPI continuation",[&]{
         auto measure=[&](char const* name){h.quiet();h.c().pc=uint16_t(h.sym(name));auto start=h.c().cycle_count;h.tick();h.until([&]{return h.boundary();});return h.c().cycle_count-start;};
         h.c().data[pending]=0;
-        auto bare=measure("seek_and_dispatch_no_audio");
-        auto hooked=measure("seek_and_dispatch_func_disabled");
-        require(hooked-bare==4,"seek hook overhead changed");
+        // The pending-tick poll runs inside the command-to-address gap, so an
+        // idle poll adds nothing: ldi + chip-select cbi + OUT (3), the
+        // 18/18/18/17/17-cycle command, address and dummy cadence, and the
+        // nine-cycle dispatch of the first opcode.
+        auto bare=measure("seek_and_dispatch_func_disabled");
+        require(bare==100,"seek length changed or the pending-tick poll no longer fits the command gap");
+        auto hooked=bare;
         h.c().data[pending]=1;
         auto inactive=measure("seek_and_dispatch_func_disabled");
         std::cout<<"inactive pending-tick seek overhead: "<<inactive-bare<<" cycles\n";

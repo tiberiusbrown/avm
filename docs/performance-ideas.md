@@ -11,7 +11,7 @@
 ## 2. Cost model and profile summary
 
 - Guest code streams from the external flash over SPI, so an instruction costs about 17.5 cycles per encoded byte plus small decode extras ([interpreter guide, Section 5](isa_interpreter_implementation.md#5-timing-model)).
-- A taken branch, jump, call or return restarts the stream and costs about 97 cycles more than its not-taken or one-byte cost (`BREQ8`: 132 taken, 35 not taken).
+- A taken branch, jump, call or return restarts the stream and costs about 97 cycles more than its not-taken or one-byte cost (`BREQ8`: 132 taken, 35 not taken when these figures were measured; the 2026-11 timing pass made it 118 and 34, and a `RET` or `JMPP` 110 instead of 114).
 - Audio interrupts took 19.8% of busy cycles in exploration, so a saving in non-interrupt cycles counts about 1.25 times in observed cycles.
 - avm_rpg exploration replay (398 frames; busy cycles 88.1 M of 128 M, excluding the vsync wait): `sys draw_overwrite` 21%, `sys display` 10.5%, taken control transfers 12.7%, 4-byte absolute `ldm`/`stm` 6.5%, `ldsp16`/`stsp16` 5.8%.
 
@@ -30,7 +30,7 @@
 | Wider compare-and-branch fusion | under 1% | at least 1 KB | Rejected | |
 | Display loop at a 17-cycle byte cadence | at most 0.5 M cycles | about 0 | Unvalidated | Needs OLED timing validation |
 
-Interpreter flash is the shared constraint: the committed interpreter is 29,332 of 29,696 bytes, so 364 bytes are free for all ISA work combined.
+Interpreter flash is the shared constraint. After the 2026-11 interpreter timing pass ([interpreter guide, Section 5](isa_interpreter_implementation.md#5-timing-model)) the interpreter is 29,580 of 29,696 bytes, so 116 bytes are free for all ISA work combined (the figures in this document were measured when 364 were free).
 
 ## 4. `CALLT`: fused table call
 
@@ -111,7 +111,7 @@ Why it works:
 - **SPI timing.** The primary slot is entered with the next byte's transfer already running. The reader's first `SPDR` write must be at least 17 cycles after that transfer began; in this path it is about 26.
 - **Reuse.** The stack-overflow check and pending-audio-tick handling in the push/seek tail apply unchanged. There is no new SRAM and no change to existing code.
 
-**Size:** body 14 B (seven instructions); the interpreter image grows 29,332 → 29,344 bytes (+12 B). That leaves 352 of the 29,696-byte limit; only 364 bytes are free today, so flash is the binding budget for every ISA proposal. Inserting the body moves later code by seven words, within the eight-word allowance in [guide Section 26.4](isa_interpreter_implementation.md#264-static-transfer-reach-considerations).
+**Size:** body 14 B (seven instructions); the interpreter image grows 29,332 → 29,344 bytes (+12 B). That leaves 352 of the 29,696-byte limit when 364 bytes were free; only 116 are free after the 2026-11 timing pass, so flash is the binding budget for every ISA proposal. Inserting the body moves later code by seven words, within the eight-word allowance in [guide Section 26.4](isa_interpreter_implementation.md#264-static-transfer-reach-considerations).
 
 ### 4.4. Measurements
 

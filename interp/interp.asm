@@ -1549,10 +1549,28 @@ emit_primary_immediate primary_CF_cmpi_s8_r7, cmpi_s8_r7_apply, fetch_simm8_then
     assert_primary_slot_width \label
 .endm
 
-emit_primary_rel8 primary_D0_breq8_rel8,  breq8_rel8_decode_func
-emit_primary_rel8 primary_D1_brne8_rel8,  brne8_rel8_decode_func
-emit_primary_rel8 primary_D2_brult8_rel8, brult8_rel8_decode_func
-emit_primary_rel8 primary_D3_brslt8_rel8, brslt8_rel8_decode_func
+; An 8-bit conditional branch resolves its condition in the primary slot, on
+; cycle 9, before the operand byte has finished transferring. SBIC/SBIS skip the
+; taken-branch RJMP exactly when the branch is NOT taken, so each path leaves
+; the slot on a known cycle:
+;   taken      SBIC/SBIS (1) + RJMP (2): branch_rel8_taken_func on cycle 12
+;   not taken  skipped RJMP (2) + the PC increment (1) + RJMP (2): the shared
+;              not-taken decode on cycle 14, ready for the cycle-16 CLI/OUT
+; A taken branch never launches the fallthrough byte, so its target seek can
+; begin as soon as the operand has been read.
+.macro emit_primary_branch8 label, skipop, flag
+\label:
+    \skipop VM_FLAGS, \flag
+    rjmp branch_rel8_taken_func
+    add  VM_PCL, ONE
+    rjmp branch_rel8_not_taken_decode
+    assert_primary_slot_width \label
+.endm
+
+emit_primary_branch8 primary_D0_breq8_rel8,  sbic, SREG_Z
+emit_primary_branch8 primary_D1_brne8_rel8,  sbis, SREG_Z
+emit_primary_branch8 primary_D2_brult8_rel8, sbic, SREG_C
+emit_primary_branch8 primary_D3_brslt8_rel8, sbic, SREG_S
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xD4-0xD7: relative control, ADJSP, and SYS
@@ -1580,8 +1598,8 @@ primary_D7_sys_end:
 ; 0xD8-0xD9: inverted conditional branches
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_rel8 primary_D8_bruge8_rel8, bruge8_rel8_decode_func
-emit_primary_rel8 primary_D9_brsge8_rel8, brsge8_rel8_decode_func
+emit_primary_branch8 primary_D8_bruge8_rel8, sbis, SREG_C
+emit_primary_branch8 primary_D9_brsge8_rel8, sbis, SREG_S
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xDA-0xDF: 16-bit conditional branches
@@ -1779,7 +1797,15 @@ emit_primary_bounded_page primary_F2_dense_3word_page_a, 0x6C, f2_table, seconda
 ; F3 bound 0x80, three-word slots.
 emit_primary_bounded_page primary_F3_dense_3word_page_b, 0x80, f3_table, secondary_width_3_stub
 ; F4 bound 0xB8, three-word slots.
-emit_primary_bounded_page primary_F4_dense_3word_page_c, 0xB8, f4_table, secondary_width_3_stub
+; F4 holds the hottest secondary forms (compact LDSP16/STSP16, INC16/DEC16,
+; TST8), so it has its own decoder: the slot loads the width-three multiplier
+; instead of the limit, and f4_decode compares against an immediate bound.
+primary_F4_dense_3word_page_c:
+    ldi  SECONDARY_MULTIPLIER, 3
+    ldi  r30, lo8(pm(f4_table))
+    ldi  r31, hi8(pm(f4_table))
+    rjmp f4_decode
+    assert_primary_slot_width primary_F4_dense_3word_page_c
 ; F5 bound 0x60, four-word slots.
 emit_primary_bounded_page primary_F5_dense_4word_page_a, 0x60, f5_table, secondary_width_4_stub
 ; F6 bound 0x50, four-word slots.
@@ -2601,6 +2627,27 @@ bounded_page_decoder_end:
     .error "generic bounded decoder and four width stubs must occupy 20 AVR words"
 .endif
 
+; F4 decoder. The primary slot reaches it on cycle 14, and the secondary byte
+; becomes readable on cycle 17. The generic stub spends cycles 14-16 loading its
+; multiplier; here the slot has already loaded it, so the three PC updates fill
+; those cycles and a handler is reached on cycle 28 instead of 30 (the NOP keeps
+; the timing the table-entry tails were laid out for). Four-cycle bodies
+; (LDSP16, STSP16) then reach the standard dispatch exactly on its first legal
+; IN cycle; two-cycle bodies and TST8 pad their tails in Cluster B.
+f4_decode:
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    in   SECONDARY_OPCODE, SPDR
+    out  SPDR, ZERO
+    nop
+    cpi  SECONDARY_OPCODE, 0xB8
+    brsh invalid_secondary
+    mul  SECONDARY_OPCODE, SECONDARY_MULTIPLIER
+    add  r30, r0
+    adc  r31, r1
+    ijmp
+
 ; F8 00-2F: CSET.EQ/NE/ULT/UGE/SLT/SGE r0-r7. The primary slot has
 ; captured VM_FLAGS in r25, selected Z in native T, and cleared XH.
 ; Low/middle PC updates occupy cycles 14/15, then the protected reverse
@@ -2879,59 +2926,49 @@ emit_cmpi_s8_apply cmpi_s8_r7_apply, VM_R7L, VM_R7H
 ; D0-D6 relative control and stack adjustment
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; At entry to each continuation, VM_PC points at the signed operand byte and
-; SPDR contains that byte. Conditional branches immediately start a speculative
-; fetch of the fallthrough opcode. A not-taken branch preserves that stream;
-; a taken branch discards it and restarts at nextPC + sign_extend(rel8).
+; The 8-bit conditional-branch slots resolve their condition on cycle 9 (see
+; emit_primary_branch8), so the taken and not-taken paths never share a decode.
+; A not-taken branch launches the speculative fallthrough fetch on cycle 17
+; and a taken branch never launches it: its flash chip select can rise as soon
+; as the operand has been read.
 
-.macro emit_branch_rel8_decode label, skipop, flag
-\label:
-    ; The primary slot now reaches this continuation on cycle 14 after the
-    ; operand-starting OUT. A two-cycle landing followed by the protected
-    ; reverse handoff places the speculative fallthrough OUT exactly on 17.
-    delay_2
+; Not taken: VM_PC was advanced to the low operand byte by the slot's ADD. Finish
+; the carry chain during cycles 14-15 so the reverse OUT lands on cycle 17.
+; The dispatch below places the fallthrough opcode's own OUT on cycle 34.
+branch_rel8_not_taken_decode:
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
     cli
     out  SPDR, ZERO
     in   PRIMARY_OPCODE, SPDR
     sei
-
-    ; A satisfied condition skips the not-taken jump. SBIS implements a
-    ; branch-on-set condition; SBIC implements a branch-on-clear condition.
-    \skipop VM_FLAGS, \flag
     rjmp branch_rel8_not_taken_func
-    rjmp branch_rel8_taken_func
-.endm
-
-emit_branch_rel8_decode breq8_rel8_decode_func,  sbis, SREG_Z
-emit_branch_rel8_decode brne8_rel8_decode_func,  sbic, SREG_Z
-emit_branch_rel8_decode brult8_rel8_decode_func, sbis, SREG_C
-emit_branch_rel8_decode brslt8_rel8_decode_func, sbis, SREG_S
-emit_branch_rel8_decode bruge8_rel8_decode_func, sbic, SREG_C
-emit_branch_rel8_decode brsge8_rel8_decode_func, sbic, SREG_S
 
 branch_rel8_not_taken_func:
-    ; PRIMARY_OPCODE contains the ignored displacement and VM_PC still names
-    ; that byte. Six inline cycles of padding route through the reverse-order
-    ; dispatch body, with the next OUT occurring 18 cycles after the speculative
-    ; fallthrough OUT.
+    ; PRIMARY_OPCODE contains the ignored displacement and VM_PC names that
+    ; byte. Six inline cycles of padding route through the reverse-order
+    ; dispatch body, with the next OUT occurring 17 cycles after the
+    ; speculative fallthrough OUT.
     delay_4
     delay_2
     rjmp cluster_tail_17
 
+; Taken: entered on cycle 12, with VM_PC still naming the opcode. The operand
+; transfer completes on cycle 17, and nothing else is in flight. Name the
+; operand byte and form the sign-extension high byte while waiting, then read
+; the operand and add it to VM_PC with a carry-in of one, which also supplies
+; the +1 from the operand's address to nextPC. A satisfied branch seeks on
+; cycle 25 instead of 35.
 branch_rel8_taken_func:
-    ; Form the signed high extension only on the taken path. Both sign cases
-    ; take two cycles, which also lets the speculative fallthrough transfer
-    ; finish before seek_and_dispatch_func toggles flash chip select.
-    clr  r25
-    sbrc PRIMARY_OPCODE, 7
-    com  r25
-
-    ; Convert the operand address to nextPC, then add the signed displacement
-    ; in the full modulo-2^24 program address space.
     add  VM_PCL, ONE
     adc  VM_PCM, ZERO
     adc  VM_PCH, ZERO
-    add  VM_PCL, PRIMARY_OPCODE
+    clr  r25
+    sec
+    in   PRIMARY_OPCODE, SPDR
+    sbrc PRIMARY_OPCODE, 7
+    ser  r25
+    adc  VM_PCL, PRIMARY_OPCODE
     adc  VM_PCM, r25
     adc  VM_PCH, r25
     rjmp seek_and_dispatch_func
@@ -3000,22 +3037,19 @@ branch_rel16_block_end:
 ; fetch, sign extension, next-PC calculation, and target addition removes the
 ; shared opcode test and avoids RCALL/RET overhead on CALL8.
 jmp8_rel8_func:
-    ; The operand transfer was started by the preceding primary dispatch. The
-    ; continuation now begins one cycle earlier, so a three-cycle delay places
-    ; this read at the first legal SPI byte boundary.
-    delay_3
-    in   r26, SPDR
-
+    ; The operand transfer was started by the preceding primary dispatch and
+    ; becomes readable on cycle 17. This continuation begins on cycle 14, so the
+    ; three cycles before the read prepare the sign-extension high byte and a
+    ; carry-in of one. VM_PC names the operand byte, so adding the signed
+    ; displacement with a carry-in of one yields nextPC + displacement in
+    ; modulo-2^24 arithmetic. SER and the SBRC skip leave the carry untouched.
     clr  r25
+    sec
+    nop
+    in   r26, SPDR
     sbrc r26, 7
-    com  r25
-
-    ; VM_PC currently names the displacement byte. Advance to nextPC, apply
-    ; the signed displacement in modulo-2^24 arithmetic, and restart the stream.
-    add  VM_PCL, ONE
-    adc  VM_PCM, ZERO
-    adc  VM_PCH, ZERO
-    add  VM_PCL, r26
+    ser  r25
+    adc  VM_PCL, r26
     adc  VM_PCM, r25
     adc  VM_PCH, r25
     rjmp seek_and_dispatch_func
@@ -3364,7 +3398,7 @@ sys_memmove_func:
 ; below within the existing eight-word placement allowance.
 sys_draw_sprite_func:
     subi  PRIMARY_OPCODE, SYS_DRAW_SPRITE_OVERWRITE
-    mov   r27, PRIMARY_OPCODE
+    out   GPIOR1, PRIMARY_OPCODE     ; retain mode across header read/MULs
     jmp   sys_draw_sprite_header_impl
 
 ; SET_SPRITE and the four cached-pointer draw services live beside the sprite
@@ -3375,7 +3409,7 @@ sys_set_sprite_func:
 
 sys_draw_func:
     subi  PRIMARY_OPCODE, SYS_DRAW_OVERWRITE
-    mov   r27, PRIMARY_OPCODE
+    out   GPIOR1, PRIMARY_OPCODE     ; retain mode across cached setup/MULs
     jmp   sys_draw_cached_impl
 
 ; The two fixed-color rectangle entries share a far implementation. The raw
@@ -3488,10 +3522,6 @@ push_pc_seek_and_dispatch_func:
 seek_and_dispatch_func:
     fx_disable
 seek_and_dispatch_func_disabled:
-    lds  r30, data_audio_ticks_pending
-    tst  r30
-    brne audio_service_and_seek
-seek_and_dispatch_no_audio:
     ldi  r30, SFC_READ
     fx_enable
     out  SPDR, r30
@@ -3501,9 +3531,17 @@ seek_and_dispatch_no_audio:
     lds  r27, data_page_data+1
     adc  r27, VM_PCH
 
+    ; Poll for elapsed audio ticks while the command byte is shifting out.
+    ; These four cycles are the first part of the command-to-address gap, so
+    ; the check costs nothing on the ordinary path. r30 is free once the
+    ; command has been written.
+    lds  r30, data_audio_ticks_pending
+    tst  r30
+    brne audio_service_during_seek
+
     ; SFC_READ and each address byte are meaningful transmitted data, so
     ; command-to-address-high also requires the 18-cycle OUT-to-OUT cadence.
-    rcall interp_delay_11
+    rcall interp_delay_7
     out  SPDR, r27
     rcall interp_delay_17
     out  SPDR, r26
@@ -3521,9 +3559,16 @@ seek_and_dispatch_no_audio:
     subi r31, hi8(-(pm(primary_table)))
     ijmp
 
-audio_service_and_seek:
+; Ticks were pending when the command byte was already in flight. Let that
+; transfer finish (chip select may rise at command + 17 or later), service the
+; audio state with the flash deselected, and restart the seek from the top.
+; The branch is taken on command + 10, and the RJMP-free landing is command + 12.
+audio_service_during_seek:
+    delay_3
+    delay_2
+    fx_disable
     call audio_service_func
-    rjmp seek_and_dispatch_no_audio
+    rjmp seek_and_dispatch_func_disabled
 
 ; Local fixed-delay ladder for pre-table interpreter paths. The large dense
 ; secondary tables place the original fx_seek_delay_* ladder outside RCALL's
@@ -3591,7 +3636,7 @@ invalid_secondary_instruction_func:
 .macro emit_f1_mov dst, src
 .Lf1_mov_start_\@:
     movw  \dst, \src
-    rjmp  cluster_a_tail_17_delay_1
+    rjmp  cluster_a_tail_18_delay_1
 .Lf1_mov_end_\@:
     .if (.Lf1_mov_end_\@ - .Lf1_mov_start_\@) != 4
         .error "F1 MOV slot is not exactly two words"
@@ -3601,7 +3646,7 @@ invalid_secondary_instruction_func:
 .macro emit_f1_stsp8 src, q
 .Lf1_stsp8_start_\@:
     std   Y+\q, \src
-    rjmp  cluster_a_tail_17
+    rjmp  cluster_a_tail_18
 .Lf1_stsp8_end_\@:
     .if (.Lf1_stsp8_end_\@ - .Lf1_stsp8_start_\@) != 4
         .error "F1 STSP8 slot is not exactly two words"
@@ -3611,7 +3656,7 @@ invalid_secondary_instruction_func:
 .macro emit_f1_zext8 dsth
 .Lf1_zext8_start_\@:
     clr   \dsth
-    rjmp  cluster_a_tail_17_delay_1
+    rjmp  cluster_a_tail_18_delay_1
 .Lf1_zext8_end_\@:
     .if (.Lf1_zext8_end_\@ - .Lf1_zext8_start_\@) != 4
         .error "F1 ZEXT8 slot is not exactly two words"
@@ -3621,7 +3666,7 @@ invalid_secondary_instruction_func:
 .macro emit_f1_swap8 dstl
 .Lf1_swap8_start_\@:
     swap  \dstl
-    rjmp  cluster_a_tail_17_delay_1
+    rjmp  cluster_a_tail_18_delay_1
 .Lf1_swap8_end_\@:
     .if (.Lf1_swap8_end_\@ - .Lf1_swap8_start_\@) != 4
         .error "F1 SWAP8 slot is not exactly two words"
@@ -3631,7 +3676,7 @@ invalid_secondary_instruction_func:
 .macro emit_f1_getsp dst
 .Lf1_getsp_start_\@:
     movw  \dst, VM_SP
-    rjmp  cluster_a_tail_17_delay_1
+    rjmp  cluster_a_tail_18_delay_1
 .Lf1_getsp_end_\@:
     .if (.Lf1_getsp_end_\@ - .Lf1_getsp_start_\@) != 4
         .error "F1 GETSP slot is not exactly two words"
@@ -3654,7 +3699,7 @@ invalid_secondary_instruction_func:
 .Lf2_add_start_\@:
     add   \dstl, \srcl
     adc   \dsth, \srch
-    rjmp  cluster_a_tail_17
+    rjmp  cluster_a_tail_18
 .Lf2_add_end_\@:
     .if (.Lf2_add_end_\@ - .Lf2_add_start_\@) != 6
         .error "F2 ADD slot is not exactly three words"
@@ -3665,7 +3710,7 @@ invalid_secondary_instruction_func:
 .Lf2_sub_start_\@:
     sub   \dstl, \srcl
     sbc   \dsth, \srch
-    rjmp  cluster_a_tail_17
+    rjmp  cluster_a_tail_18
 .Lf2_sub_end_\@:
     .if (.Lf2_sub_end_\@ - .Lf2_sub_start_\@) != 6
         .error "F2 SUB slot is not exactly three words"
@@ -3676,7 +3721,7 @@ invalid_secondary_instruction_func:
 .Lf2_mov32_start_\@:
     movw  \dst0, \src0
     movw  \dst2, \src2
-    rjmp  cluster_a_tail_17
+    rjmp  cluster_a_tail_18
 .Lf2_mov32_end_\@:
     .if (.Lf2_mov32_end_\@ - .Lf2_mov32_start_\@) != 6
         .error "F2 MOV32 slot is not exactly three words"
@@ -3687,7 +3732,7 @@ invalid_secondary_instruction_func:
 .Lf3_st8_start_\@:
     movw  r26, \addr
     st    X, \srcl
-    rjmp  f3_cluster_tail_18_delay_1
+    rjmp  f3_cluster_tail_18
 .Lf3_st8_end_\@:
     .if (.Lf3_st8_end_\@ - .Lf3_st8_start_\@) != 6
         .error "F3 ST8 slot is not exactly three words"
@@ -3698,7 +3743,7 @@ invalid_secondary_instruction_func:
 .Lf3_mul_start_\@:
     \op   \dstl, \srcl
     movw  \dstl, r0
-    rjmp  f3_cluster_tail_18_delay_1
+    rjmp  f3_cluster_tail_18
 .Lf3_mul_end_\@:
     .if (.Lf3_mul_end_\@ - .Lf3_mul_start_\@) != 6
         .error "F3 widening multiply slot is not exactly three words"
@@ -3709,7 +3754,7 @@ invalid_secondary_instruction_func:
 .Lf3_ldsp8u_start_\@:
     ldd   \dstl, Y+\q
     clr   \dsth
-    rjmp  f3_cluster_tail_18_delay_1
+    rjmp  f3_cluster_tail_18
 .Lf3_ldsp8u_end_\@:
     .if (.Lf3_ldsp8u_end_\@ - .Lf3_ldsp8u_start_\@) != 6
         .error "F3 LDSP8U slot is not exactly three words"
@@ -3742,7 +3787,7 @@ invalid_secondary_instruction_func:
 .Lf4_shift_start_\@:
     \op_hi \dsth
     \op_lo \dstl
-    rjmp  cluster_b_tail_17
+    rjmp  cluster_b_tail_18_delay_2
 .Lf4_shift_end_\@:
     .if (.Lf4_shift_end_\@ - .Lf4_shift_start_\@) != 6
         .error "F4 shift slot is not exactly three words"
@@ -3753,7 +3798,7 @@ invalid_secondary_instruction_func:
 .Lf4_lsl16_start_\@:
     lsl   \dstl
     rol   \dsth
-    rjmp  cluster_b_tail_17
+    rjmp  cluster_b_tail_18_delay_2
 .Lf4_lsl16_end_\@:
     .if (.Lf4_lsl16_end_\@ - .Lf4_lsl16_start_\@) != 6
         .error "F4 LSL16 slot is not exactly three words"
@@ -3764,7 +3809,7 @@ invalid_secondary_instruction_func:
 .Lf4_not16_start_\@:
     com   \dstl
     com   \dsth
-    rjmp  cluster_b_tail_17
+    rjmp  cluster_b_tail_18_delay_2
 .Lf4_not16_end_\@:
     .if (.Lf4_not16_end_\@ - .Lf4_not16_start_\@) != 6
         .error "F4 NOT16 slot is not exactly three words"
@@ -3786,7 +3831,7 @@ invalid_secondary_instruction_func:
 .Lf4_inc16_start_\@:
     add   \dstl, ONE
     adc   \dsth, ZERO
-    rjmp  cluster_b_tail_17
+    rjmp  cluster_b_tail_18_delay_2
 .Lf4_inc16_end_\@:
     .if (.Lf4_inc16_end_\@ - .Lf4_inc16_start_\@) != 6
         .error "F4 INC16 slot is not exactly three words"
@@ -3797,7 +3842,7 @@ invalid_secondary_instruction_func:
 .Lf4_dec16_start_\@:
     sub   \dstl, ONE
     sbc   \dsth, ZERO
-    rjmp  cluster_b_tail_17
+    rjmp  cluster_b_tail_18_delay_2
 .Lf4_dec16_end_\@:
     .if (.Lf4_dec16_end_\@ - .Lf4_dec16_start_\@) != 6
         .error "F4 DEC16 slot is not exactly three words"
@@ -3809,7 +3854,7 @@ invalid_secondary_instruction_func:
     cp    \lhsl, \rhsl
     cpc   \lhsh, \rhsh
     in    SECONDARY_OPCODE, SREG
-    rjmp  flags_commit_b_18_delay_1
+    rjmp  flags_commit_b_18
 .Lf5_cmp_end_\@:
     .if (.Lf5_cmp_end_\@ - .Lf5_cmp_start_\@) != 8
         .error "F5 CMP slot is not exactly four words"
@@ -3872,7 +3917,7 @@ invalid_secondary_instruction_func:
     mov   SECONDARY_OPCODE, \dstl
     mov   \dstl, \dsth
     mov   \dsth, SECONDARY_OPCODE
-    rjmp  cluster_b_tail_18_delay_1
+    rjmp  cluster_b_tail_18
 .Lf6_bswap16_end_\@:
     .if (.Lf6_bswap16_end_\@ - .Lf6_bswap16_start_\@) != 8
         .error "F6 BSWAP16 slot is not exactly four words"
@@ -3884,7 +3929,7 @@ invalid_secondary_instruction_func:
     cp    \dstl, ZERO
     cpc   \dsth, ZERO
     in    SECONDARY_OPCODE, SREG
-    rjmp  flags_commit_b_18_delay_1
+    rjmp  flags_commit_b_18
 .Lf6_tst16_end_\@:
     .if (.Lf6_tst16_end_\@ - .Lf6_tst16_start_\@) != 8
         .error "F6 TST16 slot is not exactly four words"
@@ -3908,7 +3953,7 @@ invalid_secondary_instruction_func:
     clr   \dsth
     sbrc  \dstl, 7
     dec   \dsth
-    rjmp  cluster_b_tail_18_delay_1
+    rjmp  cluster_b_tail_18
 .Lf6_sext8_end_\@:
     .if (.Lf6_sext8_end_\@ - .Lf6_sext8_start_\@) != 8
         .error "F6 SEXT8 slot is not exactly four words"
@@ -3920,7 +3965,7 @@ invalid_secondary_instruction_func:
     neg   \dstl
     adc   \dsth, ZERO
     neg   \dsth
-    rjmp  cluster_b_tail_18_delay_1
+    rjmp  cluster_b_tail_18
 .Lf6_neg16_end_\@:
     .if (.Lf6_neg16_end_\@ - .Lf6_neg16_start_\@) != 8
         .error "F6 NEG16 slot is not exactly four words"
@@ -4079,23 +4124,17 @@ cluster_a_tail:
 cluster_a_tail_17_delay_2:
     rjmp cluster_a_tail_17
 cluster_a_start:
-cluster_a_tail_17_delay_1:
-    nop
 cluster_a_tail_17:
     dispatch_reverse
 
-cluster_a_tail_18_delay_2:
-    rjmp cluster_a_tail_18
-flags_commit_a_18_delay_1:
-    out  VM_FLAGS, SECONDARY_OPCODE
 cluster_a_tail_18_delay_1:
 cluster_tail_18_delay_1:
     nop
 cluster_a_tail_18:
     dispatch
 cluster_a_end:
-.if (cluster_a_end - cluster_a_start) != 48
-    .error "secondary cadence Cluster A must occupy 24 AVR words"
+.if (cluster_a_end - cluster_a_start) != 42
+    .error "secondary cadence Cluster A must occupy 21 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4318,21 +4357,52 @@ f0_stsp8_r_body:
     st    Z, r0
     rjmp  cluster_tail_18
 
+; LDSP16 and STSP16 dominate every compiled program whose frames exceed the
+; compact forms' 16-byte reach, so both are fully scheduled instead of using the
+; shared helper and dispatch tail. The body is entered on cycle 32 while the
+; displacement is still in flight (readable from cycle 35). Z names the
+; register pair through ldd offsets 8 and 9, which removes the register-file
+; base adjustment, and X addresses SP+u8. The three cycles before the read build
+; Z; the read and the following-opcode launch land on cycles 35 and 36, and the
+; remaining sixteen cycles of work end exactly when the standard dispatch's IN
+; becomes legal (launch + 17), so the next opcode launches on cycle 54.
 f0_ldsp16_r_body:
-    rcall f0_fetch_stack_u8_decode_r_to_xz
-    ld    r0, Z+
-    ld    r1, Z
-    st    X+, r0
-    st    X,  r1
-    rjmp  cluster_tail_18
-
-f0_stsp16_r_body:
-    rcall f0_fetch_stack_u8_decode_r_to_xz
+    mov   r30, r24
+    andi  r30, 0x07
+    lsl   r30
+    in    r24, SPDR
+    out   SPDR, ZERO
+    mov   r31, ZERO
+    movw  r26, VM_SP
+    add   r26, r24
+    adc   r27, ZERO
     ld    r0, X+
     ld    r1, X
-    st    Z+, r0
-    st    Z,  r1
-    rjmp  cluster_tail_18
+    std   Z+8, r0
+    std   Z+9, r1
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    dispatch
+
+f0_stsp16_r_body:
+    mov   r30, r24
+    andi  r30, 0x07
+    lsl   r30
+    in    r24, SPDR
+    out   SPDR, ZERO
+    mov   r31, ZERO
+    movw  r26, VM_SP
+    add   r26, r24
+    adc   r27, ZERO
+    ldd   r0, Z+8
+    ldd   r1, Z+9
+    st    X+, r0
+    st    X,  r1
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    dispatch
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; F0 40-5F: absolute data-space forms
@@ -4357,7 +4427,7 @@ f0_ldm8u_r_body:
     ld    r0, Z
     st    X+, r0
     st    X,  ZERO
-    rjmp  cluster_tail_18_delay_3
+    rjmp  cluster_tail_18_delay_1
 f0_ldm8u_flash:
     clr   DISPLACED_SPEC         ; byte width for the shared flash body
     rjmp  displaced_flash_load
@@ -4376,7 +4446,7 @@ f0_ldm16_r_body:
     ld    r1, Z
     st    X+, r0
     st    X,  r1
-    rjmp  cluster_tail_18_delay_1
+    rjmp  cluster_tail_18
 f0_ldm16_flash:
     ldi   DISPLACED_SPEC, 0x10   ; word width for the shared flash body
     rjmp  displaced_flash_load
@@ -5666,6 +5736,98 @@ sys_display_service_end:
 ; CMP32 captures the complete left operand before reusing XL as scratch, so
 ; qL == qR is fully defined.
 
+; CMP32 has its own entry. Eight of the sixteen valid operand pairs account for
+; nearly all executions (the six most frequent alone for four fifths), so they compare the register-file quads
+; directly (no pointer decode and no byte loads); the rest take the generic path
+; below. The CLR is the cadence slot that SUBI occupies for LD32/ST32 and
+; leaves the operation index zero for that fallback. The tests are ordered by
+; frequency; the first pair's IN reaches its legal cycle exactly, later pairs
+; add two cycles each.
+f0_cmp32_entry:
+    clr   SECONDARY_OPCODE
+    add   VM_PCL, ONE
+    cli
+    out   SPDR, ZERO
+    in    F0_COLD32_SPEC, SPDR
+    sei
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    cpi   F0_COLD32_SPEC, 0xC4    ; q3 vs q1
+    breq  .Lf0_cmp32_q3_q1
+    cpi   F0_COLD32_SPEC, 0x48    ; q1 vs q2
+    breq  .Lf0_cmp32_q1_q2
+    cpi   F0_COLD32_SPEC, 0xC0    ; q3 vs q0
+    breq  .Lf0_cmp32_q3_q0
+    cpi   F0_COLD32_SPEC, 0x4C    ; q1 vs q3
+    breq  .Lf0_cmp32_q1_q3
+    cpi   F0_COLD32_SPEC, 0x84    ; q2 vs q1
+    breq  .Lf0_cmp32_q2_q1
+    cpi   F0_COLD32_SPEC, 0x40    ; q1 vs q0
+    breq  .Lf0_cmp32_q1_q0
+    cpi   F0_COLD32_SPEC, 0x80    ; q2 vs q0
+    breq  .Lf0_cmp32_q2_q0
+    cpi   F0_COLD32_SPEC, 0x04    ; q0 vs q1
+    breq  .Lf0_cmp32_q0_q1
+    rjmp  f0_cold32_validate
+
+.Lf0_cmp32_q3_q1:
+    cp    r20, r12
+    cpc   r21, r13
+    cpc   r22, r14
+    cpc   r23, r15
+    in    r24, SREG
+    rjmp  flags_commit_b_18
+.Lf0_cmp32_q1_q2:
+    cp    r12, r16
+    cpc   r13, r17
+    cpc   r14, r18
+    cpc   r15, r19
+    in    r24, SREG
+    rjmp  flags_commit_b_18
+.Lf0_cmp32_q3_q0:
+    cp    r20, r8
+    cpc   r21, r9
+    cpc   r22, r10
+    cpc   r23, r11
+    in    r24, SREG
+    rjmp  flags_commit_b_18
+.Lf0_cmp32_q1_q3:
+    cp    r12, r20
+    cpc   r13, r21
+    cpc   r14, r22
+    cpc   r15, r23
+    in    r24, SREG
+    rjmp  flags_commit_b_18
+.Lf0_cmp32_q2_q1:
+    cp    r16, r12
+    cpc   r17, r13
+    cpc   r18, r14
+    cpc   r19, r15
+    in    r24, SREG
+    rjmp  flags_commit_b_18
+.Lf0_cmp32_q1_q0:
+    cp    r12, r8
+    cpc   r13, r9
+    cpc   r14, r10
+    cpc   r15, r11
+    in    r24, SREG
+    rjmp  flags_commit_b_18
+.Lf0_cmp32_q2_q0:
+    cp    r16, r8
+    cpc   r17, r9
+    cpc   r18, r10
+    cpc   r19, r11
+    in    r24, SREG
+    rjmp  flags_commit_b_18
+.Lf0_cmp32_q0_q1:
+    cp    r8, r12
+    cpc   r9, r13
+    cpc   r10, r14
+    cpc   r11, r15
+    in    r24, SREG
+    rjmp  flags_commit_b_18
+
 f0_cold32_start:
 f0_cold32_delay_1:
     subi  SECONDARY_OPCODE, 0x69  ; 0=CMP32, 1=LD32, 2=ST32
@@ -5679,6 +5841,7 @@ f0_cold32:
     adc   VM_PCH, ZERO
 
     ; Common validity: high operand must be q-aligned and low operand r-aligned.
+f0_cold32_validate:
     mov   r26, F0_COLD32_SPEC
     andi  r26, 0x31
     brne  f0_cold32_invalid
@@ -6016,7 +6179,7 @@ f0_veneer_table:
     rjmp  f0_ldp32_post_body
 
     ; 69-6B: CMP32 / LD32 / ST32; trailing byte is pre-scaled RRSPEC.
-    rjmp  f0_cold32_delay_1
+    rjmp  f0_cmp32_entry
     rjmp  f0_cold32_delay_1
     rjmp  f0_cold32_delay_1
 
@@ -6435,8 +6598,6 @@ f3_table_end:
 
 ; Local copy of the Cluster A 18-cycle tail for the F3 slots. The cluster itself
 ; now lies beyond RJMP reach from this table, and the copy has identical timing.
-f3_cluster_tail_18_delay_1:
-    nop
 f3_cluster_tail_18:
     dispatch
 
@@ -6473,28 +6634,24 @@ emit_f5_ld16_cont  f5_ld16_d3_cont, r14, r15
 f5_ld16_flash:
     jmp   primary_ld16_flash
 
-; Cluster B serves F4-F6 and provides both one- and two-cycle flag-commit
-; landings needed by TST8, CMP, and TST16 families.
+; Cluster B serves F4-F6 and provides the flag-commit landing needed by the
+; TST8, CMP, and TST16 families. Their bodies reach it late enough that the
+; commit OUT and the standard dispatch need no padding.
 cluster_b_start:
-cluster_b_tail_17_delay_1:
-    nop
-cluster_b_tail_17:
-    dispatch_reverse
-
-flags_commit_b_18_delay_2:
-    out  VM_FLAGS, SECONDARY_OPCODE
+; Two-cycle landing for the F4 handlers whose bodies are two cycles long.
 cluster_b_tail_18_delay_2:
     rjmp cluster_b_tail_18
+; One-cycle landing for TST8's flag commit.
 flags_commit_b_18_delay_1:
-    out  VM_FLAGS, SECONDARY_OPCODE
-cluster_b_tail_18_delay_1:
     nop
+flags_commit_b_18:
+    out  VM_FLAGS, SECONDARY_OPCODE
 cluster_b_tail:
 cluster_b_tail_18:
     dispatch
 cluster_b_end:
-.if (cluster_b_end - cluster_b_start) != 50
-    .error "secondary cadence Cluster B must occupy 25 AVR words"
+.if (cluster_b_end - cluster_b_start) != 24
+    .error "secondary cadence Cluster B must occupy 12 AVR words"
 .endif
 
 ; F4-F7 contain their exact native slots. A nearby invalid-secondary shim is
@@ -7037,22 +7194,13 @@ f7_table_end:
 
 ; Cluster C serves F7/F8 and the late forwarding/shared-body pages.
 cluster_c_start:
-cluster_c_tail_17_delay_1:
-    nop
-cluster_c_tail_17:
-    dispatch_reverse
-
-cluster_c_tail_18_delay_2:
-    rjmp cluster_c_tail_18
-cluster_c_tail_18_delay_1:
-    nop
 cluster_c_tail:
 cmov_tail:
 cluster_c_tail_18:
     dispatch
 cluster_c_end:
-.if (cluster_c_end - cluster_c_start) != 46
-    .error "secondary cadence Cluster C must occupy 23 AVR words"
+.if (cluster_c_end - cluster_c_start) != 18
+    .error "secondary cadence Cluster C must occupy 9 AVR words"
 .endif
 
 ; F7 continuations. Each LD8U destination keeps a native RAM continuation that
@@ -7154,6 +7302,15 @@ secondary_tables_after_cluster_c:
     mov   \dstl, \dsth
     clr   \dsth
     andi  r26, 7
+    breq  .Lfa_lsr_done_\@
+    ; Shifts by 15 are the most common right shift; after the byte move only the
+    ; old sign bit remains, so three instructions replace seven loop passes.
+    cpi   r26, 7
+    brne  .Lfa_lsr_loop_\@
+    lsl   \dstl
+    clr   \dstl
+    rol   \dstl
+    rjmp  cluster_c_tail_18
 .Lfa_lsr_no8_\@:
     breq  .Lfa_lsr_done_\@
 .Lfa_lsr_loop_\@:
@@ -7164,8 +7321,8 @@ secondary_tables_after_cluster_c:
 .Lfa_lsr_done_\@:
     rjmp  cluster_c_tail_18
 .Lfa_lsr_end_\@:
-    .if (.Lfa_lsr_end_\@ - \label) != 24
-        .error "FA LSR16V shared body is not exactly twelve AVR words"
+    .if (.Lfa_lsr_end_\@ - \label) != 38
+        .error "FA LSR16V shared body is not exactly nineteen AVR words"
     .endif
 .endm
 
@@ -7178,6 +7335,12 @@ secondary_tables_after_cluster_c:
     lsl   \dsth
     sbc   \dsth, \dsth
     andi  r26, 7
+    breq  .Lfa_asr_done_\@
+    ; Shifts by 15 leave only the sign: the high byte already holds it.
+    cpi   r26, 7
+    brne  .Lfa_asr_loop_\@
+    mov   \dstl, \dsth
+    rjmp  cluster_c_tail_18
 .Lfa_asr_no8_\@:
     breq  .Lfa_asr_done_\@
 .Lfa_asr_loop_\@:
@@ -7188,8 +7351,8 @@ secondary_tables_after_cluster_c:
 .Lfa_asr_done_\@:
     rjmp  cluster_c_tail_18
 .Lfa_asr_end_\@:
-    .if (.Lfa_asr_end_\@ - \label) != 26
-        .error "FA ASR16V shared body is not exactly thirteen AVR words"
+    .if (.Lfa_asr_end_\@ - \label) != 36
+        .error "FA ASR16V shared body is not exactly eighteen AVR words"
     .endif
 .endm
 
@@ -7283,8 +7446,8 @@ emit_fa_asr_body fa_asr_r6, r20, r21
 emit_fa_asr_body fa_asr_r7, r22, r23
 
 fa_shift_bodies_end:
-.if (fa_shift_bodies_end - fa_forward_table_end) != ((8 * 12 + 4 * 13) * 2)
-    .error "FA shared shift bodies must occupy exactly 296 bytes"
+.if (fa_shift_bodies_end - fa_forward_table_end) != ((4 * 12 + 4 * 19 + 4 * 18) * 2)
+    .error "FA shared shift bodies must occupy exactly 384 bytes"
 .endif
 
 cmov_table:
@@ -7665,6 +7828,10 @@ startup_func:
     sts  data_startup_flags, r26
     rjmp startup_read_header
 
+; Nearby landing for the header checks' short branches.
+startup_header_invalid:
+    rjmp startup_invalid_image
+
 startup_find_development_image:
     ; First try an image whose tail is at the physical end of flash. This form
     ; has no following save sector.
@@ -7687,10 +7854,8 @@ startup_find_development_image:
     rjmp startup_invalid_image
 1:
 
-    ldi  r26, FX_DEV_SAVE_PAGE_LO
-    ldi  r27, FX_DEV_SAVE_PAGE_HI
-    sts  data_page_save+0, r26
-    sts  data_page_save+1, r27
+    sts  data_page_save+0, r20
+    sts  data_page_save+1, r21
     ldi  r26, _BV(STARTUP_SAVE_PAGE_VALID)
     sts  data_startup_flags, r26
 
@@ -7704,31 +7869,21 @@ startup_read_header:
     ; magic[4]
     rcall fx_startup_read_byte
     cpi  r30, AVM_HEADER_MAGIC0
-    breq 1f
-    rjmp startup_invalid_image
-1:
+    brne startup_header_invalid
     rcall fx_startup_read_byte
     cpi  r30, AVM_HEADER_MAGIC1
-    breq 1f
-    rjmp startup_invalid_image
-1:
+    brne startup_header_invalid
     rcall fx_startup_read_byte
     cpi  r30, AVM_HEADER_MAGIC2
-    breq 1f
-    rjmp startup_invalid_image
-1:
+    brne startup_header_invalid
     rcall fx_startup_read_byte
     cpi  r30, AVM_HEADER_MAGIC3
-    breq 1f
-    rjmp startup_invalid_image
-1:
+    brne startup_header_invalid
 
     ; One coarse compatibility byte covers the ISA, ABI, and runtime services.
     rcall fx_startup_read_byte
     cpi  r30, AVM_RUNTIME_VERSION
-    breq 1f
-    rjmp startup_invalid_image
-1:
+    brne startup_header_invalid
 
     ; entryPoint, packed little-endian 24-bit image-relative address.
     rcall fx_startup_read_byte
@@ -9336,7 +9491,7 @@ sys_set_sprite_impl:
     jmp   seek_and_dispatch_func_disabled
 
 sys_draw_cached_impl:
-    out   GPIOR1, r27                ; retain mode across cached setup/MULs
+    ; The mode is already in GPIOR1.
 
     ; The renderer takes ownership of SPI. Advance from the service byte to the
     ; following primary opcode before terminating the speculative transaction.
@@ -9356,7 +9511,7 @@ sys_draw_cached_impl:
     rjmp  .Lsys_sprite_header_ready
 
 sys_draw_sprite_header_impl:
-    out   GPIOR1, r27              ; retain mode across header read/MULs
+    ; The mode is already in GPIOR1.
 
     ; The instruction stream must be restarted after the sprite has owned SPI.
     ; Advance VM_PC from the service byte to the following primary opcode now.
@@ -9445,8 +9600,7 @@ sys_draw_sprite_header_impl:
     pop   r1                         ; native raw-renderer height
     in    r0, GPIOR2                 ; native raw-renderer width
     in    r27, GPIOR1                ; native raw-renderer mode
-    rcall draw_bitmap_seek_func
-    jmp   seek_and_dispatch_func_disabled
+    jmp   draw_bitmap_seek_func
 
 
 ; Reusable raw page-bitmap renderer ABI.
@@ -9461,10 +9615,13 @@ sys_draw_sprite_header_impl:
 ;   AVM r5          int16_t y
 ;   FX deselected; no SPI transfer active
 ;
-; Return:
-;   RET with FX deselected and no SPI transfer active. The caller owns any
-;   bytecode-stream restart. This makes the routine suitable for repeated calls
-;   from a larger SYS service such as a text renderer.
+; Exit:
+;   draw_bitmap_seek_func completes the SYS call. It is tail-called with the
+;   native stack as the SYS wrapper found it and never returns: an empty or
+;   fully invisible bitmap restarts the bytecode stream immediately, and a
+;   drawn bitmap restores r8-r23 and restarts the stream in sprite_exit_seek_func.
+;   Text glyphs use the internal T=1 entries below and return to their own
+;   caller, so no repeated-call contract exists for this entry.
 ;
 ; Data layout and semantics match the four sprite SYS services. This entry is
 ; deliberately exported so future text/glyph SYS services can prepare their
@@ -9488,7 +9645,7 @@ sys_draw_sprite_header_impl:
 ;   r14             framebuffer row advance (128-visibleColumns)
 ;   r15             overwrite final-source-page valid-bit mask
 ;   r16             visible column count
-;   r17             preserved call-lifetime text status; unused by renderer
+;   r17             read-only (x high byte, text status); never saved or restored
 ;   r18             vertical shift coefficient
 ;   r19             signed destination page during setup; high mask/temporary
 ;   r20:r21:r22     current visible source-row physical FX pointer
@@ -9500,7 +9657,7 @@ sys_draw_sprite_header_impl:
 ;   r24:r25,r0:r1   stream and framebuffer temporaries
 ;
 .Lsprite_raw_reject:
-    ret
+    jmp   seek_and_dispatch_func_disabled
 .global draw_bitmap_seek_func
 draw_bitmap_seek_func:
     ; Reject invisible or empty bitmaps before touching architectural state or
@@ -9560,7 +9717,6 @@ draw_bitmap_seek_visible_text_func:
     push  r14
     push  r15
     push  r16
-    push  r17
     push  r18
     push  r19
     push  r20
@@ -9588,8 +9744,7 @@ draw_bitmap_seek_visible_text_func:
     ; Full source-row stride in bytes.
     mov   r10, r8
     clr   r11
-    mov   r24, r13
-    cpi   r24, SPRITE_MODE_PLUS_MASK
+    cpi   r27, SPRITE_MODE_PLUS_MASK
     brne  .Lsprite_stride_ready
     lsl   r10
     rol   r11
@@ -10399,8 +10554,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
 .Lsprite_middle_done:
     ; X advanced across the visible columns of the low page. Advance to the
     ; same x coordinate on the following framebuffer page.
-    mov   r24, r14
-    add   r26, r24
+    add   r26, r14
     adc   r27, ZERO
 
 .Lsprite_row_complete:
@@ -10451,14 +10605,41 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
 
 .Lsprite_finish:
     brts  .Lsprite_finish_text
+
+    ; The final dummy transfer is still shifting out. Four pops outlast it, so
+    ; the seek below may raise chip select; the other twelve restores run in
+    ; the idle gaps of that seek instead of in front of it.
     pop   r23
     pop   r22
     pop   r21
     pop   r20
+
+; Restart the bytecode stream after a drawn sprite. This is
+; seek_and_dispatch_func_disabled with the remaining register restores placed
+; in its SPI gaps: three in the command-to-address-high gap and eight in the
+; address-high gap. Every gap keeps its exact length. The pending-audio poll stays in the command gap; its
+; service path runs before any of these restores, so the rare restart repeats
+; them from the top.
+sprite_exit_seek_func:
+    fx_disable
+    ldi   r30, SFC_READ
+    fx_enable
+    out   SPDR, r30
+
+    lds   r26, data_page_data+0
+    add   r26, VM_PCM
+    lds   r27, data_page_data+1
+    adc   r27, VM_PCH
+
+    lds   r30, data_audio_ticks_pending
+    tst   r30
+    brne  sprite_exit_audio_service
+
     pop   r19
     pop   r18
-    pop   r17
     pop   r16
+    nop
+    out   SPDR, r27
     pop   r15
     pop   r14
     pop   r13
@@ -10467,8 +10648,28 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     pop   r10
     pop   r9
     pop   r8
+    nop
+    out   SPDR, r26
+    rcall sprite_delay_17
+    out   SPDR, VM_PCL
+    rcall sprite_delay_16
+    out   SPDR, ZERO
+    rcall sprite_delay_15
+    cli
+    out   SPDR, ZERO
+    in    PRIMARY_OPCODE, SPDR
+    sei
+    mul   PRIMARY_OPCODE, FOUR
+    movw  r30, r0
+    subi  r31, hi8(-(pm(primary_table)))
+    ijmp
+
+sprite_exit_audio_service:
+    delay_3
+    delay_2
     fx_disable
-    ret
+    call  audio_service_func
+    rjmp  sprite_exit_seek_func
 
 .Lsprite_finish_text:
     fx_disable

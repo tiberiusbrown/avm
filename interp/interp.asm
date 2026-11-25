@@ -3304,11 +3304,11 @@ branch_rel8_not_taken_decode:
 
 branch_rel8_not_taken_func:
     ; PRIMARY_OPCODE contains the ignored displacement and VM_PC names that
-    ; byte. Six inline cycles of padding route through the reverse-order
-    ; dispatch body, with the next OUT occurring 17 cycles after the
-    ; speculative fallthrough OUT.
-    delay_4
-    delay_2
+    ; byte. Six inline cycles of padding (LPM; r0 is dead) route through the
+    ; reverse-order dispatch body, with the next OUT occurring 17 cycles after
+    ; the speculative fallthrough OUT.
+    delay_3
+    delay_3
     rjmp cluster_tail_17
 
 ; Taken: entered on cycle 12, with VM_PC still naming the opcode. The operand
@@ -3369,8 +3369,8 @@ branch_rel16_not_taken_func:
     ; handoff on cycle 34, launching the fallthrough primary opcode. VM_PC still
     ; names the high displacement byte, matching branch_rel8_not_taken_func's
     ; expected final-operand state.
-    delay_4
-    delay_2
+    delay_3                      ; r0 is dead
+    delay_3
     cli
     out  SPDR, ZERO
     in   PRIMARY_OPCODE, SPDR
@@ -3387,8 +3387,8 @@ branch_rel16_taken_func:
     rjmp rel16_read_high
 
 branch_rel16_block_end:
-.if (branch_rel16_block_end - branch_rel16_decode_func) != (25 * 2)
-    .error "16-bit conditional branch subsystem must occupy exactly 50 bytes"
+.if (branch_rel16_block_end - branch_rel16_decode_func) != (24 * 2)
+    .error "16-bit conditional branch subsystem must occupy exactly 48 bytes"
 .endif
 
 ; D4 and D5 use fully specialized continuations. Duplicating the operand
@@ -3941,15 +3941,11 @@ interp_delay_16:
 interp_delay_15:
     nop
 interp_delay_14:
-    nop
-interp_delay_13:
-    nop
+    delay_2
 interp_delay_12:
     nop
 interp_delay_11:
-    nop
-interp_delay_10:
-    nop
+    delay_2
 interp_delay_9:
     delay_2
 interp_delay_7:
@@ -4487,7 +4483,7 @@ f0_fetch_stack_u8_decode_r_to_xz_end:
 
 ; Fetch a little-endian 16-bit operand. The low byte is read at cycle 35 and
 ; the high-byte transfer starts at cycle 36. Advancing VM_PC by two consumes
-; both operand bytes; three four-cycle delays place the high-byte IN at cycle
+; both operand bytes; a twelve-cycle delay call places the high-byte IN at cycle
 ; 53 and the speculative following-primary OUT at cycle 54.
 f0_fetch_u16_start:
 f0_fetch_addr16:
@@ -4499,15 +4495,13 @@ f0_fetch_u16:
     add  VM_PCL, F0_OPERAND_HI
     adc  VM_PCM, ZERO
     adc  VM_PCH, ZERO
-    delay_4
-    delay_4
-    delay_4
+    rcall interp_delay_12
     in   F0_OPERAND_HI, SPDR
     out  SPDR, ZERO
     ret
 f0_fetch_u16_end:
-.if (f0_fetch_u16_end - f0_fetch_u16_start) != 30
-    .error "shared F0 two-byte fetch helper must occupy exactly fifteen AVR words"
+.if (f0_fetch_u16_end - f0_fetch_u16_start) != 20
+    .error "shared F0 two-byte fetch helper must occupy exactly ten AVR words"
 .endif
 
 ; Fetch a little-endian absolute data-space address and decode the F0
@@ -4532,14 +4526,13 @@ f0_fetch_addr16_decode_r_to_xz:
     subi  r26, -8
     mov   r27, ZERO
 
-    delay_4
-    delay_3
+    rcall interp_delay_7
     in    r31, SPDR
     out   SPDR, ZERO
     ret
 f0_fetch_addr16_decode_r_to_xz_end:
-.if (f0_fetch_addr16_decode_r_to_xz_end - f0_fetch_addr16_decode_r_to_xz_start) != 34
-    .error "shared F0 absolute-address fetch/decode helper must occupy exactly seventeen AVR words"
+.if (f0_fetch_addr16_decode_r_to_xz_end - f0_fetch_addr16_decode_r_to_xz_start) != 30
+    .error "shared F0 absolute-address fetch/decode helper must occupy exactly fifteen AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -5014,7 +5007,7 @@ fx_read_program_bytes_func:
 
 .Lfx_read_program_loop:
     ; Seven-cycle call plus CLI places OUT at the minimum legal boundary.
-    rcall fx_read_program_delay_7
+    rcall interp_delay_7
     cli
     out   SPDR, ZERO             ; begin the next data-byte transfer
     in    r27, SPDR              ; consume the completed previous byte
@@ -5030,7 +5023,7 @@ fx_read_program_bytes_func:
     ; seven-cycle final wait without changing existing reader latency.
     delay_2
 .Lfx_read_program_final_short:
-    rcall fx_read_program_delay_7
+    rcall interp_delay_7
     in    r27, SPDR
     st    Z, r27
     fx_disable
@@ -5061,34 +5054,20 @@ fx_read_program_start_after_command_func:
     ; The seven-cycle delay and one NOP put the high-address OUT at cycle 18.
     ; Remaining meaningful bytes retain the 18-cycle cadence; the first dummy
     ; transfer uses the minimum 17-cycle cadence.
-    rcall fx_read_program_delay_7
+    rcall interp_delay_7
     nop
     out   SPDR, r26
-    rcall fx_read_program_delay_17
+    rcall interp_delay_17
     out   SPDR, r25
-    rcall fx_read_program_delay_17
+    rcall interp_delay_17
     out   SPDR, r24
-    rcall fx_read_program_delay_16
+    rcall interp_delay_16
     out   SPDR, ZERO             ; begin first data-byte transfer
     ret
 
-; Local fixed-delay ladder. Each label is the complete cycle count from the
-; calling RCALL through the returning RET. It uses only NOP and RJMP .+0.
-fx_read_program_delay_17:
-    nop
-fx_read_program_delay_16:
-    delay_4
-    nop
-fx_read_program_delay_11:
-    delay_2
-fx_read_program_delay_9:
-    delay_2
-fx_read_program_delay_7:
-    ret
-
 fx_read_program_bytes_end:
-.if (fx_read_program_bytes_end - fx_read_program_bytes_start) != 106
-    .error "shared program-space readers must occupy exactly fifty-three AVR words"
+.if (fx_read_program_bytes_end - fx_read_program_bytes_start) != 92
+    .error "shared program-space readers must occupy exactly forty-six AVR words"
 .endif
 
 
@@ -5125,8 +5104,7 @@ sys_progmem_services_start:
 ; r24:r27 are clobbered.
 sys_progmem_prepare_func:
     clt
-    nop
-    nop
+    delay_2
     movw  r24, VM_R6
     mov   r26, VM_R7L
 
@@ -5221,8 +5199,7 @@ sys_memcmp_p_impl:
     ; The start returns at cycle 5. Preload the first RAM byte, then use the
     ; seven-cycle delay and RJMP to reach the first exact cycle-17 handoff.
     ld    r24, Z+
-    rcall fx_read_program_delay_7
-    rjmp  .Lsys_memcmp_p_loop
+    rcall interp_delay_9
 
 .Lsys_memcmp_p_loop:
     cli
@@ -5256,8 +5233,7 @@ sys_strcmp_p_impl:
     rcall sys_progmem_prepare_func
 
     ld    r0, Z+
-    rcall fx_read_program_delay_7
-    rjmp  .Lsys_strcmp_p_loop
+    rcall interp_delay_9
 
 .Lsys_strcmp_p_loop:
     cli
@@ -5270,9 +5246,9 @@ sys_strcmp_p_impl:
     breq  .Lsys_stream_compare_equal
     ; SEI follows the exit branches, so no exit runs with interrupts enabled.
     sei
+    delay_3                      ; LPM; the next instruction reloads r0
+    delay_2
     ld    r0, Z+
-    delay_4
-    nop
     rjmp  .Lsys_strcmp_p_loop
 
 ; AS0 memcmp/strcmp with a flash-window rhs and RAM lhs. The program-memory engine
@@ -5295,7 +5271,7 @@ sys_memcmp_rhs_flash_impl:
     clt                          ; RAM-left orientation for the shared loop
     rcall sys_progmem_image_prepare_func
     ld    r24, Z+
-    rcall fx_read_program_delay_7
+    rcall interp_delay_7
     rjmp  .Lsys_memcmp_p_loop
 
 sys_strcmp_rhs_flash_impl:
@@ -5311,7 +5287,7 @@ sys_strcmp_rhs_flash_impl:
     clt                          ; RAM-left orientation for the shared loop
     rcall sys_progmem_image_prepare_func
     ld    r0, Z+
-    rcall fx_read_program_delay_7
+    rcall interp_delay_7
     rjmp  .Lsys_strcmp_p_loop
 
 ; AS0 memcmp/strcmp with a flash-window lhs and RAM rhs. The shared program-space
@@ -5336,7 +5312,7 @@ sys_memcmp_lhs_flash_impl:
     set                          ; flash-left orientation for the shared loop
     rcall sys_progmem_image_prepare_func
     ld    r24, Z+
-    rcall fx_read_program_delay_7
+    rcall interp_delay_7
     rjmp  .Lsys_memcmp_p_loop
 
 sys_strcmp_lhs_flash_impl:
@@ -5352,7 +5328,7 @@ sys_strcmp_lhs_flash_impl:
     set                          ; flash-left orientation for the shared loop
     rcall sys_progmem_image_prepare_func
     ld    r0, Z+
-    rcall fx_read_program_delay_7
+    rcall interp_delay_7
     rjmp  .Lsys_strcmp_p_loop
 
 ; Dual AS0 flash-window comparisons. The slow engine is entered when both
@@ -5520,7 +5496,7 @@ sys_strlen_flash_impl:
     clr   VM_R4L
     clr   VM_R4H
     rcall sys_progmem_image_prepare_func
-    rcall fx_read_program_delay_9
+    rcall interp_delay_9
     rjmp  .Lsys_strlen_p_loop
 
 ; uint16_t strlen_P(progptr/uint24_t src)
@@ -5530,8 +5506,7 @@ sys_strlen_p_impl:
     clr   VM_R4H
     rcall sys_progmem_prepare_func
 
-    rcall fx_read_program_delay_9
-    rjmp  .Lsys_strlen_p_loop
+    rcall interp_delay_11
 
 .Lsys_strlen_p_loop:
     cli
@@ -5544,7 +5519,7 @@ sys_strlen_p_impl:
     sei
     add   VM_R4L, ONE
     adc   VM_R4H, ZERO
-    rcall fx_read_program_delay_7
+    rcall interp_delay_7
     rjmp  .Lsys_strlen_p_loop
 
 ; BREQ cannot reach the shared stream drain. The NUL exit lands here with the final
@@ -5562,8 +5537,7 @@ sys_strlen_p_impl:
 fx_copy_image_string_n_func:
     clt
     rcall sys_progmem_image_prepare_func
-    rcall fx_read_program_delay_9
-    rjmp  .Lfx_copy_program_string_n_loop
+    rcall interp_delay_11
 
 .Lfx_copy_program_string_n_loop:
     cli
@@ -5684,8 +5658,8 @@ sys_strncat_flash_impl:
     rjmp  cluster_tail_18
 
 sys_progmem_services_end:
-.if (sys_progmem_services_end - sys_progmem_services_start) != 744
-    .error "program-memory SYS subsystem must occupy exactly 372 AVR words"
+.if (sys_progmem_services_end - sys_progmem_services_start) != 732
+    .error "program-memory SYS subsystem must occupy exactly 366 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -5952,8 +5926,10 @@ display_update_func:
     cpi   r25, 0xB8              ; eight 128-byte pages
     brne  .Ldisplay_sh1106_page
 
-    ; Match the reference final-transfer delay before releasing chip select.
+    ; Match the reference final-transfer delay before releasing chip select,
+    ; then the two-cycle wait for the final SPIF.
     lpm   r26, Z
+    delay_2
 #else
     ; Arduboy2-derived SSD1306/SSD1309 data-only transfer. A doubled count makes
     ; the SBIW/parity delay loop execute twice per framebuffer byte, yielding
@@ -5975,7 +5951,7 @@ display_update_func:
     rjmp  .Ldisplay_ssd_delay
     st    Z+, r0
     brne  .Ldisplay_ssd_loop
-    nop                         ; match SH1106's final cycle-16 exit
+    delay_3                     ; match SH1106's cycle-16 exit, then wait two
 #endif
 
     ; Complete and acknowledge the final transfer before releasing chip select.
@@ -5983,7 +5959,6 @@ display_update_func:
     ; visible until cycle 18, even though received data is ready at 16.
     ; Wait so SPSR sees the completed final byte's SPIF, then
     ; access SPDR to clear it; an early read can leave a fresh SPIF afterward.
-    delay_2
 display_acknowledge:
     in    r24, SPSR
     in    r24, SPDR
@@ -5997,8 +5972,8 @@ sys_display_service_end:
     .error "SH1106 display SYS wrapper/function must occupy exactly 45 AVR words"
 .endif
 #else
-.if (sys_display_service_end - sys_display_service_start) != 64
-    .error "SSD1306/SSD1309 display SYS wrapper/function must occupy exactly 32 AVR words"
+.if (sys_display_service_end - sys_display_service_start) != 62
+    .error "SSD1306/SSD1309 display SYS wrapper/function must occupy exactly 31 AVR words"
 .endif
 #endif
 
@@ -7758,33 +7733,19 @@ fx_seek_to_pc:
     rcall fx_seek_delay_17
     out  SPDR, ZERO
 
-    ; Wait 16 cycles: 2 + 10 + 4 from RET. The addressed byte is ready in
-    ; SPDR when this routine returns.
-    delay_2
-    rcall fx_seek_delay_10
-    ret
+    ; Wait 16 cycles by tail-jumping into the ladder (2 + 10 + 4 from its RET).
+    ; The addressed byte is ready in SPDR when this routine returns.
+    rjmp fx_seek_delay_17
 
 ; Fixed delay ladder. Each name denotes total cycles from the calling RCALL
-; through the returning RET, matching the cadence used by the SPI pipeline.
-; Entries 7 and 9-14 cover the operand-fetch slack used below without
-; repeated inline delay sequences. No current path requires an 8-cycle call.
+; through the returning RET. It uses LPM, which overwrites r0: its only user,
+; fx_seek_to_pc, runs once during startup, where r0 is dead.
 fx_seek_delay_17:
-    nop
-fx_seek_delay_16:
-    delay_2
-fx_seek_delay_14:
-    nop
-fx_seek_delay_13:
-    nop
-fx_seek_delay_12:
-    nop
+    delay_3
+    delay_3
 fx_seek_delay_11:
     nop
-fx_seek_delay_10:
-    nop
-fx_seek_delay_9:
-    delay_2
-fx_seek_delay_7:
+    delay_3
     ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -8488,22 +8449,16 @@ ff_poly:
 ff_poly_coefficient:
     in    r18, SPDR
     out   SPDR, ZERO
-    rcall ff_poly_delay_16
+    rcall sprite_delay_16
     in    r19, SPDR
     out   SPDR, ZERO
-    rcall ff_poly_delay_16
+    rcall sprite_delay_16
     in    r20, SPDR
     out   SPDR, ZERO
-    rcall ff_poly_delay_16
+    rcall sprite_delay_16
     in    r21, SPDR
     out   SPDR, ZERO
     ret
-ff_poly_delay_16:
-    delay_4
-    delay_4
-    nop
-    ret
-
 #include "native_math.inc"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -9509,7 +9464,174 @@ sys_draw_sprite_header_impl:
     pop   r1                         ; native raw-renderer height
     in    r0, GPIOR2                 ; native raw-renderer width
     in    r27, GPIOR1                ; native raw-renderer mode
+
+; Interior page-aligned fast path for OVERWRITE and PLUS_MASK.
+;
+; delay_3 is LPM, which overwrites r0; the path uses it only where r0 is dead.
+;
+; A sprite that lies completely on screen, starts on a framebuffer page boundary
+; (y & 7 == 0), and (for OVERWRITE) has a whole number of pages needs none of the
+; generic renderer's clipping, shifting, masking, row dispatch, register frame
+; or row-complete bookkeeping: every source row is one framebuffer page, so the
+; frame is a single SPI stream of width * pages bytes (twice that for PLUS_MASK)
+; that is stored straight into the framebuffer. The path uses only the native
+; scratch registers r0:r1, r24:r27 and r30:r31, so it saves and restores nothing.
+; Every other sprite continues into draw_bitmap_seek_func unchanged.
+;
+; Entry: r0 width, r1 height, r27 mode, r24:r26 image-relative frame pointer,
+;   AVM r4 = x (r16:r17), r5 = y (r18:r19), GPIOR1 mode, GPIOR2 width,
+;   FX deselected, no SPI transfer active.
+sprite_fast_try:
+    ; Unaligned y is the most common reason to fall back, so test it first.
+    mov   r31, r18                       ; y must be a multiple of eight
+    andi  r31, 0x07
+    brne  .Lsprite_fast_generic
+    cpi   r27, SPRITE_MODE_SELF_MASKED
+    brsh  .Lsprite_fast_generic          ; SELF_MASKED and ERASE: generic path
+
+    ; 0 <= x <= 128 - width: the unsigned 16-bit compare also rejects x < 0.
+    ldi   r30, 128
+    sub   r30, r0
+    brcs  .Lsprite_fast_generic          ; width > 128
+    cp    r30, r16
+    cpc   ZERO, r17
+    brcs  .Lsprite_fast_generic
+
+    ; 0 <= y <= 64 - height, likewise.
+    ldi   r30, 64
+    sub   r30, r1
+    brcs  .Lsprite_fast_generic          ; height > 64
+    cp    r30, r18
+    cpc   ZERO, r19
+    brcs  .Lsprite_fast_generic
+
+    tst   r0                             ; empty sprites take the generic reject
+    breq  .Lsprite_fast_generic
+    tst   r1
+    breq  .Lsprite_fast_generic
+
+    tst   r27
+    brne  .Lsprite_fast_start            ; PLUS_MASK: padding bits are zero
+    mov   r30, r1                        ; OVERWRITE: whole pages only, since the
+    andi  r30, 0x07                      ; padding bits of a partial page are
+    breq  .Lsprite_fast_start            ; ignored and need masking
+.Lsprite_fast_generic:
     jmp   draw_bitmap_seek_func
+
+.Lsprite_fast_start:
+    ; Physical frame address: add the data page to the middle and high bytes,
+    ; then open the transaction. t0 is the cycle of the command OUT; the address
+    ; bytes follow at t0+18, +36 and +54, the first data transfer at t0+71, and
+    ; the first data byte is read at t0+89, the earliest the SPI bus allows.
+    lds   r30, data_page_data+0
+    add   r25, r30
+    lds   r30, data_page_data+1
+    adc   r26, r30
+    ldi   r30, SFC_READ
+    fx_enable
+    out   SPDR, r30                      ; t0: command
+
+    ; r31 = pages = (height + 7) / 8, r30 = columns left in this row,
+    ; r1 = framebuffer advance from the end of one row to the next page.
+    mov   r31, r1
+    subi  r31, 0xF9
+    lsr   r31
+    lsr   r31
+    lsr   r31
+    mov   r30, r0
+    ldi   r27, 128
+    sub   r27, r0
+    mov   r1, r27
+    rcall sprite_delay_8
+    out   SPDR, r26                      ; t0+18: address high
+
+    ; X = 0x0500 + (y / 8) * 128 + x. y is a multiple of eight below 64, so
+    ; SWAP leaves ((y / 8) & 1) * 128 in bit 7 and y / 16 in bits 1:0, and x is
+    ; at most 127, so ORing it in cannot carry.
+    mov   r27, r18
+    swap  r27
+    mov   r26, r27
+    andi  r26, 0x80
+    or    r26, r16
+    andi  r27, 0x03
+    subi  r27, 0xFB                      ; + high byte of the framebuffer
+    rcall sprite_delay_10
+    out   SPDR, r25                      ; t0+36: address middle
+
+    in    r25, GPIOR1                    ; mode, tested after the first transfer
+    rcall sprite_delay_16
+    out   SPDR, r24                      ; t0+54: address low
+
+    rcall sprite_delay_16
+    out   SPDR, ZERO                     ; t0+71: first data transfer
+
+    sbrc  r25, 0
+    rjmp  .Lsprite_fast_plus_entry
+    rcall sprite_delay_13                ; the first loop CLI is 16 cycles on
+
+; OVERWRITE: one store per byte, 17 cycles per byte. The reverse-order handoff
+; (CLI, OUT, IN, SEI) starts the next transfer before it reads the previous
+; byte; the dummy OUT at exactly 17 cycles is the established data cadence.
+; The last byte of each page branches out to advance the pointer, and both
+; paths rejoin at a BRNE that tests the DEC of the columns or of the pages.
+.Lsprite_fast_ow_loop:
+    cli
+    out   SPDR, ZERO
+    in    r24, SPDR
+    sei
+    st    X+, r24
+    dec   r30
+    breq  .Lsprite_fast_ow_row_end
+    rcall sprite_delay_7                 ; RCALL and RET leave SREG unchanged
+.Lsprite_fast_ow_next:
+    brne  .Lsprite_fast_ow_loop
+    rjmp  .Lsprite_fast_done
+.Lsprite_fast_ow_row_end:
+    add   r26, r1                        ; same column of the next page
+    adc   r27, ZERO
+    in    r30, GPIOR2                    ; width
+    dec   r31
+    rjmp  .Lsprite_fast_ow_next
+
+.Lsprite_fast_plus_entry:
+    rcall sprite_delay_12                ; the first loop CLI is 16 cycles on
+
+; PLUS_MASK: image byte then mask byte per column, 17 cycles per byte, so a
+; column takes 34 cycles whether or not it ends a page.
+.Lsprite_fast_plus_loop:
+    cli
+    out   SPDR, ZERO                     ; begin the mask byte
+    in    r24, SPDR                      ; image
+    sei
+    rcall sprite_delay_11
+    ld    r0, X
+    cli
+    out   SPDR, ZERO                     ; begin the next image byte
+    in    r25, SPDR                      ; mask
+    sei
+    com   r25
+    and   r0, r25
+    or    r0, r24
+    st    X+, r0
+    dec   r30
+    brne  .Lsprite_fast_plus_pad
+    add   r26, r1
+    adc   r27, ZERO
+    in    r30, GPIOR2                    ; width
+    dec   r31
+    brne  .Lsprite_fast_plus_loop
+
+; The last iteration of either loop started one transfer past the frame. It
+; finishes before chip select rises; then restart the bytecode stream with the
+; standard seek.
+.Lsprite_fast_done:
+    nop
+    fx_disable
+    jmp   seek_and_dispatch_func_disabled
+
+.Lsprite_fast_plus_pad:
+    delay_3
+    rjmp  .Lsprite_fast_plus_loop
 
 
 ; Reusable raw page-bitmap renderer ABI.
@@ -10024,8 +10146,8 @@ draw_bitmap_seek_prepared_text_func:
 .Ltext_prepared_store_nonoverwrite_dispatch:
     out   GPIOR1, r30
     out   GPIOR2, r31
-    delay_4
-    delay_2
+    delay_3                         ; r0 is dead
+    delay_3
     out   SPDR, ZERO                ; first image byte, +17
     rjmp  .Lsprite_row_dispatch
 
@@ -10111,8 +10233,8 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     and   r25, r19
     or    r25, r1
     st    X+, r25
-    delay_4
-    nop
+    delay_3                      ; r0 is dead after the merge
+    delay_2
     dec   r13
     brne  .Lsprite_top_overwrite_full_loop
     rjmp  .Lsprite_top_done
@@ -10126,8 +10248,8 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     and   r25, r9
     or    r25, r0
     st    X+, r25
-    delay_4
-    nop
+    delay_3                      ; r0 is dead after the merge
+    delay_2
     dec   r13
     brne  .Lsprite_bottom_overwrite_full_loop
     rjmp  .Lsprite_bottom_done
@@ -10603,9 +10725,7 @@ sprite_delay_12:
 sprite_delay_11:
     nop
 sprite_delay_10:
-    nop
-sprite_delay_9:
-    nop
+    delay_2
 sprite_delay_8:
     nop
 sprite_delay_7:
@@ -11865,17 +11985,9 @@ format_emit_post_padding:
 ; Dedicated formatter program-memory reader
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Open-loop delay ladder. The named delay includes the calling RCALL and RET.
-; Calling format_spi_delay_16 immediately after OUT SPDR places the following
-; IN SPDR on cycle 17. Interrupts can extend but cannot shorten the interval.
-format_spi_delay_16:
-    delay_4
-    nop
-format_spi_delay_11:
-    delay_4
-format_spi_delay_7:
-    ret
-
+; Open-loop delays: calling sprite_delay_16 immediately after OUT SPDR places
+; the following IN SPDR on cycle 17. Interrupts can extend but cannot shorten
+; the interval.
 ; Input r26:r25:r24=image-relative logical address. Start the first data-byte
 ; transfer. X, Y, and Z are untouched; r24-r27 are clobbered.
 format_fx_begin_read:
@@ -11887,19 +11999,19 @@ format_fx_begin_read:
     fx_enable
     ldi   r27, SFC_READ
     out   SPDR, r27
-    rcall format_spi_delay_16
+    rcall sprite_delay_16
     in    r27, SPDR
 
     out   SPDR, r26
-    rcall format_spi_delay_16
+    rcall sprite_delay_16
     in    r27, SPDR
 
     out   SPDR, r25
-    rcall format_spi_delay_16
+    rcall sprite_delay_16
     in    r27, SPDR
 
     out   SPDR, r24
-    rcall format_spi_delay_16
+    rcall sprite_delay_16
     in    r27, SPDR
 
     out   SPDR, ZERO
@@ -11926,7 +12038,7 @@ format_read_program_chunk:
     clr   r23
 
 .Lformat_read_program_chunk_loop:
-    rcall format_spi_delay_16
+    rcall sprite_delay_16
     in    r27, SPDR
     st    Z+, r27
     inc   r22
@@ -13290,11 +13402,11 @@ text_finish:
     nop
     out   SPDR, r26
 
-    rcall .Ltext_restart_delay_17
+    rcall .Ltext_delay_17
     out   SPDR, VM_PCL
-    rcall .Ltext_restart_delay_16
+    rcall .Ltext_delay_16
     out   SPDR, ZERO
-    rcall .Ltext_restart_delay_15
+    rcall .Ltext_delay_15
     cli
     out   SPDR, ZERO
     in    PRIMARY_OPCODE, SPDR
@@ -13303,16 +13415,6 @@ text_finish:
     movw  r30, r0
     subi  r31, hi8(-(pm(primary_table)))
     ijmp
-
-; Compact complete-cycle delay ladder for the only restart delays used.
-.Ltext_restart_delay_17:
-    nop
-.Ltext_restart_delay_16:
-    nop
-.Ltext_restart_delay_15:
-    delay_4
-    delay_4
-    ret
 
 ; Text repeated-byte sink. The per-glyph fixed-reader union preserves both the
 ; formatter and the count/byte loop state, so no outer save frame is required.
@@ -13457,8 +13559,7 @@ text_emit_char_raw:
     push  r18
     push  r19
     push  r22
-    delay_2
-    nop
+    delay_3                         ; r0 is dead until the next record byte
     out   SPDR, r25                 ; physical record address middle, +18
 
     ; Install mode, baseline, and physical image base while middle transfers.
@@ -13475,10 +13576,10 @@ text_emit_char_raw:
     nop
     out   SPDR, r24                 ; physical record address low, +18
 
-    rcall .Ltext_record_delay_16
+    rcall .Ltext_delay_16
     out   SPDR, ZERO                ; begin h, +17
 
-    rcall .Ltext_record_delay_16
+    rcall .Ltext_delay_16
     in    r1, SPDR                  ; unsigned h
     out   SPDR, ZERO                ; begin signed yoff
 
@@ -13667,16 +13768,17 @@ text_emit_char_raw:
     ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Local complete-cycle delays for the inlined record transaction.
-.Ltext_record_delay_16:
+; Local complete-cycle delays for the record transaction and the text restart,
+; counted from the calling RCALL through the returning RET. Entry 15 spends
+; eight cycles with a nested call to the final RET and one NOP.
+.Ltext_delay_17:
     nop
-.Ltext_record_delay_15:
-    delay_4
+.Ltext_delay_16:
     nop
-.Ltext_record_delay_10:
+.Ltext_delay_15:
+    rcall .Ltext_delay_ret
     nop
-    delay_2
-.Ltext_record_delay_7:
+.Ltext_delay_ret:
     ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -15760,8 +15862,7 @@ audio_enable_phase:
     lsl  r24
     lsl  r24
     andi r24, 127
-    nop
-    nop
+    delay_2
     sts  TCNT1L, r24
     ldi  r24, _BV(OCF1A)
     out  TIFR1, r24

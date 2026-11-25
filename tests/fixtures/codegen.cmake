@@ -74,6 +74,7 @@ avm_fixture(codegen/c/sprite_cached_overwrite.c KIND C SUITE core OPT_LEVELS ALL
 avm_fixture(codegen/c/sprite_cached_plus_mask.c KIND C SUITE core OPT_LEVELS ALL EXPECT_PASS)
 avm_fixture(codegen/c/sprite_cached_self_masked.c KIND C SUITE core OPT_LEVELS ALL EXPECT_PASS)
 avm_fixture(codegen/c/sprite_erase.c KIND C SUITE core OPT_LEVELS ALL EXPECT_PASS)
+avm_fixture(codegen/c/sprite_interior_aligned.c KIND C SUITE core OPT_LEVELS ALL EXPECT_PASS)
 avm_fixture(codegen/c/sprite_overwrite.c KIND C SUITE core OPT_LEVELS ALL EXPECT_PASS)
 avm_fixture(codegen/c/sprite_plus_mask.c KIND C SUITE core OPT_LEVELS ALL EXPECT_PASS)
 avm_fixture(codegen/c/sprite_self_masked.c KIND C SUITE core OPT_LEVELS ALL EXPECT_PASS)

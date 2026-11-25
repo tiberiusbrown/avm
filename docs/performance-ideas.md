@@ -1,6 +1,6 @@
 # AVM performance optimization ideas
 
-**Status:** working record of proposed and evaluated ISA and interpreter optimizations. Nothing here is part of the ISA in [arch.md](arch.md), and no entry has been adopted unless it says so. Figures were measured on 2026-11-24 against repository revision `1ac7640`, from scratch prototypes and instruction traces, not from the committed interpreter.
+**Status:** working record of proposed and evaluated ISA and interpreter optimizations. Nothing here is part of the ISA in [arch.md](arch.md), and no entry has been adopted unless it says so. Figures were measured on 2026-11-24 against repository revision `1ac7640`, from scratch prototypes and instruction traces, not from the committed interpreter; Section 7 was measured on 2026-11-25; its "before" figures are `ce20048`.
 
 ## 1. Evidence levels
 
@@ -21,7 +21,9 @@
 |---|---|---:|---|---|
 | [`CALLT [qN]`](#4-callt-fused-table-call) fused `ldp24` + `callp` | 0.62% of exploration (patched sites; about 0.74% if all) | +12 B | Prototyped | Shelved; opcodes in [Section 5](#5-primary-opcode-inventory) |
 | 1-byte `LDSP16`/`STSP16 [sp+{0,2,4,6}]` on `r4-r7` | about 1.5% of exploration; 3.3% of benchmark cycles | about 0 (reuses 32 slots) | Trace estimate | Waiting on opcode supply ([Section 5.2](#52-demand-and-allocation-options)) |
-| `SYS draw_tilemap` batch tile blit | 8.3% of exploration, pixel-identical | +176 B | Prototyped | Declined: cannot draw from the flash window or program memory without substantial added code |
+| `SYS draw_tilemap` batch tile blit | 8.3% of exploration, pixel-identical | +176 B | Prototyped | Declined: cannot draw from the flash window or program memory without substantial added code; [Section 7.4](#74-batch-services-and-the-flash-window) proposes a window-capable form at about 9% on top of the sprite fast path |
+| [Interior aligned sprite fast path](#73-renderer-changes) | 2.18% of exploration | +248 B | Prototyped | Adopted 2026-11-25 |
+| [Tile copy cache](#74-batch-services-and-the-flash-window) inside a batch tile service | about 1.9% of exploration | about +110 B | Trace estimate | Not started |
 | `ENTER`/`LEAVE` (push or pop `r0-r3` with `adjsp`, `ret`) | about 1.1% | about 100 B | Trace estimate | Not started |
 | 3-byte paged absolute `LDM`/`STM` (page in the secondary byte, upper registers) | about 1.4% | about 170 B | Trace estimate | Not started |
 | `TST8` + `BR8` fusion | about 0.5% | about 130 B | Trace estimate | Not started |
@@ -30,7 +32,7 @@
 | Wider compare-and-branch fusion | under 1% | at least 1 KB | Rejected | |
 | Display loop at a 17-cycle byte cadence | at most 0.5 M cycles | about 0 | Unvalidated | Needs OLED timing validation |
 
-Interpreter flash is the shared constraint. After the 2026-11 interpreter timing pass ([interpreter guide, Section 5](isa_interpreter_implementation.md#5-timing-model)) the interpreter is 28,004 of 29,696 bytes, so 1,692 bytes are free for all ISA work combined (the figures in this document were measured when 364 were free; the pass cost four bytes net, and the later size trades of rare instructions, the float formatter, and cold startup and text code freed 1,332 more).
+Interpreter flash is the shared constraint. After the 2026-11 interpreter timing pass ([interpreter guide, Section 5](isa_interpreter_implementation.md#5-timing-model)) the interpreter is 28,104 of 29,696 bytes, so 1,592 bytes are free for all ISA work combined (the figures in this document were measured when 364 were free; the pass cost four bytes net, and the later size trades of rare instructions, the float formatter, and cold startup and text code freed 1,332 more, and the sprite fast path with its delay re-encoding then used 100).
 
 ## 4. `CALLT`: fused table call
 
@@ -111,7 +113,7 @@ Why it works:
 - **SPI timing.** The primary slot is entered with the next byte's transfer already running. The reader's first `SPDR` write must be at least 17 cycles after that transfer began; in this path it is about 26.
 - **Reuse.** The stack-overflow check and pending-audio-tick handling in the push/seek tail apply unchanged. There is no new SRAM and no change to existing code.
 
-**Size:** body 14 B (seven instructions); the interpreter image grows 29,332 → 29,344 bytes (+12 B). That leaves 352 of the 29,696-byte limit when 364 bytes were free; 1,692 are free after the 2026-11 timing and size passes, so flash remains the binding budget for every ISA proposal. Inserting the body moves later code by seven words, within the eight-word allowance in [guide Section 26.4](isa_interpreter_implementation.md#264-static-transfer-reach-considerations).
+**Size:** body 14 B (seven instructions); the interpreter image grows 29,332 → 29,344 bytes (+12 B). That leaves 352 of the 29,696-byte limit when 364 bytes were free; 1,592 are free after the 2026-11 timing, size and sprite passes, so flash remains the binding budget for every ISA proposal. Inserting the body moves later code by seven words, within the eight-word allowance in [guide Section 26.4](isa_interpreter_implementation.md#264-static-transfer-reach-considerations).
 
 ### 4.4. Measurements
 
@@ -232,7 +234,93 @@ Gains are fractions of avm_rpg exploration busy cycles. Only `SYS draw_tilemap` 
 - **`ENTER`/`LEAVE`.** In avm_rpg 7,658 four-register prologues (push `r3-r0`, `adjsp -n`) and matching epilogues (`adjsp +n`, pop `r0-r3`, `ret`) run per 398 frames. Fusing each into one 3-byte `F0` form is estimated at about 95 cycles saved per call.
 - **Audio interrupt.** Synthesis took 19.8% of busy cycles; reducing it is an interpreter change, not an ISA change, and was not analyzed.
 
-## 7. Reproducing the measurements
+## 7. Sprite drawing: renderer fast paths and batch tile services
+
+Measured on 2026-11-25 against `ce20048`, with scratch tools that are not in the repository: a native instruction tracer over the instruction benchmarks (`advance_instr()` stepping, cycle and PC per instruction), an SPDR-write timeline per benchmark, and a replay harness that logs the arguments of every call to `draw_bitmap_seek_func` during the exploration replay. Overwrite and plus-mask are the priority modes; nothing below is optimized for self-masked or erase.
+
+### 7.1. What the exploration replay draws
+
+Measured: 16,076 renderer entries in the replay window, every one a 16 x 16 sprite.
+
+| | `draw_overwrite` (tiles) | `draw_plus_mask` (actors, ambient, birds) |
+|---|---:|---:|
+| calls (avm-prof) | 15,036, 20.8% of busy cycles, 1,184 cycles each including interrupts | 996, 2.0%, 1,747 each |
+| fully on screen | 70.9% | 80.0% |
+| clipped left or right | 10.0% + 10.0% | 0.6% |
+| clipped top or bottom | 3.5% + 3.5% (corners 2.0%) | 9.4% (corners 1.5%) |
+| entirely off screen | 0.1% | 8.4% |
+| `y & 7 == 0` among fully visible | 86% | 79% |
+
+`draw_tiles` as a whole is 24.0 M cycles (28% of busy), so the guest loop around each tile costs another 413 cycles. No self-masked or erase call occurs. Of the fully visible, page-aligned tiles, 9.7% repeat the tile to their left, 29.5% repeat one of the last four distinct tiles drawn in the same frame, and 41% repeat an earlier tile of the frame.
+
+### 7.2. Where a cached call spends its cycles
+
+Measured, no interrupts, cycles counted from the `SYS` decode's `OUT SPDR`:
+
+| Phase | 8 x 8 aligned | 16 x 9 unaligned, frame 1 | SPI floor |
+|---|---:|---:|---:|
+| decode to the sprite's `SFC_READ` command | 66 | 77 | at least 17 (the speculative fetch must finish) |
+| command to address-high | 87 | 99 | 18 |
+| address-high to the first data byte | 86 | 87 | 71 |
+| decode to the first data byte | 239 | 262 | about 106 |
+| data bytes | 18 each | 18 each; 20 for the partial final page | 17 |
+| row boundary | | +41 | 0 |
+| clipped row (re-seek) | +101 each | | |
+| end of the last data byte to the next opcode | 124 | 124 | about 105 |
+
+Plus-mask data runs at 17.5 cycles per byte already. The address-high byte is late because the 15 pushes, the stride and frame arithmetic, the visibility test and the clipping all run before it. The flash transaction therefore idles for about 85 cycles in front of the first data byte, and again for about 50 to 60 cycles before the command is launched. About 130 to 155 cycles of every visible call are front-end work that the SPI bus could overlap.
+
+### 7.3. Renderer changes
+
+**Implemented 2026-11-25** (see the interpreter guide, pass summary): an interior page-aligned fast path for overwrite and plus-mask. It covers a sprite that is fully on screen, has `y & 7 == 0`, and, for overwrite, a height divisible by eight: 61% of the replay's tile calls and 63% of its plus-mask calls. It needs no register frame, opens the flash transaction as soon as the test passes, sends the address bytes at the minimum spacing, streams the whole frame at 17 cycles per byte with no row dispatch, and restarts the bytecode stream directly.
+
+| Measured against `ce20048` | Before | After |
+|---|---:|---:|
+| aligned 16 x 16 overwrite draw, no interrupts | 1,132 | 974 |
+| aligned 16 x 16 plus-mask draw, no interrupts | 1,573 | 1,426 |
+| `draw_overwrite` in the replay, observed | 1,184 | 1,069 |
+| `draw_plus_mask` in the replay, observed | 1,747 | 1,639 |
+| replay busy cycles | 85.54 M | 83.68 M (-2.18%), identical final display |
+
+Calls that fall back to the general renderer pay for the test: 4 cycles for unaligned `y`, 4 to 18 for clipped or off-screen draws, 20 to 26 for a partial final page, a 1 x 1 or an empty sprite, and 4 to 6 in self-masked and erase mode. The instruction benchmarks have 22 rows faster (by 92 to 1,355 cycles) and 162 sprite rows slower by those amounts; on the compiled benchmarks `tile_cache_render` gains 0.6% and the four unaligned tile-sprite programs lose 0.4 to 0.7%.
+
+Not done, and why:
+
+- **Front end of the general renderer.** It is bounded by its own instruction count, not by the SPI bus, so moving work behind the address bytes gains nothing there; only removing work would.
+- **Cached stride in `set_sprite`** (about 10 cycles). The cached-sprite state sits inside the packed private RAM layout that the audio map depends on.
+- **Peeling the last byte** of the fast loops, about 12 cycles per fast draw (0.2% of the replay): today each loop starts one transfer past the frame and waits for it. A batch service gains it once per tile.
+- **Clipped and unaligned fast paths.** Extending the fast path to horizontally clipped aligned sprites would add about 0.5% of the replay for about 150 B. Unaligned sprites need the shift loops and registers; the general renderer already streams them at 18 cycles per byte.
+
+### 7.4. Batch services and the flash window
+
+Any service that takes a RAM pointer must accept an AS0 address at or above `0x0B00` (the flash window, image offset = address - `0x0600`), as `memcmp`, `memcpy` and the formatter do. A draw owns the SPI bus, so tile indices cannot be fetched from flash between tiles at less than one transaction (about 100 cycles) each. The services below therefore read a row of indices (or a chunk of records) at a time into the 68-byte private workspace at `data_end_private`, which the non-nested compare services already alias, and read SRAM arrays in place. Each reads the sheet selected by `set_sprite`, so no 24-bit sprite pointer register is needed; an explicit PROGMEM array variant is not proposed because ordinary `const` arrays are reachable through the window. All preserve every register, `CC` and `SP`, and draw exactly what the equivalent loop of single calls would draw.
+
+Per-tile estimates, without interrupts, on the fast path: about 690 cycles for an eligible 16 x 16 tile (index and position step 25, frame address 15, eligibility 8, command 5, command to first data 89, 31 further bytes 527, transaction end 20) against about 1,180 for today's single call (about 850) plus the guest loop (about 330). Other tiles keep the general renderer at about 900 per tile (the prototype's measurement), against about 1,230 today. With the replay's 61/39 split that is about 430 cycles saved per tile.
+
+| Option | ABI | Interpreter cost | Gain on the replay, on top of 7.3 |
+|---|---|---:|---:|
+| A. `draw_tilemap` (grid) | `r4` x, `r5` y of tile (0,0); `r6` AS0 address of tile[0][0]; `r7` = rows << 8 \| cols; `r2` = skip << 8 \| stride. Tile (r,c) = frame `tile[r*stride+c]` at (x + c*width, y + r*height), overwrite, skip value not drawn, row-major | about 300 B (176 B prototype, +30 B callable fast loops, +60 B per-tile dispatch, +40 B window rows) | about 9% (RAM map); about 8.5% if the map is in the window |
+| B. `draw_tile_row` | `r4` x, `r5` y; `r6` AS0 address of the indices; `r7` = skip << 8 \| count; tile i at (x + i*width, y) | about 240 B | about 8.5% (RAM map): one call per row costs about 420 cycles each, 3 more per frame than A |
+| C. `draw_sprites` (list) | `r6` AS0 address of records `{int16 x; int16 y; uint8 frame}`; `r7` = count; two service numbers for overwrite and plus-mask | about 250 B alone, about 150 B beside A | about 0.3%: only about 2.5 plus-mask draws per frame; about 220 cycles per sprite plus the guest loop in sprite-heavy games |
+| D. Tile copy cache inside A or B | none (internal) | about 110 B, 16 bytes of workspace | about 1.9% more |
+
+- **A** is the largest gain for the fewest calls. Skipping whole off-screen rows and columns is computed once per call, so off-screen tiles cost nothing. A window row costs about 105 + 17 x visible cols cycles, about 1.2 k per frame. A plus-mask mode byte would add about 14 B.
+- **B** has a simpler ABI and the same window logic; choose it if the grid's five argument registers or the stride/skip semantics are unwanted.
+- **C** is independent of tile maps and is the natural way to batch actors and effects, but the replay has few of them, and the guest still has to build the records.
+- **D** copies the 32 bytes of an identical earlier tile of the same call from the framebuffer (about 220 cycles instead of about 690) when both are page-aligned and fully on screen; aligned overwrite tiles share no pages, so the copy is exact. 29.5% of the replay's eligible tiles match one of the last four distinct tiles (41% match any earlier tile of the frame, at a higher lookup cost).
+
+### 7.5. Order of work
+
+| Step | Observed gain on the replay | Interpreter cost |
+|---|---:|---:|
+| Interior aligned fast path (done) | 2.18% | +248 B (offset by 148 B of delay re-encoding) |
+| A. `draw_tilemap` with window rows | about 9% | about 300 B |
+| D. Tile copy cache | about 1.9% | about 110 B |
+| Fast path for horizontally clipped aligned sprites | about 0.5% | about 150 B |
+
+A and D together would take the replay about 11% below today's 83.68 M busy cycles for about 410 B of the 1,592 free. Verification for a batch service: randomized maps, positions, strides, skip values and both memory regions against a loop of single calls (pixel-identical, registers preserved), replay frame hashes, and the SPI-write checker.
+
+## 8. Reproducing the measurements
 
 - **Interpreter build:** the recipe in `cmake/BuildAvmInterpreter.cmake` (`avr-gcc -c -x assembler-with-cpp -mmcu=atmega32u4 interp.asm`, then link with `-nostartfiles -nostdlib -Wl,--gc-sections -Wl,--entry=__vectors -Wl,--section-start=.text=0x0000 -Wl,-Tdata=0x800A0B`, then `avr-objcopy -O ihex`). Patch a copy; do not edit the committed file for an experiment.
 - **Guest microbenchmark:** C++ with the table base hidden from the optimizer by an empty `asm` (otherwise the call becomes a switch), then, for the fused build:

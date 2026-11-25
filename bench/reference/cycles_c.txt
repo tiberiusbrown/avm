@@ -387,12 +387,12 @@
         3587   sys_strncpy_p.c
       468797   tail_calls.c
        52094   text.c
-     3016364   tile_cache_render.c
+     2999137   tile_cache_render.c
        42480   tilesrect.c
-       85822   tilessprite.c
-       36642   tilessprite16.c
-       33450   tilessprite16_cached.c
-       72358   tilessprite_cached.c
+       86334   tilessprite.c
+       36770   tilessprite16.c
+       33578   tilessprite16_cached.c
+       72870   tilessprite_cached.c
       493871   volatile_rmw.c
       501526   wide_add_sub.c
      1052805   wide_compare.c

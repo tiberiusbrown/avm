@@ -201,6 +201,9 @@
     .error "dual-flash comparison scratch must stay within the formatter workspace"
 .endif
 
+; The tile map service keeps its row step in the same nonnested workspace.
+#define data_tilemap_step         (data_end_private+0)
+
 .if (data_format_digit_buffer + FORMAT_INTEGER_DIGIT_CAPACITY) > data_format_arg_ptr
     .error "64-bit integer digit buffer overlaps formatter argument cursor"
 .endif
@@ -827,11 +830,16 @@
 #define SYS_GET_SYSTEM_HEIGHT           0x3B
 #define SYS_GET_SYSTEM_DISPLAY_TYPE     0x3C
 #define SYS_DEBUG_PRINTFV                0x3D
+#define SYS_DRAW_TILEMAP                 0x3E
 
 #define SPRITE_MODE_OVERWRITE    0
 #define SPRITE_MODE_PLUS_MASK    1
 #define SPRITE_MODE_SELF_MASKED  2
 #define SPRITE_MODE_ERASE        3
+
+; Option bits in the high byte of the draw_tilemap flags.
+#define TILEMAP_OPTION_U16       0
+#define TILEMAP_OPTION_SKIP      1
 
 #define SPRITE_FLAG_TOP          0
 #define SPRITE_FLAG_BOTTOM       1
@@ -3598,7 +3606,7 @@ sys_decode_func:
     sei
 
 sys_dispatch_func:
-    cpi  PRIMARY_OPCODE, SYS_DEBUG_PRINTFV+1
+    cpi  PRIMARY_OPCODE, SYS_DRAW_TILEMAP+1
     brsh invalid_syscall_func
     add  r30, PRIMARY_OPCODE
     adc  r31, ZERO
@@ -3723,13 +3731,17 @@ sys_dispatch_table:
     sys_entries 1,   sys_send_display_command_func
     sys_entries 3,   sys_system_info_func
     sys_entries 1,   sys_debug_printfv_func
+    sys_entries 1,   sys_draw_tilemap_func
 sys_dispatch_table_end:
 
 .if SYS_DEBUG_PRINTFV != 0x3D
     .error "RAM debug formatter must occupy entry 0x3D"
 .endif
+.if SYS_DRAW_TILEMAP != 0x3E
+    .error "tile map drawing must occupy entry 0x3E"
+.endif
 
-.if (sys_dispatch_table_end - sys_dispatch_table) != ((SYS_DEBUG_PRINTFV+1) * 2)
+.if (sys_dispatch_table_end - sys_dispatch_table) != ((SYS_DRAW_TILEMAP+1) * 2)
     .error "SYS dispatch table must contain exactly the defined service entries"
 .endif
 
@@ -3774,6 +3786,9 @@ sys_draw_func:
 ; service number remains in PRIMARY_OPCODE so bit zero can select white/black.
 sys_draw_filled_rect_func:
     jmp   sys_draw_filled_rect_impl
+
+sys_draw_tilemap_func:
+    jmp   sys_draw_tilemap_impl
 
 ; The six contiguous platform/persistence services share one far dispatcher,
 ; minimizing movement of the range-constrained interpreter core.
@@ -9355,6 +9370,7 @@ sys_set_sprite_impl:
     jmp   seek_and_dispatch_func_disabled
 
 sys_draw_cached_impl:
+    clt                              ; this draw restarts the bytecode stream
     ; The mode is already in GPIOR1.
 
     ; The renderer takes ownership of SPI. Advance from the service byte to the
@@ -9365,6 +9381,8 @@ sys_draw_cached_impl:
 
     ; Recreate the state produced by the explicit header-read path: raw pointer
     ; plus two, width in r0/GPIOR2, height in r1, mode in GPIOR1, and FX idle.
+    ; The tile map service RCALLs this entry with SREG.T set to draw one tile.
+.Lsprite_cached_load:
     lds   r24, data_sprite_ptr+0
     lds   r25, data_sprite_ptr+1
     lds   r26, data_sprite_ptr+2
@@ -9375,6 +9393,7 @@ sys_draw_cached_impl:
     rjmp  .Lsys_sprite_header_ready
 
 sys_draw_sprite_header_impl:
+    clt                              ; this draw restarts the bytecode stream
     ; The mode is already in GPIOR1.
 
     ; The instruction stream must be restarted after the sprite has owned SPI.
@@ -9476,7 +9495,12 @@ sys_draw_sprite_header_impl:
 ; frame is a single SPI stream of width * pages bytes (twice that for PLUS_MASK)
 ; that is stored straight into the framebuffer. The path uses only the native
 ; scratch registers r0:r1, r24:r27 and r30:r31, so it saves and restores nothing.
-; Every other sprite continues into draw_bitmap_seek_func unchanged.
+; Every other sprite continues into draw_bitmap_seek_func.
+;
+; SREG.T clear draws one sprite for a draw service, which restarts the bytecode
+; stream when done. SREG.T set draws one tile for the tile map service and
+; returns to it; the fallback then runs the generic renderer under the text glyph
+; register frame.
 ;
 ; Entry: r0 width, r1 height, r27 mode, r24:r26 image-relative frame pointer,
 ;   AVM r4 = x (r16:r17), r5 = y (r18:r19), GPIOR1 mode, GPIOR2 width,
@@ -9516,7 +9540,20 @@ sprite_fast_try:
     andi  r30, 0x07                      ; padding bits of a partial page are
     breq  .Lsprite_fast_start            ; ignored and need masking
 .Lsprite_fast_generic:
-    jmp   draw_bitmap_seek_func
+    brtc  .Lsprite_fast_single
+    ; A tile map tile: the general renderer runs under the text glyph register
+    ; frame and returns to the tile map service through .Ltext_emit_char_restore.
+    push  r8
+    push  r9
+    push  r12
+    push  r13
+    push  r14
+    push  r15
+    push  r18
+    push  r19
+    push  r22
+.Lsprite_fast_single:
+    rjmp  draw_bitmap_seek_func
 
 .Lsprite_fast_start:
     ; Physical frame address: add the data page to the middle and high bytes,
@@ -9625,9 +9662,12 @@ sprite_fast_try:
 ; finishes before chip select rises; then restart the bytecode stream with the
 ; standard seek.
 .Lsprite_fast_done:
-    nop
+    brts  .Lsprite_fast_tile_done    ; the untaken branch also pads the transfer
     fx_disable
     jmp   seek_and_dispatch_func_disabled
+.Lsprite_fast_tile_done:
+    fx_disable
+    ret
 
 .Lsprite_fast_plus_pad:
     delay_3
@@ -9647,23 +9687,26 @@ sprite_fast_try:
 ;   FX deselected; no SPI transfer active
 ;
 ; Exit:
-;   draw_bitmap_seek_func completes the SYS call. It is tail-called with the
-;   native stack as the SYS wrapper found it and never returns: an empty or
-;   fully invisible bitmap restarts the bytecode stream immediately, and a
-;   drawn bitmap restores r8-r23 and restarts the stream in sprite_exit_seek_func.
-;   Text glyphs use the internal T=1 entries below and return to their own
-;   caller, so no repeated-call contract exists for this entry.
+;   With SREG.T clear, draw_bitmap_seek_func completes the SYS call. It is
+;   tail-called with the native stack as the SYS wrapper found it and never
+;   returns: an empty or fully invisible bitmap restarts the bytecode stream
+;   immediately, and a drawn bitmap restores r8-r23 and restarts the stream in
+;   sprite_exit_seek_func.
+;   With SREG.T set, the caller has pushed the text glyph register frame (r8, r9,
+;   r12-r15, r18, r19, r22), and every exit, including rejection, returns through
+;   .Ltext_emit_char_restore. Text glyphs use the internal T=1 entries below; the
+;   tile map service enters draw_bitmap_seek_func through the fast path's fallback.
 ;
 ; Data layout and semantics match the four sprite SYS services. This entry is
 ; deliberately exported so future text/glyph SYS services can prepare their
 ; own width, height, and bitmap pointer, then reuse clipping and rendering.
 ;
 ; Preservation contracts:
-;   draw_bitmap_seek_func / draw_bitmap_seek_nonempty_func push and restore
-;   all native r8-r23 (the complete AVM register file).
-;   draw_bitmap_seek_nonempty_text_func is an internal text-only contract: the
-;   caller has already preserved architectural state for the whole text SYS, so
-;   the renderer may clobber r8-r23 and skips the per-glyph register frame.
+;   With SREG.T clear, draw_bitmap_seek_func / draw_bitmap_seek_nonempty_func
+;   push and restore all native r8-r23 (the complete AVM register file).
+;   With SREG.T set, the caller preserves architectural state for its whole SYS,
+;   so the renderer may clobber r8-r23 beyond the glyph frame it restores and
+;   skips the per-draw register save.
 ;   VM_PC, VM_FLAGS, VM_SP, and the permanent constants are untouched. Native
 ;   r0:r1, r24:r27, r30:r31, GPIOR1:GPIOR2, and SREG are call-clobbered.
 ;
@@ -9681,14 +9724,17 @@ sprite_fast_try:
 ;   r19             signed destination page during setup; high mask/temporary
 ;   r20:r21:r22     current visible source-row physical FX pointer
 ;   r23             top/bottom/reseek/surviving-partial flags
-;   SREG.T          0=renderer preserves r8-r23, 1=text caller preserves them
+;   SREG.T          0=renderer preserves r8-r23, 1=caller preserves them
 ;   GPIOR1:GPIOR2   selected mode-specific row-dispatch word address
 ;   X               current framebuffer page pointer
 ;   Z               adjacent framebuffer page pointer or dispatch target
 ;   r24:r25,r0:r1   stream and framebuffer temporaries
 ;
 .Lsprite_raw_reject:
+    brts  .Lsprite_raw_reject_return
     jmp   seek_and_dispatch_func_disabled
+.Lsprite_raw_reject_return:
+    rjmp  .Lsprite_finish_text
 .global draw_bitmap_seek_func
 draw_bitmap_seek_func:
     ; Reject invisible or empty bitmaps before touching architectural state or
@@ -9698,9 +9744,9 @@ draw_bitmap_seek_func:
     tst   r1
     breq  .Lsprite_raw_reject
 
-; Internal preserved entry for callers that already proved r0 != 0 and r1 != 0.
+; Internal entry for callers that already proved r0 != 0 and r1 != 0. SREG.T
+; keeps the preservation contract the caller selected.
 draw_bitmap_seek_nonempty_func:
-    clt                              ; generic renderer owns preservation
 
 .Lsprite_raw_check_visible:
     cpi   VM_R4L, 128
@@ -10730,6 +10776,143 @@ sprite_delay_8:
     nop
 sprite_delay_7:
     ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; SYS draw_tilemap
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; ABI (architectural registers):
+;   r0  = low byte: draw mode 0-3 (SPRITE_MODE_*); high byte: TILEMAP_OPTION_U16
+;         selects uint16_t entries, TILEMAP_OPTION_SKIP leaves all-ones entries
+;         (0xFF or 0xFFFF) undrawn
+;   r2  = stride: entries from the start of one map row to the start of the next
+;   r4  = int16_t x   upper-left pixel of the first tile
+;   r5  = int16_t y
+;   r6  = AS0 address of entry [0][0] (SRAM or the flash window)
+;   r7  = rows << 8 | cols
+;
+; Entry (row, col) is frame map[row * stride + col] of the selected sprite,
+; drawn at (x + col * width, y + row * height) in the selected mode, exactly as
+; a loop of cached draws over the rows would draw it, except that the loop ends
+; at the first row below the screen. Address and coordinate arithmetic wraps
+; modulo 65,536. An empty grid or an empty sprite draws nothing. All
+; architectural registers, VM_FLAGS and VM_SP are preserved.
+;
+; Each tile enters .Lsprite_cached_load with SREG.T set, so both sprite paths
+; return here: the interior fast path with RET, the generic renderer through the
+; text glyph register frame that the fast path's fallback pushes. Loop state
+; lives in registers both paths preserve (the glyph frame, plus r17 and Y, which
+; the renderer does not write):
+;   r8  draw mode         r9  options          r12:r17 current x (low:high)
+;   r13 rows left         r14 columns left     r15 sprite width
+;   r18:r19 current y     r22 columns          Y   next entry
+; Only the pointer step from the end of one row to the next is kept in SRAM.
+; Entries in the flash window are read with one flash transaction each. The
+; service does not run audio work; ticks are serviced at the following seek.
+
+sys_draw_tilemap_start:
+sys_draw_tilemap_impl:
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    ; Save native r8-r29: the architectural file and Y (r24-r27 are scratch).
+    ; This loop also outlasts the speculative bytecode transfer.
+    ldi   r30, 8
+    clr   r31
+.Ltilemap_save:
+    ld    r0, Z+
+    push  r0
+    cpi   r30, 30
+    brne  .Ltilemap_save
+
+    mul   r22, r23                    ; Z is set for an empty grid
+    breq  .Ltilemap_done
+
+    sub   r12, r22                    ; (stride - cols) entries, in bytes
+    sbc   r13, ZERO
+    sbrc  r9, TILEMAP_OPTION_U16
+    add   r12, r12
+    sbrc  r9, TILEMAP_OPTION_U16
+    adc   r13, r13
+    sts   data_tilemap_step+0, r12
+    sts   data_tilemap_step+1, r13
+    movw  r28, r20                    ; map pointer
+    mov   r12, r16                    ; x low; r17 already holds x high
+    mov   r13, r23                    ; rows
+    lds   r15, data_sprite_width
+
+.Ltilemap_row:
+    cpi   r18, 64                     ; this and later rows are below the screen
+    cpc   r19, ZERO
+    brge  .Ltilemap_done
+    mov   r14, r22
+
+.Ltilemap_col:
+    ; r20:r21 = entry (zero-extended), Y advances past it.
+    clr   r21
+    cpi   r29, 0x0B                   ; AS0 flash window at 0x0B00 and above
+    brsh  .Ltilemap_fetch_flash
+    ld    r20, Y+
+    sbrc  r9, TILEMAP_OPTION_U16
+    ld    r21, Y+
+.Ltilemap_fetched:
+    movw  r24, r20                    ; all ones in the entry's width?
+    sbrs  r9, TILEMAP_OPTION_U16
+    ser   r25
+    adiw  r24, 1
+    brne  .Ltilemap_draw
+    sbrc  r9, TILEMAP_OPTION_SKIP
+    rjmp  .Ltilemap_col_next
+.Ltilemap_draw:
+    mov   r16, r12                    ; x; the entry already sits in AVM r6
+    out   GPIOR1, r8
+    set                               ; the draw returns here
+    rcall .Lsprite_cached_load
+
+.Ltilemap_col_next:
+    add   r12, r15
+    adc   r17, ZERO
+    dec   r14
+    brne  .Ltilemap_col
+
+    mul   r22, r15                    ; x back to the first column
+    sub   r12, r0
+    sbc   r17, r1
+    lds   r24, data_tilemap_step+0
+    add   r28, r24
+    lds   r24, data_tilemap_step+1
+    adc   r29, r24
+    lds   r24, data_sprite_height
+    add   r18, r24
+    adc   r19, ZERO
+    dec   r13
+    brne  .Ltilemap_row
+
+.Ltilemap_done:
+    ldi   r30, 30
+    clr   r31
+.Ltilemap_restore:
+    pop   r0
+    st    -Z, r0
+    cpi   r30, 8
+    brne  .Ltilemap_restore
+    jmp   seek_and_dispatch_func
+
+.Ltilemap_fetch_flash:
+    movw  r24, r28
+    subi  r25, 0x06                   ; image-relative address
+    clr   r26
+    ldi   r30, 20                     ; destination: r20:r21
+    clr   r31
+    mul   ONE, ONE                    ; reader count r1:r0 = 1
+    sbrc  r9, TILEMAP_OPTION_U16
+    inc   r0
+    add   r28, r0
+    adc   r29, ZERO
+    call  fx_read_program_bytes_func
+    rjmp  .Ltilemap_fetched
+sys_draw_tilemap_end:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; SYS filled-rectangle drawing services

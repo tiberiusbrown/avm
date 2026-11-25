@@ -5,23 +5,23 @@ Disassembly of section .text:
 
 <avm_test_main>:
  d7 01                 sys	debug_break
- c6 db 0d              ldi16	r6, 0xddb
+ c6 d6 0d              ldi16	r6, 0xdd6
  c3 00                 ldi8	r7, 0x0
  d7 15                 sys	strlen_p
  04                    mov	r5, r4
- c6 dc 0d              ldi16	r6, 0xddc
+ c6 d7 0d              ldi16	r6, 0xdd7
  c3 00                 ldi8	r7, 0x0
  d7 15                 sys	strlen_p
  14                    add	r5, r4
- c6 de 0d              ldi16	r6, 0xdde
+ c6 d9 0d              ldi16	r6, 0xdd9
  c3 00                 ldi8	r7, 0x0
  d7 15                 sys	strlen_p
  14                    add	r5, r4
- c6 e7 0d              ldi16	r6, 0xde7
+ c6 e2 0d              ldi16	r6, 0xde2
  c3 00                 ldi8	r7, 0x0
  d7 15                 sys	strlen_p
  14                    add	r5, r4
- c6 08 0e              ldi16	r6, 0xe08
+ c6 03 0e              ldi16	r6, 0xe03
  c3 00                 ldi8	r7, 0x0
  d7 15                 sys	strlen_p
  14                    add	r5, r4

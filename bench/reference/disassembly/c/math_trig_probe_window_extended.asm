@@ -26,7 +26,7 @@ Disassembly of section .text:
  aa                    xor	r6, r6
  f4 4a                 stsp16	[sp+0x2], r6
  f0 16 02              leasp	r6, 0x2
- e1 e1 0a              call16	__kernel_rem_pio2f
+ e1 dd 0a              call16	__kernel_rem_pio2f
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 69                 mov32	q2, q1
@@ -79,7 +79,7 @@ Disassembly of section .text:
  c8 81                 addi.s8	r4, -0x7f
  c1 0a                 ldi8	r5, 0xa
  e1 41 06              call16	__avm_umulhisi3
- f0 06 b5 18           ldi16	r2, 0x18b5
+ f0 06 b0 18           ldi16	r2, 0x18b0
  f0 03 00              ldi8	r3, 0x0
  f7 66                 add32	q1, q2
  c0 7f                 ldi8	r4, 0x7f
@@ -396,10 +396,10 @@ Disassembly of section .text:
  c8 81                 addi.s8	r4, -0x7f
  c1 0a                 ldi8	r5, 0xa
  e1 d9 03              call16	__avm_umulhisi3
- c6 b9 18              ldi16	r6, 0x18b9
+ c6 b4 18              ldi16	r6, 0x18b4
  c3 00                 ldi8	r7, 0x0
  f7 6e                 add32	q3, q2
- f0 04 b5 18           ldi16	r0, 0x18b5
+ f0 04 b0 18           ldi16	r0, 0x18b0
  f0 01 00              ldi8	r1, 0x0
  f7 62                 add32	q0, q2
  f0 64 80              ldp32	q2, [q0]

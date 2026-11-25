@@ -59,6 +59,7 @@ Disassembly of section .text:
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
+ 00                    nop
 
 <Accumulator::add(unsigned int)>:
  68                    ld16	r6, [r4]

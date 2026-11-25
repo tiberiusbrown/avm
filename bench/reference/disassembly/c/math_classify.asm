@@ -72,7 +72,7 @@ Disassembly of section .text:
  10                    add	r4, r4
  10                    add	r4, r4
  a5                    xor	r5, r5
- c6 79 0e              ldi16	r6, 0xe79
+ c6 74 0e              ldi16	r6, 0xe74
  c3 00                 ldi8	r7, 0x0
  f7 6b                 add32	q2, q3
  f0 64 08              ldp32	q0, [q2]

@@ -2378,6 +2378,21 @@ void formatter(char** args) {
     require(minsp>=scratch_end,"formatter/audio interrupts collided with private workspace");
     std::cout<<"libm/formatter with sample interrupts: native stack "<<0xb00-minsp<<" bytes\n";
 }
+// The tile map service nests deeper in the native stack than a single draw. Run its
+// fixture with the sample interrupts active and require that the deepest stack
+// stays clear of the private workspace.
+void tilemap_stack(char** args) {
+    harness h(args,false);
+    unsigned minsp=0xaff;
+    auto begin=h.c().cycle_count;
+    while(!h.c().autobreaks.test(AB_BREAK) && h.c().cycle_count-begin<400000000) {
+        minsp=std::min(minsp,unsigned(h.c().sp()));
+        h.tick(true);
+    }
+    require(h.c().autobreaks.test(AB_BREAK),"tile map audio workload did not finish");
+    require(minsp>=scratch_end,"tile map and audio interrupts collided with private workspace");
+    std::cout<<"tile map with sample interrupts: native stack "<<0xb00-minsp<<" bytes\n";
+}
 // Direct compiled-asset/API validation intentionally excludes demo UI navigation/rendering.
 void playlist_assets(char** args) {
     harness h(args,false);
@@ -2727,7 +2742,7 @@ void sys_bounds(char** args) {
     harness h(args);
     auto table=h.sym("sys_dispatch_table"), trap=h.sym("invalid_syscall_func");
     auto services=h.sym("sys_dispatch_table_end")-table;
-    require(services==0x3e,"SYS table has wrong size");
+    require(services==0x3f,"SYS table has wrong size");
     for(unsigned id=0;id<256;++id) {
         h.c().data[24]=uint8_t(id); h.word(30,uint16_t(table));
         auto flags=h.c().data[reg::addr::GPIOR0]; auto sp=h.c().sp();
@@ -2879,6 +2894,7 @@ void run_suite(std::string const& name,char** args) {
     else if(name=="demo") {demo(args); demo(args,true);}
     else if(name=="playlist-assets") playlist_assets(args);
     else if(name=="formatter") formatter(args);
+    else if(name=="tilemap-stack") tilemap_stack(args);
     else if(name=="export-c") exported_large_asset(args);
     else if(name=="export-cpp") exported_large_asset(args,false);
     else throw std::runtime_error("unknown audio suite: "+name);

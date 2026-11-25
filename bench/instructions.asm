@@ -40,6 +40,9 @@
 ;     all four clipping edges and corners, full-screen work, and complete
 ;     rejection on every side. set_sprite is measured separately with a
 ;     representative multi-frame sprite.
+;   * The tile map SYS covers an empty grid and sprite, single and multi-tile
+;     grids, aligned, unaligned and clipped windows, every drawing mode, 16-bit
+;     and flash-window maps, skipped entries, and off-screen windows.
 ;   * Comparison and string SYS services cover zero-length, equal, early/late
 ;     mismatch, prefix, NUL-padding, truncation, and long-scan paths. Program
 ;     variants deliberately carry nonzero q3[31:24] padding.
@@ -78,6 +81,9 @@
 .equ BENCH_FORMAT_DST,    0x0500
 .equ BENCH_FORMAT_RAM,    0x0600
 .equ BENCH_FORMAT_ARGS,   0x0700
+
+; RAM map used by the tile map benchmarks.
+.equ BENCH_TILEMAP,       0x0200
 .equ BENCH_FORMAT_STRING, 0x0780
 
 .macro bench_reset_sp
@@ -13331,6 +13337,417 @@ _start:
     sys debug_break
 
 ; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (empty grid)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, BENCH_TILEMAP
+    ldi8 r5, 1
+    ldi16 r6, 64
+    sys memset
+
+    ldi16 r4, %lo16(.Lbench_tilemap_plain_16x16)
+    ldi8 r5, %hi8(.Lbench_tilemap_plain_16x16)
+    sys set_sprite
+
+    ldi16 r0, 0x0000
+    ldi16 r2, 9
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, BENCH_TILEMAP
+    ldi16 r7, 0x0200
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (empty sprite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, BENCH_TILEMAP
+    ldi8 r5, 1
+    ldi16 r6, 64
+    sys memset
+
+    ldi16 r4, %lo16(.Lbench_sprite_plain_zero_width)
+    ldi8 r5, %hi8(.Lbench_sprite_plain_zero_width)
+    sys set_sprite
+
+    ldi16 r0, 0x0000
+    ldi16 r2, 9
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, BENCH_TILEMAP
+    ldi16 r7, 0x0204
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (1x1 16x16 overwrite at x=0,y=0; aligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, BENCH_TILEMAP
+    ldi8 r5, 1
+    ldi16 r6, 64
+    sys memset
+
+    ldi16 r4, %lo16(.Lbench_tilemap_plain_16x16)
+    ldi8 r5, %hi8(.Lbench_tilemap_plain_16x16)
+    sys set_sprite
+
+    ldi16 r0, 0x0000
+    ldi16 r2, 9
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, BENCH_TILEMAP
+    ldi16 r7, 0x0101
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (4x2 16x16 overwrite at x=0,y=0; aligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, BENCH_TILEMAP
+    ldi8 r5, 1
+    ldi16 r6, 64
+    sys memset
+
+    ldi16 r4, %lo16(.Lbench_tilemap_plain_16x16)
+    ldi8 r5, %hi8(.Lbench_tilemap_plain_16x16)
+    sys set_sprite
+
+    ldi16 r0, 0x0000
+    ldi16 r2, 9
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, BENCH_TILEMAP
+    ldi16 r7, 0x0204
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (4x2 16x16 overwrite at x=3,y=5; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, BENCH_TILEMAP
+    ldi8 r5, 1
+    ldi16 r6, 64
+    sys memset
+
+    ldi16 r4, %lo16(.Lbench_tilemap_plain_16x16)
+    ldi8 r5, %hi8(.Lbench_tilemap_plain_16x16)
+    sys set_sprite
+
+    ldi16 r0, 0x0000
+    ldi16 r2, 9
+    ldi16 r4, 0x0003
+    ldi16 r5, 0x0005
+    ldi16 r6, BENCH_TILEMAP
+    ldi16 r7, 0x0204
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (9x5 16x16 overwrite at x=-5,y=-4; full screen clipped)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, BENCH_TILEMAP
+    ldi8 r5, 1
+    ldi16 r6, 64
+    sys memset
+
+    ldi16 r4, %lo16(.Lbench_tilemap_plain_16x16)
+    ldi8 r5, %hi8(.Lbench_tilemap_plain_16x16)
+    sys set_sprite
+
+    ldi16 r0, 0x0000
+    ldi16 r2, 9
+    ldi16 r4, 0xfffb
+    ldi16 r5, 0xfffc
+    ldi16 r6, BENCH_TILEMAP
+    ldi16 r7, 0x0509
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (4x2 16x16 plus-mask at x=0,y=0; aligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, BENCH_TILEMAP
+    ldi8 r5, 1
+    ldi16 r6, 64
+    sys memset
+
+    ldi16 r4, %lo16(.Lbench_tilemap_plus_16x16)
+    ldi8 r5, %hi8(.Lbench_tilemap_plus_16x16)
+    sys set_sprite
+
+    ldi16 r0, 0x0001
+    ldi16 r2, 9
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, BENCH_TILEMAP
+    ldi16 r7, 0x0204
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (4x2 16x16 self-masked at x=3,y=5; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, BENCH_TILEMAP
+    ldi8 r5, 1
+    ldi16 r6, 64
+    sys memset
+
+    ldi16 r4, %lo16(.Lbench_tilemap_plain_16x16)
+    ldi8 r5, %hi8(.Lbench_tilemap_plain_16x16)
+    sys set_sprite
+
+    ldi16 r0, 0x0002
+    ldi16 r2, 9
+    ldi16 r4, 0x0003
+    ldi16 r5, 0x0005
+    ldi16 r6, BENCH_TILEMAP
+    ldi16 r7, 0x0204
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (4x2 16x16 erase at x=3,y=5; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, BENCH_TILEMAP
+    ldi8 r5, 1
+    ldi16 r6, 64
+    sys memset
+
+    ldi16 r4, %lo16(.Lbench_tilemap_plain_16x16)
+    ldi8 r5, %hi8(.Lbench_tilemap_plain_16x16)
+    sys set_sprite
+
+    ldi16 r0, 0x0003
+    ldi16 r2, 9
+    ldi16 r4, 0x0003
+    ldi16 r5, 0x0005
+    ldi16 r6, BENCH_TILEMAP
+    ldi16 r7, 0x0204
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (4x2 16x16 overwrite; 16-bit entries)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, BENCH_TILEMAP
+    ldi16 r5, 1
+    .rept 16
+    st16 [r4+], r5
+    .endr
+
+    ldi16 r4, %lo16(.Lbench_tilemap_plain_16x16)
+    ldi8 r5, %hi8(.Lbench_tilemap_plain_16x16)
+    sys set_sprite
+
+    ldi16 r0, 0x0100
+    ldi16 r2, 9
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, BENCH_TILEMAP
+    ldi16 r7, 0x0204
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (4x2 all entries skipped)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, BENCH_TILEMAP
+    ldi8 r5, 255
+    ldi16 r6, 64
+    sys memset
+
+    ldi16 r4, %lo16(.Lbench_tilemap_plain_16x16)
+    ldi8 r5, %hi8(.Lbench_tilemap_plain_16x16)
+    sys set_sprite
+
+    ldi16 r0, 0x0200
+    ldi16 r2, 9
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, BENCH_TILEMAP
+    ldi16 r7, 0x0204
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (4x2 16x16 overwrite; flash-window map)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, %lo16(.Lbench_tilemap_plain_16x16)
+    ldi8 r5, %hi8(.Lbench_tilemap_plain_16x16)
+    sys set_sprite
+
+    ldi16 r0, 0x0000
+    ldi16 r2, 9
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, avm_bench_flash_map
+    ldi16 r7, 0x0204
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (4x2 16x16 overwrite; 16-bit flash-window map)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, %lo16(.Lbench_tilemap_plain_16x16)
+    ldi8 r5, %hi8(.Lbench_tilemap_plain_16x16)
+    sys set_sprite
+
+    ldi16 r0, 0x0100
+    ldi16 r2, 9
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, avm_bench_flash_map16
+    ldi16 r7, 0x0204
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (4x1 16x16 below the screen at y=64)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, BENCH_TILEMAP
+    ldi8 r5, 1
+    ldi16 r6, 64
+    sys memset
+
+    ldi16 r4, %lo16(.Lbench_tilemap_plain_16x16)
+    ldi8 r5, %hi8(.Lbench_tilemap_plain_16x16)
+    sys set_sprite
+
+    ldi16 r0, 0x0000
+    ldi16 r2, 9
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0040
+    ldi16 r6, BENCH_TILEMAP
+    ldi16 r7, 0x0104
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_tilemap (4x1 16x16 right of the screen at x=128)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, BENCH_TILEMAP
+    ldi8 r5, 1
+    ldi16 r6, 64
+    sys memset
+
+    ldi16 r4, %lo16(.Lbench_tilemap_plain_16x16)
+    ldi8 r5, %hi8(.Lbench_tilemap_plain_16x16)
+    sys set_sprite
+
+    ldi16 r0, 0x0000
+    ldi16 r2, 9
+    ldi16 r4, 0x0080
+    ldi16 r5, 0x0000
+    ldi16 r6, BENCH_TILEMAP
+    ldi16 r7, 0x0104
+    sys debug_break
+    sys draw_tilemap
+    sys debug_break
+
+; -----------------------------------------------------------------------------
 ; BENCH: RET
 ; -----------------------------------------------------------------------------
     bench_reset_sp
@@ -13622,6 +14039,20 @@ _start:
     .byte 128, 64
     .rept 1024
     .byte 0x6d, 0xb6
+    .endr
+
+; Two-frame 16 x 16 sheets for the tile map benchmarks.
+.Lbench_tilemap_plain_16x16:
+    .byte 16, 16
+    .fill 32, 1, 0x5a
+    .fill 32, 1, 0xa5
+.Lbench_tilemap_plus_16x16:
+    .byte 16, 16
+    .rept 32
+    .byte 0x96, 0x5a
+    .endr
+    .rept 32
+    .byte 0x69, 0xc3
     .endr
 
 .size _start, .-_start

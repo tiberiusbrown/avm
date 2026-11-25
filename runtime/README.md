@@ -92,6 +92,32 @@ including `memcpy` and `memcpy_P`.
 `<avm/audio.h>` (also included by `<avm.h>`) supplies autonomous four-channel
 music, SFX, and direct-tone controls through `SYS 0x38`. See
 [the audio documentation](../docs/audio.md) for APIs and asset generation.
+`<avm/tilemap.h>` (also included by `<avm.h>`) draws a window of a tile map
+with the sprite selected by `avm_set_sprite()`, using one system call
+([`draw_tilemap`](../docs/arch.md#49211-tile-map-drawing)). Each function takes
+`(x, y, tiles, cols, rows, stride)`: the position of the first tile, the first
+entry to draw, the window size, and the number of entries from one map row to the
+next. Entry `tiles[row * stride + col]` selects the frame drawn at
+`(x + col * width, y + row * height)`; the call ends at the first row below the
+screen. The names compose the options:
+
+| Name part | Meaning |
+|---|---|
+| `avm_draw_tilemap_<mode>` | `uint16_t` entries; mode is `overwrite`, `plus_mask`, `self_masked`, or `erase` |
+| `avm_draw_tilemap_u8_<mode>` | `uint8_t` entries |
+| `_skip` suffix | all-ones entries (`0xFFFF` or `0xFF`) are not drawn |
+
+`tiles` is an ordinary pointer to RAM or to a `const` array in the flash window.
+`avm_draw_tilemap_ex()` takes the mode (`AVM_DRAW_MODE_*`), the entry width and
+the skip behavior as arguments. A scrolling 16 x 16 tile background is one call:
+
+```c
+avm_set_sprite(tile_sheet);
+avm_draw_tilemap_u8_overwrite(
+    -(int16_t)(camera_x & 15), -(int16_t)(camera_y & 15),
+    &map[(camera_y >> 4) * MAP_WIDTH + (camera_x >> 4)], 9, 5, MAP_WIDTH);
+```
+
 `<avm.h>` also supplies `avm_get_system_width()`, `avm_get_system_height()`,
 and `avm_get_system_display_type()` for immutable display configuration.
 `avm_send_display_command(cmd, n)` synchronously sends a RAM byte stream as raw

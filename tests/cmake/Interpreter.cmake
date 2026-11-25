@@ -117,8 +117,10 @@ avm_add_audio_run(avm_audio_demo_integration_run demo "${audio_demo_fixture}" av
 avm_add_audio_run(avm_audio_playlist_assets_run playlist-assets "${AVM_PUSH16_TEST_DIR}/audio_playlist.bin")
 avm_add_audio_run(avm_audio_formatter_run formatter "${AVM_C_TEST_BINARY_DIR}/O0/audio.bin")
 avm_add_audio_run(avm_audio_formatter_O2_run formatter "${AVM_C_TEST_BINARY_DIR}/O2/audio.bin")
+avm_add_audio_run(avm_audio_tilemap_stack_run tilemap-stack "${AVM_C_TEST_BINARY_DIR}/O2/tilemap.bin")
 avm_add_check(avm_audio_tests_run DEPENDS avm_audio_core_isa_run avm_audio_core_audio_run
-    avm_audio_demo_integration_run avm_audio_playlist_assets_run avm_audio_formatter_run avm_audio_formatter_O2_run)
+    avm_audio_demo_integration_run avm_audio_playlist_assets_run avm_audio_formatter_run avm_audio_formatter_O2_run
+    avm_audio_tilemap_stack_run)
 if(Python3_Interpreter_FOUND)
     avm_add_audio_run(avm_audio_export_c_run export-c "${audio_large_dir}/C.bin")
     avm_add_audio_run(avm_audio_export_cpp_run export-cpp "${audio_large_dir}/CXX.bin")

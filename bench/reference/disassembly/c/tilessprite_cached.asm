@@ -5,7 +5,7 @@ Disassembly of section .text:
 
 <avm_test_main>:
  d7 01                 sys	debug_break
- c4 ce 0f              ldi16	r4, 0xfce
+ c4 c9 0f              ldi16	r4, 0xfc9
  c1 00                 ldi8	r5, 0x0
  d7 22                 sys	set_sprite
  f0 55 02 01           ldm16	r5, [0x102]

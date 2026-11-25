@@ -12,16 +12,16 @@ Disassembly of section .text:
  f0 44 00 01           ldm8u	r4, [0x100]
  f4 a4                 tst8	r4
  d0 14                 breq8	0x14 <L0>
- f0 06 af 02           ldi16	r2, 0x2af
+ f0 06 ae 02           ldi16	r2, 0x2ae
  f0 03 00              ldi8	r3, 0x0
- c6 a6 02              ldi16	r6, 0x2a6
+ c6 a5 02              ldi16	r6, 0x2a5
  c3 00                 ldi8	r7, 0x0
  cc 01                 cmpi.s8	r4, 0x1
  fb 16                 cmov.eq	r2, r6
  fb 1f                 cmov.eq	r3, r7
  d4 07                 jmp8	0x7 <L1>
 <L0>:
- f0 06 a4 02           ldi16	r2, 0x2a4
+ f0 06 a3 02           ldi16	r2, 0x2a3
  f0 03 00              ldi8	r3, 0x0
 <L1>:
  c4 34 12              ldi16	r4, 0x1234

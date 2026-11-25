@@ -583,6 +583,8 @@ On the instruction benchmarks these changes move 397 of the 881 rows: 362 are fa
 
 **Delay padding.** Delay sequences were re-encoded in as few words as each exact cycle count allows: `LPM` (`delay_3`, three cycles in one word, overwrites `r0`) where `r0` is dead, one `RCALL` into a ladder for seven or more cycles, tail jumps into a ladder, and merged ladders (the program-reader, floating-point and formatter ladders now use the interpreter and sprite ladders, and the two text ladders are one). The re-encoding saves 148 bytes and moves no instruction benchmark outside the sprite fast path. Both interpreters are now 28,104 bytes, 1,592 below the limit.
 
+**Tile map service.** `draw_tilemap` (`SYS 0x3E`, Section 30.4) adds 204 bytes, so both interpreters are 28,308 bytes, 1,388 below the limit. Sprite draws now clear `SREG.T`, and the fast path's exit, its fallback and the renderer's rejection test it: each of the 184 single-sprite instruction-benchmark rows rises by one cycle when the sprite is visible (136 rows), two when it is fully off screen (32) and three when it is empty (16). No other row changes.
+
 The fixed setup costs of that deduplication are below, measured against `2282a60` with the same probe protocol. Per-byte streaming rates are unchanged. RAM `memcpy`, `memmove`, `strncpy`, and `strncat`, and every `memcmp_P`, `strcmp_P`, and `strlen_P` instruction row, are unchanged. The `sys_strncpy_p` and `sys_strncat_p` C workloads each drop by one cycle.
 
 | Path | Before | After | Note |
@@ -3787,6 +3789,32 @@ A dense page is a fixed-width table indexed by the secondary byte, so a rarely e
 | F7 | `BOOL rD` | `88-8F` | 80 | 38 | 58 | 218 |
 
 The handlers, dispatcher and trap trampoline occupy about 190 bytes against 600 bytes of removed table, a net saving of 424 bytes. Together the six families are 0.007% of the instructions executed by the benchmark suite and none appears in the avm_rpg exploration replay. A differential run of every (page, secondary) pair for F1-F7 and FE (2,048 pairs) against the interpreter before the change shows identical trap/execute outcomes, register file, stack pointer, architectural flags and stack memory.
+
+## 30.4. Tile map SYS service
+
+`draw_tilemap` (`0x3E`, [architecture Section 49.21.1](arch.md#49211-tile-map-drawing)) draws a window of a tile map with the selected sprite. It has no drawing code of its own: it walks the grid and draws each tile through the cached-pointer draw.
+
+- **Draw reuse.** Each tile calls `.Lsprite_cached_load`, the cached-draw setup inside `sys_draw_cached_impl`, with `SREG.T` set. The interior fast path then ends with `RET` instead of restarting the bytecode stream. Any other tile runs the generic renderer: the fast path's fallback first pushes the nine-register text glyph frame (`r8`, `r9`, `r12-r15`, `r18`, `r19`, `r22`), and the renderer returns through `.Ltext_emit_char_restore` exactly as it does for text, including from its rejection of an empty sprite or an off-screen tile. Single draws clear `SREG.T`.
+- **Loop state.** `r8` holds the mode, `r9` the option bits, `r12`/`r17` the x coordinate, `r13` and `r14` the row and column counters, `r15` the sprite width, `r18:r19` the y coordinate, `r22` the column count and `Y` the next entry; both draw paths preserve all of them. Only the two-byte step from one row's end to the next lives in SRAM, in the call-lifetime workspace at `data_end_private`.
+- **Entries.** RAM entries are read through `Y`; an entry at `0x0B00` or above is read from the flash window with one `fx_read_program_bytes_func` transaction. With `TILEMAP_OPTION_SKIP` an all-ones entry is not drawn. Rows from the first one below the screen are not visited; other off-screen tiles are rejected one at a time.
+- **Registers and stack.** The service saves native `r8-r29` in a loop, restores them, and ends in `seek_and_dispatch_func`. The call nests deeper in the native stack than a single draw; `avm_audio_tilemap_stack_run` runs its codegen fixture with the sample interrupt and requires the deepest stack to stay clear of the private workspace.
+- **Audio.** Pending audio ticks are serviced at the seek after the call. A full-screen window of 16 x 16 tiles takes about 37,000 cycles (2.3 ms).
+
+Instruction-benchmark rows (cycles, without interrupts, 16 x 16 tiles):
+
+| Case | Cycles |
+|---|---:|
+| empty grid | 444 |
+| 1 x 1, overwrite, page aligned | 1,228 |
+| 4 x 2, overwrite, page aligned | 6,505 |
+| 4 x 2, overwrite, unaligned | 7,825 |
+| 9 x 5, overwrite, clipped on every side | 36,874 |
+| 4 x 2, plus-mask, page aligned | 10,825 |
+| 4 x 2, flash-window map | 7,433 |
+| 4 x 2, all entries skipped | 665 |
+| 4 x 1, right of the screen | 1,065 |
+
+The `tile_cache_render` workload (a scrolling 9 x 5 window with 8-bit entries and a skip value) takes 2,150,045 cycles with one call per frame against 3,001,681 with a loop of `draw_overwrite` calls. `tests/codegen/c/tilemap.c` compares every runtime tile map function with the equivalent loop of cached draws.
 
 ## 31. Assembler selection rules
 

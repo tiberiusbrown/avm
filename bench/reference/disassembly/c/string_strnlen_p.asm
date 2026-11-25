@@ -12,19 +12,19 @@ Disassembly of section .text:
  f2 42                 sub	r2, r2
  c0 20                 ldi8	r4, 0x20
  d7 01                 sys	debug_break
- c6 05 0f              ldi16	r6, 0xf05
+ c6 00 0f              ldi16	r6, 0xf00
  c3 00                 ldi8	r7, 0x0
  f4 5a                 stsp16	[sp+0x6], r6
  f4 63                 stsp16	[sp+0x8], r7
- c6 25 0f              ldi16	r6, 0xf25
+ c6 20 0f              ldi16	r6, 0xf20
  c3 00                 ldi8	r7, 0x0
  f0 3e 12              stsp16	[sp+0x12], r6
  f0 3f 14              stsp16	[sp+0x14], r7
- c6 45 0f              ldi16	r6, 0xf45
+ c6 40 0f              ldi16	r6, 0xf40
  c3 00                 ldi8	r7, 0x0
  f4 7a                 stsp16	[sp+0xe], r6
  f0 3f 10              stsp16	[sp+0x10], r7
- c6 65 0f              ldi16	r6, 0xf65
+ c6 60 0f              ldi16	r6, 0xf60
  c3 00                 ldi8	r7, 0x0
  f4 6a                 stsp16	[sp+0xa], r6
  f4 73                 stsp16	[sp+0xc], r7

@@ -128,7 +128,7 @@ Disassembly of section .text:
  15                    add	r5, r5
  f1 15                 mov	r2, r5
  f1 1e                 mov	r3, r6
- c4 12 1b              ldi16	r4, 0x1b12
+ c4 0d 1b              ldi16	r4, 0x1b0d
  c1 00                 ldi8	r5, 0x0
  f7 66                 add32	q1, q2
  f0 68 c4              ldp32	q3, [q1+]
@@ -164,7 +164,7 @@ Disassembly of section .text:
  f2 66                 mov32	q1, q2
  f4 10                 ldsp16	r4, [sp+0x4]
  f4 19                 ldsp16	r5, [sp+0x6]
- e1 1b 0b              call16	__kernel_rem_pio2f
+ e1 17 0b              call16	__kernel_rem_pio2f
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 69                 mov32	q2, q1
@@ -173,7 +173,7 @@ Disassembly of section .text:
  f0 16 00              leasp	r6, 0x0
  f4 10                 ldsp16	r4, [sp+0x4]
  f4 19                 ldsp16	r5, [sp+0x6]
- e1 6b 11              call16	avm_rem_pio2f_medium
+ e1 67 11              call16	avm_rem_pio2f_medium
  08                    mov	r6, r4
  0d                    mov	r7, r5
  d4 37                 jmp8	0x37 <L10>
@@ -246,7 +246,7 @@ Disassembly of section .text:
  c8 81                 addi.s8	r4, -0x7f
  c1 0a                 ldi8	r5, 0xa
  e1 39 07              call16	__avm_umulhisi3
- f0 06 7a 2f           ldi16	r2, 0x2f7a
+ f0 06 75 2f           ldi16	r2, 0x2f75
  f0 03 00              ldi8	r3, 0x0
  f7 66                 add32	q1, q2
  c0 7f                 ldi8	r4, 0x7f
@@ -563,10 +563,10 @@ Disassembly of section .text:
  c8 81                 addi.s8	r4, -0x7f
  c1 0a                 ldi8	r5, 0xa
  e1 d1 04              call16	__avm_umulhisi3
- c6 7e 2f              ldi16	r6, 0x2f7e
+ c6 79 2f              ldi16	r6, 0x2f79
  c3 00                 ldi8	r7, 0x0
  f7 6e                 add32	q3, q2
- f0 04 7a 2f           ldi16	r0, 0x2f7a
+ f0 04 75 2f           ldi16	r0, 0x2f75
  f0 01 00              ldi8	r1, 0x0
  f7 62                 add32	q0, q2
  f0 64 80              ldp32	q2, [q0]

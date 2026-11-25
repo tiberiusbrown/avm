@@ -23,7 +23,7 @@ Disassembly of section .text:
  f4 48                 stsp16	[sp+0x2], r4
  f0 14 00              leasp	r4, 0x0
  f1 26                 mov	r5, r2
- d5 2d                 call8	_ZN5Scope6updateEj
+ d5 2c                 call8	_ZN5Scope6updateEj
  f1 20                 mov	r4, r0
  c1 03                 ldi8	r5, 0x3
  81                    and	r4, r5
@@ -32,7 +32,7 @@ Disassembly of section .text:
  f1 24                 mov	r5, r0
  f9 a6                 xor	r5, r1
  f0 14 00              leasp	r4, 0x0
- d5 1b                 call8	_ZN5Scope6updateEj
+ d5 1a                 call8	_ZN5Scope6updateEj
 <L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
  64                    ld16	r5, [r4]
@@ -51,7 +51,6 @@ Disassembly of section .text:
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
- 00                    nop
 
 <Scope::update(unsigned int)>:
  ed d8 22              ld16	r6, [r4+2]

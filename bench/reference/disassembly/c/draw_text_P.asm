@@ -6,10 +6,10 @@ Disassembly of section .text:
 <avm_test_main>:
  b0                    push16	r0
  d7 01                 sys	debug_break
- c4 f1 0c              ldi16	r4, 0xcf1
+ c4 ec 0c              ldi16	r4, 0xcec
  c1 00                 ldi8	r5, 0x0
  d7 31                 sys	set_text_font
- c6 c5 0c              ldi16	r6, 0xcc5
+ c6 c0 0c              ldi16	r6, 0xcc0
  c3 00                 ldi8	r7, 0x0
  f2 30                 sub	r0, r0
  a0                    xor	r4, r4

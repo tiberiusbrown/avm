@@ -1,8 +1,8 @@
 {
-  "compiler_sha256": "9a2deaf76b23d0ece70e0b5d3e9eb65c985017ba656c0f3d4fdda9c95cdb5b8e",
+  "compiler_sha256": "250d185d816eebe3dede2f7c36970c106c4d9a7466774e8de6bd5af6adf6d7b0",
   "compiler_version": "clang version 24.0.0git (https://github.com/tiberiusbrown/llvm-project.git 8c0da0d2e68e695ac08e8f4394ee6e3a2c11dc3e)",
   "configuration": "RelWithDebInfo",
-  "interpreter_sha256": "66dfee2f541607959393595611257f9505864752690558a69a6e20fe14bd0420",
+  "interpreter_sha256": "7745a82b5cbd5d2c93be1e23110e13dbbcfaea8d1e758685d09c07691762fb15",
   "optimization": "-O2",
   "target_triple": "avm-unknown-arduboyfx",
   "workloads": {
@@ -100,6 +100,8 @@
     "codegen/c/tangent_quadrant_bench.h": "4ab33e61a66546d3d9feab1480a1853ef9dee0e6ead71221176aa9a05d3e69c8",
     "codegen/c/text.c": "82833c9db223e2abdbb70d2381d8c641e74260f27b282e71aa746cceb79776ca",
     "codegen/c/tile_cache_render.c": "24fd9ba2c472c24392e0eb516049cd7e2003096e0c304019a26a0d1efb19f2ca",
+    "codegen/c/tile_cache_render_tilemap.c": "9ce3cf00ef9ccd17ea1b94f862ea28c8b90e2c4ea554fbaa611a9ac5b002d04e",
+    "codegen/c/tile_cache_render_tilemap_P.c": "d8efb5758bbc45e72523ad9400de1c8d3441f05009730ad645f79ee6014e91cb",
     "codegen/c/tilesrect.c": "179d6b03adca155054d9d730f4026eb1bb9df939b1a5b5f68766e48fd48cf3e1",
     "codegen/c/tilessprite.c": "650cf07f03e82b47423ef3ecf2c3b61de470cda8a46e3bcabc1c7753509341be",
     "codegen/c/tilessprite16.c": "afdb604ce0a6f462fc0422840be73043890396e8209dd2794d20e720c2aed169",

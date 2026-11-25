@@ -25,7 +25,7 @@ Disassembly of section .text:
  a1                    xor	r4, r5
  a4                    xor	r5, r4
  a1                    xor	r4, r5
- c6 8d 0e              ldi16	r6, 0xe8d
+ c6 88 0e              ldi16	r6, 0xe88
  c3 00                 ldi8	r7, 0x0
  f7 6b                 add32	q2, q3
  08                    mov	r6, r4

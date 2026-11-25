@@ -2112,7 +2112,8 @@ have no generic LLVM representation.
 | `0x3B` | `get_system_height` | None | Height in `r4` | System query |
 | `0x3C` | `get_system_display_type` | None | Display type in `r4` | System query |
 | `0x3D` | `debug_printfv` | `r6 = RAM format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | AS0 format/argument reads, including window format and `%s` pointers, indirect AS0/AS1 reads, `%n` AS0 writes; observable debug output |
-| `0x3E-0xFF` | Reserved | — | — | — |
+| `0x3E` | `draw_tilemap` | `r4 = x`, `r5 = y`, `r6 = map`, `r7 = rows << 8 \| cols`, `r2 = stride`, `r0 = flags` | None | Data-space (RAM or window) map, selected-sprite and program-space reads; framebuffer reads and writes |
+| `0x3F-0xFF` | Reserved | — | — | — |
 
 Every defined service preserves:
 
@@ -2926,6 +2927,66 @@ or reordered across an access that may alias the framebuffer. It may be
 reordered relative to provably disjoint data-space memory only when its
 program-space read, selected-state dependencies, and all other observable
 service constraints are preserved.
+
+#### 49.21.1. Tile map drawing
+
+Encoding:
+
+| ID | Encoding | Service |
+|---:|---|---|
+| `0x3E` | `D7 3E` | `draw_tilemap` |
+
+Inputs:
+
+```text
+r0 = flags
+r2 = stride, in map entries, from the start of one map row to the next
+r4 = signed 16-bit x coordinate of the first tile
+r5 = signed 16-bit y coordinate of the first tile
+r6 = address-space-zero address of the first map entry
+r7 = rows << 8 | cols
+```
+
+| Flag bits | Meaning |
+|---|---|
+| `7:0` | Drawing mode: 0 overwrite, 1 plus-mask, 2 self-masked, 3 erase. Other values are invalid. |
+| `8` | Map entries are little-endian 16-bit values; otherwise they are bytes. |
+| `9` | An all-ones entry (`0xFF`, or `0xFFFF` for 16-bit entries) is not drawn. |
+| `15:10` | Reserved; MUST be zero. |
+
+The service draws a window of `rows` by `cols` map entries with the selected
+sprite. Let `size` be the entry size in bytes and `width` and `height` the
+selected sprite's header values. For each row `r` from zero to `rows - 1`:
+
+```text
+rowY = (y + r * height) mod 65536
+if signed16(rowY) >= 64: the service ends
+for c from 0 to cols - 1:
+    address = (r6 + (r * stride + c) * size) mod 65536
+    entry   = the size-byte value at address, zero-extended
+    if flag bit 9 is set and entry is all ones: continue
+    draw frame entry at ((x + c * width) mod 65536, rowY) as the
+    cached-pointer draw of the selected mode
+```
+
+Because `stride * size` is added modulo 65536, a stride of `65536 - n` steps `n`
+entries backwards, and a stride smaller than `cols` makes rows overlap. Every
+entry of a visited row is read, including entries of tiles outside the
+framebuffer. Each entry must be readable address-space-zero data: either RAM or
+an object in the AS0 flash window (section 9.1). Entry values are frame indices;
+each drawn frame must satisfy the requirements of the drawing mode in this
+section. Clipping and pixel results are those of the cached-pointer draws. A
+`rows` or `cols` of zero, an unselected sprite, or a zero sprite dimension leaves
+the framebuffer unchanged.
+
+The service preserves every general-purpose register, including its inputs, and
+`CC` and `SP`. It reads the map, the selected-sprite state and the selected
+frames, and reads and writes the fixed framebuffer. It does not modify the
+selected sprite or update the physical display. The ordering rules of the
+cached-pointer draws apply: it MUST NOT be reordered across a `set_sprite` that
+may determine its sprite, and MUST NOT be removed when its framebuffer writes may
+be observed, or speculated or reordered across an access that may alias the
+framebuffer or the map.
 
 ### 49.22. Filled rectangle drawing services
 
@@ -4227,6 +4288,7 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | `draw_sprite_overwrite`, `draw_sprite_plus_mask`, `draw_sprite_self_masked`, `draw_sprite_erase` | Dedicated typed AVM intrinsics and `SYS 0x1E-0x21` | — | — | Read an explicit AS1 sprite and read/write the fixed framebuffer |
 | `set_sprite`, `draw_overwrite`, `draw_plus_mask`, `draw_self_masked`, `draw_erase` | Dedicated typed AVM intrinsics and `SYS 0x22-0x26` | — | — | Select an AS1 sprite or draw from selected-sprite state into the fixed framebuffer |
 | `draw_filled_rect_white`, `draw_filled_rect_black` | Dedicated typed AVM intrinsics and `SYS 0x27-0x28` | — | — | Read/write the fixed framebuffer |
+| `draw_tilemap` | Dedicated typed AVM intrinsic and `SYS 0x3E` | — | — | Read an AS0 map and the selected sprite; read/write the fixed framebuffer |
 | `vsnprintf`, `vsnprintf_P` | Dedicated typed AVM intrinsics and `SYS 0x2F-0x30` | — | — | Bounded AS0 write; AS0 and AS1 reads selected by the format |
 | `debug_printfv_P` | Dedicated typed AVM intrinsic and `SYS 0x37` | — | — | AS0/AS1 reads selected by the format; `%n` AS0 writes; externally observable debug output |
 | `set_text_font`, `set_text_mode`, `draw_text`, `draw_text_P`, `draw_textfv`, `draw_textfv_P` | Dedicated typed AVM intrinsics and `SYS 0x31-0x36` | — | — | Hidden selected-text state; AS0/AS1 source reads; fixed-framebuffer read/write effects |
@@ -4733,6 +4795,19 @@ reads its AS1 header and updates selected-sprite state. Cached-pointer draws rea
 that state and the selected AS1 frame. All drawing operations read and write the
 fixed framebuffer range `0x0500-0x08FF`.
 
+The runtime and Clang target also provide the tile map interface:
+
+```c
+void __avm_draw_tilemap(
+    int16_t x, int16_t y, const void *map, uint16_t dims,
+    uint16_t stride, uint16_t flags);
+```
+
+`dims` is `rows << 8 | cols` and `flags` follows Section 49.21.1. Machine
+selection assigns `x` to `r4`, `y` to `r5`, `map` to `r6`, `dims` to `r7`,
+`stride` to `r2`, and `flags` to `r0`, then emits `SYS 0x3E`. The runtime header
+`avm/tilemap.h` builds its `avm_draw_tilemap_*` functions on this interface.
+
 The target runtime and Clang target also provide:
 
 ```c
@@ -4979,6 +5054,8 @@ declare void @llvm.avm.draw.overwrite(i16 %x, i16 %y, i16 %frame)
 declare void @llvm.avm.draw.plus.mask(i16 %x, i16 %y, i16 %frame)
 declare void @llvm.avm.draw.self.masked(i16 %x, i16 %y, i16 %frame)
 declare void @llvm.avm.draw.erase(i16 %x, i16 %y, i16 %frame)
+declare void @llvm.avm.draw.tilemap(
+    i16 %x, i16 %y, ptr %map, i16 %dims, i16 %stride, i16 %flags)
 
 declare void @llvm.avm.draw.filled.rect.white(
     i16 %x, i16 %y, i8 %width, i8 %height)
@@ -5081,6 +5158,7 @@ generic LLVM intrinsic.
 | `llvm.avm.draw.plus.mask(i16,i16,i16)` | `SYS 0x24` through `SYS_DRAW_PLUS_MASK` | `r4 = x`, `r5 = y`, `r6 = frame` | None |
 | `llvm.avm.draw.self.masked(i16,i16,i16)` | `SYS 0x25` through `SYS_DRAW_SELF_MASKED` | `r4 = x`, `r5 = y`, `r6 = frame` | None |
 | `llvm.avm.draw.erase(i16,i16,i16)` | `SYS 0x26` through `SYS_DRAW_ERASE` | `r4 = x`, `r5 = y`, `r6 = frame` | None |
+| `llvm.avm.draw.tilemap(i16,i16,ptr,i16,i16,i16)` | `SYS 0x3E` through `SYS_DRAW_TILEMAP` | `r4 = x`, `r5 = y`, `r6 = map`, `r7 = dims`, `r2 = stride`, `r0 = flags` | None |
 | `llvm.avm.draw.filled.rect.white(i16,i16,i8,i8)` | `SYS 0x27` through `SYS_DRAW_FILLED_RECT_WHITE` | `r4 = x`, `r5 = y`, `low8(r6) = width`, `low8(r7) = height` | None |
 | `llvm.avm.draw.filled.rect.black(i16,i16,i8,i8)` | `SYS 0x28` through `SYS_DRAW_FILLED_RECT_BLACK` | `r4 = x`, `r5 = y`, `low8(r6) = width`, `low8(r7) = height` | None |
 | `llvm.avm.buttons()` | `SYS 0x29` through `SYS_BUTTONS` | None | `r4 = zero-extended mask` |
@@ -5198,6 +5276,13 @@ selected-state definition and uses MUST be represented by a chain, token, or
 other unmodeled dependency that prevents illegal reordering of `set_sprite`
 and cached-pointer draws.
 
+The tile map pseudo has input-only fixed uses of `r4`, `r5`, `r6`, `r7`, `r2`,
+and `r0`, no architectural register definitions, and a hidden use of the
+selected-sprite state. It carries an AS0 read of unknown extent around the map
+pointer (a stride may step backwards), a conservative AS1 read for the selected
+frames, and conservative AS0 read and write effects for the complete
+framebuffer.
+
 The two filled-rectangle pseudos have input-only fixed uses of `r4-r7` and no
 architectural register definitions. Only `low8(r6)` and `low8(r7)` determine
 the width and height, but the complete physical registers are preserved across
@@ -5309,6 +5394,9 @@ The memory services have their precise address-space effects:
   selected address-space-one frame, then reads and writes the fixed framebuffer
   range `0x0500-0x08FF`.
 - Each filled-rectangle service reads and writes the fixed address-space-zero
+  framebuffer range `0x0500-0x08FF`.
+- `draw_tilemap` reads an address-space-zero map, the hidden selected-sprite
+  state and the selected address-space-one frames, then reads and writes the fixed
   framebuffer range `0x0500-0x08FF`.
 - `vsnprintf` reads its AS0 format, the AS0 variadic area, and any AS0 or AS1
   strings selected by the format, and writes its bounded AS0 destination.
@@ -5478,6 +5566,10 @@ void __avm_draw_overwrite(int16_t x, int16_t y, uint16_t frame);
 void __avm_draw_plus_mask(int16_t x, int16_t y, uint16_t frame);
 void __avm_draw_self_masked(int16_t x, int16_t y, uint16_t frame);
 void __avm_draw_erase(int16_t x, int16_t y, uint16_t frame);
+
+void __avm_draw_tilemap(
+    int16_t x, int16_t y, const void *map, uint16_t dims,
+    uint16_t stride, uint16_t flags);
 
 void __avm_draw_filled_rect_white(
     int16_t x, int16_t y, uint8_t width, uint8_t height);

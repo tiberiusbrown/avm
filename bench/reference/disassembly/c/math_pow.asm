@@ -27,7 +27,7 @@ Disassembly of section .text:
  ff 00                 fadd
  aa                    xor	r6, r6
  c7 a0 3f              ldi16	r7, 0x3fa0
- e1 de 0a              call16	powf
+ e1 da 0a              call16	powf
  f2 66                 mov32	q1, q2
  f2 68                 mov32	q2, q0
  aa                    xor	r6, r6

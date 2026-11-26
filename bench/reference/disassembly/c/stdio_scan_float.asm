@@ -209,13 +209,13 @@ Disassembly of section .text:
  f1 10                 mov	r2, r0
  f4 aa                 inc16	r2
  f1 21                 mov	r4, r1
- e1 ec 06              call16	isspace
+ e1 e8 06              call16	isspace
  f6 2c                 tst16	r4
  d0 1b                 breq8	0x1b <L5>
 <L4>:
  ed 80 21              ld8u	r4, [r0+1]
  f4 a8                 inc16	r0
- e1 e0 06              call16	isspace
+ e1 dc 06              call16	isspace
  f6 2c                 tst16	r4
  d1 f4                 brne8	-0xc <L4>
  f0 1c 10              ldsp8u	r4, [sp+0x10]
@@ -245,7 +245,7 @@ Disassembly of section .text:
  d0 ad                 breq8	-0x53 <L2>
 <L7>:
  f1 74                 zext8	r4
- e1 a5 06              call16	isspace
+ e1 a1 06              call16	isspace
  f6 2c                 tst16	r4
  d0 a4                 breq8	-0x5c <L2>
  f0 1c 10              ldsp8u	r4, [sp+0x10]
@@ -300,7 +300,7 @@ Disassembly of section .text:
  c2 0a                 ldi8	r6, 0xa
  af                    xor	r7, r7
  f2 68                 mov32	q2, q0
- e1 56 23              call16	__avm_mulsi3
+ e1 52 23              call16	__avm_mulsi3
  f2 62                 mov32	q0, q2
  f0 34 11              ldsp16	r4, [sp+0x11]
  f0 35 13              ldsp16	r5, [sp+0x13]
@@ -324,7 +324,7 @@ Disassembly of section .text:
  a7                    xor	r5, r7
  c2 0a                 ldi8	r6, 0xa
  af                    xor	r7, r7
- e1 7c 24              call16	__avm_udivsi3
+ e1 78 24              call16	__avm_udivsi3
  f4 aa                 inc16	r2
  f0 69 80              cmp32	q2, q0
  d8 bd                 bruge8	-0x43 <L12>
@@ -378,7 +378,7 @@ Disassembly of section .text:
  cc ff                 cmpi.s8	r4, -0x1
  da 96 fe              breq16	-0x16a <L2>
  f1 74                 zext8	r4
- e1 8e 05              call16	isspace
+ e1 8a 05              call16	isspace
  f6 2c                 tst16	r4
  da 8c fe              breq16	-0x174 <L2>
  f0 1c 10              ldsp8u	r4, [sp+0x10]
@@ -464,7 +464,7 @@ Disassembly of section .text:
  dd 27 01              bruge16	0x127 <L47>
  c2 0a                 ldi8	r6, 0xa
  af                    xor	r7, r7
- e1 10 22              call16	__avm_mulsi3
+ e1 0c 22              call16	__avm_mulsi3
  08                    mov	r6, r4
  0d                    mov	r7, r5
  c0 ff                 ldi8	r4, 0xff
@@ -562,7 +562,7 @@ Disassembly of section .text:
  f4 40                 stsp16	[sp+0x0], r4
  f1 71                 zext8	r1
  f1 21                 mov	r4, r1
- e1 39 04              call16	__avm_scan_count
+ e1 35 04              call16	__avm_scan_count
  d6 02                 adjsp	0x2
  e0 a6 01              jmp16	422 <L66>
 <L41>:
@@ -601,7 +601,7 @@ Disassembly of section .text:
  da d8 00              breq16	0xd8 <L58>
 <L45>:
  f1 74                 zext8	r4
- e1 dc 03              call16	isspace
+ e1 d8 03              call16	isspace
  f6 2c                 tst16	r4
  da ce 00              breq16	0xce <L58>
  f0 1c 10              ldsp8u	r4, [sp+0x10]
@@ -687,7 +687,7 @@ Disassembly of section .text:
  cc ff                 cmpi.s8	r4, -0x1
  d0 34                 breq8	0x34 <L58>
  f1 74                 zext8	r4
- e1 38 03              call16	isspace
+ e1 34 03              call16	isspace
  f6 2c                 tst16	r4
  d0 2b                 breq8	0x2b <L58>
  f0 1c 10              ldsp8u	r4, [sp+0x10]
@@ -763,7 +763,7 @@ Disassembly of section .text:
  f0 14 00              leasp	r4, 0x0
  f0 15 15              leasp	r5, 0x15
  f0 16 24              leasp	r6, 0x24
- e1 12 03              call16	__avm_scan_integer
+ e1 0e 03              call16	__avm_scan_integer
  f1 0c                 mov	r1, r4
  f0 0d 01              cmpi.s8	r1, 0x1
  db 36 02              brne16	0x236 <L95>
@@ -772,7 +772,7 @@ Disassembly of section .text:
  f0 14 00              leasp	r4, 0x0
  f0 15 15              leasp	r5, 0x15
  f0 16 24              leasp	r6, 0x24
- e1 25 0a              call16	__avm_scan_float
+ e1 21 0a              call16	__avm_scan_float
  f1 0c                 mov	r1, r4
  f0 0d 01              cmpi.s8	r1, 0x1
  db 20 02              brne16	0x220 <L95>
@@ -882,7 +882,7 @@ Disassembly of section .text:
  d1 15                 brne8	0x15 <L76>
  f1 21                 mov	r4, r1
  f1 74                 zext8	r4
- e1 a9 01              call16	isspace
+ e1 a5 01              call16	isspace
  c6 ff ff              ldi16	r6, 0xffff
  c7 ff ff              ldi16	r7, 0xffff
  f6 2c                 tst16	r4
@@ -1102,16 +1102,13 @@ Disassembly of section .text:
 <isalnum>:
  c1 20                 ldi8	r5, 0x20
  94                    or	r5, r4
- c9 85                 addi.s8	r5, -0x7b
- c6 e5 ff              ldi16	r6, 0xffe5
- 39                    cmp	r6, r5
- d2 07                 brult8	0x7 <L0>
+ c9 9f                 addi.s8	r5, -0x61
+ cd 1a                 cmpi.s8	r5, 0x1a
+ f8 15                 cset.ult	r5
  c8 d0                 addi.s8	r4, -0x30
  cc 0a                 cmpi.s8	r4, 0xa
  f8 14                 cset.ult	r4
- ef                    ret
-<L0>:
- c0 01                 ldi8	r4, 0x1
+ 91                    or	r4, r5
  ef                    ret
 
 <isspace>:
@@ -1191,7 +1188,7 @@ Disassembly of section .text:
  f4 72                 stsp16	[sp+0xc], r6
  f4 7b                 stsp16	[sp+0xe], r7
  f0 3c 28              stsp16	[sp+0x28], r4
- e1 cf f7              call16	__avm_scan_peek
+ e1 d3 f7              call16	__avm_scan_peek
  f4 50                 stsp16	[sp+0x4], r4
  ed a2 26              ld8u	r5, [r1+6]
  cd 69                 cmpi.s8	r5, 0x69
@@ -1250,7 +1247,7 @@ Disassembly of section .text:
  d1 1f                 brne8	0x1f <L8>
 <L7>:
  f0 34 28              ldsp16	r4, [sp+0x28]
- e1 85 f7              call16	__avm_scan_take
+ e1 89 f7              call16	__avm_scan_take
  c4 ff ff              ldi16	r4, 0xffff
  c5 ff ff              ldi16	r5, 0xffff
  f4 32                 ldsp16	r6, [sp+0xc]
@@ -1364,12 +1361,12 @@ Disassembly of section .text:
  f0 69 84              cmp32	q2, q1
  d0 68                 breq8	0x68 <L17>
  f0 34 28              ldsp16	r4, [sp+0x28]
- e1 82 f6              call16	__avm_scan_peek
+ e1 86 f6              call16	__avm_scan_peek
  cc 30                 cmpi.s8	r4, 0x30
  d1 5e                 brne8	0x5e <L17>
  f0 33 28              ldsp16	r3, [sp+0x28]
  f1 23                 mov	r4, r3
- e1 98 f6              call16	__avm_scan_take
+ e1 9c f6              call16	__avm_scan_take
  f0 04 ff ff           ldi16	r0, 0xffff
  f0 05 ff ff           ldi16	r1, 0xffff
  f4 30                 ldsp16	r4, [sp+0xc]
@@ -1385,16 +1382,16 @@ Disassembly of section .text:
  f0 32 30              ldsp16	r2, [sp+0x30]
  db f7 00              brne16	0xf7 <L23>
  f1 23                 mov	r4, r3
- e1 51 f6              call16	__avm_scan_peek
+ e1 55 f6              call16	__avm_scan_peek
  cc 62                 cmpi.s8	r4, 0x62
  d0 0a                 breq8	0xa <L16>
  f1 23                 mov	r4, r3
- e1 48 f6              call16	__avm_scan_peek
+ e1 4c f6              call16	__avm_scan_peek
  cc 42                 cmpi.s8	r4, 0x42
  db ee 04              brne16	0x4ee <L56>
 <L16>:
  f1 23                 mov	r4, r3
- e1 60 f6              call16	__avm_scan_take
+ e1 64 f6              call16	__avm_scan_take
  c4 fe ff              ldi16	r4, 0xfffe
  c5 ff ff              ldi16	r5, 0xffff
  f4 32                 ldsp16	r6, [sp+0xc]
@@ -1642,7 +1639,7 @@ Disassembly of section .text:
  da ff 01              breq16	0x1ff <L48>
 <L38>:
  f1 21                 mov	r4, r1
- e1 37 f4              call16	__avm_scan_peek
+ e1 3b f4              call16	__avm_scan_peek
  f1 14                 mov	r2, r4
  f0 0a d0              addi.s8	r2, -0x30
  f0 0e 0a              cmpi.s8	r2, 0xa
@@ -1663,7 +1660,7 @@ Disassembly of section .text:
  df 02 02              brsge16	0x202 <L49>
  f0 3a 20              stsp16	[sp+0x20], r2
  f1 21                 mov	r4, r1
- e1 2a f4              call16	__avm_scan_take
+ e1 2e f4              call16	__avm_scan_take
  f0 34 18              ldsp16	r4, [sp+0x18]
  f0 35 1a              ldsp16	r5, [sp+0x1a]
  f4 12                 ldsp16	r6, [sp+0x4]
@@ -2037,18 +2034,18 @@ Disassembly of section .text:
  e0 fe fb              jmp16	-1026 <L26>
 <L58>:
  f0 34 28              ldsp16	r4, [sp+0x28]
- e1 2c f1              call16	__avm_scan_peek
+ e1 30 f1              call16	__avm_scan_peek
  cc 78                 cmpi.s8	r4, 0x78
  d0 0d                 breq8	0xd <L59>
  f0 34 28              ldsp16	r4, [sp+0x28]
- e1 22 f1              call16	__avm_scan_peek
+ e1 26 f1              call16	__avm_scan_peek
  cc 58                 cmpi.s8	r4, 0x58
  f2 6a                 mov32	q3, q0
  db 0e fb              brne16	-0x4f2 <L18>
 <L59>:
  f0 31 28              ldsp16	r1, [sp+0x28]
  f1 21                 mov	r4, r1
- e1 35 f1              call16	__avm_scan_take
+ e1 39 f1              call16	__avm_scan_take
  c4 fe ff              ldi16	r4, 0xfffe
  c5 ff ff              ldi16	r5, 0xffff
  f4 32                 ldsp16	r6, [sp+0xc]
@@ -2111,7 +2108,7 @@ Disassembly of section .text:
  f0 3d 1e              stsp16	[sp+0x1e], r5
  f0 3e 20              stsp16	[sp+0x20], r6
  f1 14                 mov	r2, r4
- e1 a0 f0              call16	__avm_scan_peek
+ e1 a4 f0              call16	__avm_scan_peek
  cc ff                 cmpi.s8	r4, -0x1
  da 20 07              breq16	0x720 <L51>
  cc 2b                 cmpi.s8	r4, 0x2b
@@ -2130,7 +2127,7 @@ Disassembly of section .text:
  f0 3e 24              stsp16	[sp+0x24], r6
  f0 3f 26              stsp16	[sp+0x26], r7
  f1 22                 mov	r4, r2
- e1 9b f0              call16	__avm_scan_take
+ e1 9f f0              call16	__avm_scan_take
  c4 ff ff              ldi16	r4, 0xffff
  c5 ff ff              ldi16	r5, 0xffff
  f7 62                 add32	q0, q2
@@ -2160,12 +2157,12 @@ Disassembly of section .text:
  f0 38 00              stsp16	[sp+0x0], r0
  f0 39 02              stsp16	[sp+0x2], r1
  f1 22                 mov	r4, r2
- e1 3b f0              call16	__avm_scan_peek
+ e1 3f f0              call16	__avm_scan_peek
  f1 04                 mov	r0, r4
  c0 20                 ldi8	r4, 0x20
  f9 11                 or	r0, r4
  f1 22                 mov	r4, r2
- e1 30 f0              call16	__avm_scan_peek
+ e1 34 f0              call16	__avm_scan_peek
  f0 0c 6e              cmpi.s8	r0, 0x6e
  da ff 00              breq16	0xff <L4>
  f0 0c 69              cmpi.s8	r0, 0x69
@@ -2177,7 +2174,7 @@ Disassembly of section .text:
  cc 49                 cmpi.s8	r4, 0x49
  db 53 06              brne16	0x653 <L46>
  f1 22                 mov	r4, r2
- e1 34 f0              call16	__avm_scan_take
+ e1 38 f0              call16	__avm_scan_take
  c0 01                 ldi8	r4, 0x1
  a5                    xor	r5, r5
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -2185,12 +2182,12 @@ Disassembly of section .text:
  f0 69 c8              cmp32	q3, q2
  da 41 06              breq16	0x641 <L46>
  f1 22                 mov	r4, r2
- e1 00 f0              call16	__avm_scan_peek
+ e1 04 f0              call16	__avm_scan_peek
  f9 84                 and	r4, r1
  cc 4e                 cmpi.s8	r4, 0x4e
  db 35 06              brne16	0x635 <L46>
  f1 22                 mov	r4, r2
- e1 16 f0              call16	__avm_scan_take
+ e1 1a f0              call16	__avm_scan_take
  c0 02                 ldi8	r4, 0x2
  a5                    xor	r5, r5
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -2198,12 +2195,12 @@ Disassembly of section .text:
  f0 69 c8              cmp32	q3, q2
  da 23 06              breq16	0x623 <L46>
  f1 22                 mov	r4, r2
- e1 e2 ef              call16	__avm_scan_peek
+ e1 e6 ef              call16	__avm_scan_peek
  f9 84                 and	r4, r1
  cc 46                 cmpi.s8	r4, 0x46
  db 17 06              brne16	0x617 <L46>
  f1 22                 mov	r4, r2
- e1 f8 ef              call16	__avm_scan_take
+ e1 fc ef              call16	__avm_scan_take
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -2211,17 +2208,17 @@ Disassembly of section .text:
  f0 69 c8              cmp32	q3, q2
  da 58 06              breq16	0x658 <L53>
  f1 22                 mov	r4, r2
- e1 c4 ef              call16	__avm_scan_peek
+ e1 c8 ef              call16	__avm_scan_peek
  f9 84                 and	r4, r1
  cc 49                 cmpi.s8	r4, 0x49
  db 4c 06              brne16	0x64c <L53>
  f1 22                 mov	r4, r2
- e1 b8 ef              call16	__avm_scan_peek
+ e1 bc ef              call16	__avm_scan_peek
  f9 84                 and	r4, r1
  cc 49                 cmpi.s8	r4, 0x49
  db ed 05              brne16	0x5ed <L46>
  f1 22                 mov	r4, r2
- e1 ce ef              call16	__avm_scan_take
+ e1 d2 ef              call16	__avm_scan_take
  c0 04                 ldi8	r4, 0x4
  a5                    xor	r5, r5
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -2229,12 +2226,12 @@ Disassembly of section .text:
  f0 69 c8              cmp32	q3, q2
  da db 05              breq16	0x5db <L46>
  f1 22                 mov	r4, r2
- e1 9a ef              call16	__avm_scan_peek
+ e1 9e ef              call16	__avm_scan_peek
  f9 84                 and	r4, r1
  cc 4e                 cmpi.s8	r4, 0x4e
  db cf 05              brne16	0x5cf <L46>
  f1 22                 mov	r4, r2
- e1 b0 ef              call16	__avm_scan_take
+ e1 b4 ef              call16	__avm_scan_take
  c0 05                 ldi8	r4, 0x5
  a5                    xor	r5, r5
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -2242,12 +2239,12 @@ Disassembly of section .text:
  f0 69 c8              cmp32	q3, q2
  da bd 05              breq16	0x5bd <L46>
  f1 22                 mov	r4, r2
- e1 7c ef              call16	__avm_scan_peek
+ e1 80 ef              call16	__avm_scan_peek
  f9 84                 and	r4, r1
  cc 49                 cmpi.s8	r4, 0x49
  db b1 05              brne16	0x5b1 <L46>
  f4 38                 ldsp16	r4, [sp+0xe]
- e1 92 ef              call16	__avm_scan_take
+ e1 96 ef              call16	__avm_scan_take
  c0 06                 ldi8	r4, 0x6
  a5                    xor	r5, r5
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -2255,12 +2252,12 @@ Disassembly of section .text:
  f0 69 c8              cmp32	q3, q2
  da 9f 05              breq16	0x59f <L46>
  f4 38                 ldsp16	r4, [sp+0xe]
- e1 5e ef              call16	__avm_scan_peek
+ e1 62 ef              call16	__avm_scan_peek
  f9 84                 and	r4, r1
  cc 54                 cmpi.s8	r4, 0x54
  db 93 05              brne16	0x593 <L46>
  f4 38                 ldsp16	r4, [sp+0xe]
- e1 74 ef              call16	__avm_scan_take
+ e1 78 ef              call16	__avm_scan_take
  c0 07                 ldi8	r4, 0x7
  a5                    xor	r5, r5
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -2268,13 +2265,13 @@ Disassembly of section .text:
  f0 69 c8              cmp32	q3, q2
  da 81 05              breq16	0x581 <L46>
  f4 38                 ldsp16	r4, [sp+0xe]
- e1 40 ef              call16	__avm_scan_peek
+ e1 44 ef              call16	__avm_scan_peek
  f9 84                 and	r4, r1
  cc 59                 cmpi.s8	r4, 0x59
  f1 20                 mov	r4, r0
  db bc 05              brne16	0x5bc <L51>
  f4 38                 ldsp16	r4, [sp+0xe]
- e1 54 ef              call16	__avm_scan_take
+ e1 58 ef              call16	__avm_scan_take
  a0                    xor	r4, r4
  c5 80 7f              ldi16	r5, 0x7f80
  e0 46 05              jmp16	1350 <L45>
@@ -2285,7 +2282,7 @@ Disassembly of section .text:
  cc 4e                 cmpi.s8	r4, 0x4e
  db a4 05              brne16	0x5a4 <L50>
  f1 22                 mov	r4, r2
- e1 3d ef              call16	__avm_scan_take
+ e1 41 ef              call16	__avm_scan_take
  c0 01                 ldi8	r4, 0x1
  a5                    xor	r5, r5
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -2293,12 +2290,12 @@ Disassembly of section .text:
  f0 69 c8              cmp32	q3, q2
  da 92 05              breq16	0x592 <L50>
  f1 22                 mov	r4, r2
- e1 09 ef              call16	__avm_scan_peek
+ e1 0d ef              call16	__avm_scan_peek
  f9 80                 and	r4, r0
  cc 41                 cmpi.s8	r4, 0x41
  db 86 05              brne16	0x586 <L50>
  f1 22                 mov	r4, r2
- e1 1f ef              call16	__avm_scan_take
+ e1 23 ef              call16	__avm_scan_take
  c0 02                 ldi8	r4, 0x2
  a5                    xor	r5, r5
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -2306,12 +2303,12 @@ Disassembly of section .text:
  f0 69 c8              cmp32	q3, q2
  da 74 05              breq16	0x574 <L50>
  f1 22                 mov	r4, r2
- e1 eb ee              call16	__avm_scan_peek
+ e1 ef ee              call16	__avm_scan_peek
  f9 80                 and	r4, r0
  cc 4e                 cmpi.s8	r4, 0x4e
  db 68 05              brne16	0x568 <L50>
  f1 22                 mov	r4, r2
- e1 01 ef              call16	__avm_scan_take
+ e1 05 ef              call16	__avm_scan_take
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -2319,11 +2316,11 @@ Disassembly of section .text:
  f0 69 c8              cmp32	q3, q2
  da 67 05              breq16	0x567 <L54>
  f1 22                 mov	r4, r2
- e1 cd ee              call16	__avm_scan_peek
+ e1 d1 ee              call16	__avm_scan_peek
  cc 28                 cmpi.s8	r4, 0x28
  db 5d 05              brne16	0x55d <L54>
  f1 22                 mov	r4, r2
- e1 e5 ee              call16	__avm_scan_take
+ e1 e9 ee              call16	__avm_scan_take
  c4 fc ff              ldi16	r4, 0xfffc
  c5 ff ff              ldi16	r5, 0xffff
  f0 32 00              ldsp16	r2, [sp+0x0]
@@ -2346,7 +2343,7 @@ Disassembly of section .text:
  cc 30                 cmpi.s8	r4, 0x30
  d1 4f                 brne8	0x4f <L6>
  f1 22                 mov	r4, r2
- e1 b1 ee              call16	__avm_scan_take
+ e1 b5 ee              call16	__avm_scan_take
  f0 30 00              ldsp16	r0, [sp+0x0]
  f0 31 02              ldsp16	r1, [sp+0x2]
  c4 ff ff              ldi16	r4, 0xffff
@@ -2357,13 +2354,13 @@ Disassembly of section .text:
  f0 69 08              cmp32	q0, q2
  d0 3f                 breq8	0x3f <L7>
  f1 22                 mov	r4, r2
- e1 75 ee              call16	__avm_scan_peek
+ e1 79 ee              call16	__avm_scan_peek
  c5 df ff              ldi16	r5, 0xffdf
  84                    and	r5, r4
  cd 58                 cmpi.s8	r5, 0x58
  d1 38                 brne8	0x38 <L8>
  f1 22                 mov	r4, r2
- e1 8a ee              call16	__avm_scan_take
+ e1 8e ee              call16	__avm_scan_take
  c4 fe ff              ldi16	r4, 0xfffe
  c5 ff ff              ldi16	r5, 0xffff
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -2417,7 +2414,7 @@ Disassembly of section .text:
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f1 22                 mov	r4, r2
- e1 01 ee              call16	__avm_scan_peek
+ e1 05 ee              call16	__avm_scan_peek
  f4 2a                 ldsp16	r6, [sp+0xa]
  f6 2e                 tst16	r6
  f8 08                 cset.ne	r0
@@ -2425,7 +2422,7 @@ Disassembly of section .text:
  cc 2e                 cmpi.s8	r4, 0x2e
  d1 25                 brne8	0x25 <L12>
  f1 22                 mov	r4, r2
- e1 12 ee              call16	__avm_scan_take
+ e1 16 ee              call16	__avm_scan_take
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 09                 ldsp16	r5, [sp+0x2]
  c6 ff ff              ldi16	r6, 0xffff
@@ -2438,7 +2435,7 @@ Disassembly of section .text:
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f1 22                 mov	r4, r2
- e1 d4 ed              call16	__avm_scan_peek
+ e1 d8 ed              call16	__avm_scan_peek
  c2 01                 ldi8	r6, 0x1
  f1 06                 mov	r0, r6
 <L12>:
@@ -2483,7 +2480,7 @@ Disassembly of section .text:
  db 19 02              brne16	0x219 <L35>
  f4 6a                 stsp16	[sp+0xa], r6
  f4 38                 ldsp16	r4, [sp+0xe]
- e1 9e ed              call16	__avm_scan_take
+ e1 a2 ed              call16	__avm_scan_take
  c4 00 36              ldi16	r4, 0x3600
  c5 65 c4              ldi16	r5, 0xc465
  f1 18                 mov	r3, r0
@@ -2524,7 +2521,7 @@ Disassembly of section .text:
  f4 49                 stsp16	[sp+0x2], r5
  f0 32 0e              ldsp16	r2, [sp+0xe]
  f1 22                 mov	r4, r2
- e1 1f ed              call16	__avm_scan_peek
+ e1 23 ed              call16	__avm_scan_peek
  f4 2a                 ldsp16	r6, [sp+0xa]
  f6 2e                 tst16	r6
  f8 0b                 cset.ne	r3
@@ -2532,7 +2529,7 @@ Disassembly of section .text:
  cc 2e                 cmpi.s8	r4, 0x2e
  d1 27                 brne8	0x27 <L18>
  f1 22                 mov	r4, r2
- e1 30 ed              call16	__avm_scan_take
+ e1 34 ed              call16	__avm_scan_take
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 09                 ldsp16	r5, [sp+0x2]
  c6 ff ff              ldi16	r6, 0xffff
@@ -2546,7 +2543,7 @@ Disassembly of section .text:
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f1 22                 mov	r4, r2
- e1 f0 ec              call16	__avm_scan_peek
+ e1 f4 ec              call16	__avm_scan_peek
  c2 01                 ldi8	r6, 0x1
  f1 1e                 mov	r3, r6
 <L18>:
@@ -2591,7 +2588,7 @@ Disassembly of section .text:
  db 29 01              brne16	0x129 <L32>
  f4 6a                 stsp16	[sp+0xa], r6
  f4 38                 ldsp16	r4, [sp+0xe]
- e1 ba ec              call16	__avm_scan_take
+ e1 be ec              call16	__avm_scan_take
  f0 38 2c              stsp16	[sp+0x2c], r0
  f0 3b 10              stsp16	[sp+0x10], r3
  f0 32 1a              ldsp16	r2, [sp+0x1a]
@@ -2649,7 +2646,7 @@ Disassembly of section .text:
  f0 35 16              ldsp16	r5, [sp+0x16]
  09                    mov	r6, r5
  af                    xor	r7, r7
- f0 04 62 2c           ldi16	r0, 0x2c62
+ f0 04 5e 2c           ldi16	r0, 0x2c5e
  f0 01 00              ldi8	r1, 0x0
  f7 6c                 add32	q3, q0
  f0 61 ac              ldp8s	r5, [q3]
@@ -2752,13 +2749,13 @@ Disassembly of section .text:
  fb 54                 cmov.ne	r2, r4
  f0 30 0e              ldsp16	r0, [sp+0xe]
  f1 20                 mov	r4, r0
- e1 3a eb              call16	__avm_scan_peek
+ e1 3e eb              call16	__avm_scan_peek
  c1 20                 ldi8	r5, 0x20
  91                    or	r4, r5
  f5 22                 cmp	r4, r2
  db d1 00              brne16	0xd1 <L41>
  f1 20                 mov	r4, r0
- e1 4f eb              call16	__avm_scan_take
+ e1 53 eb              call16	__avm_scan_take
  f4 02                 ldsp16	r6, [sp+0x0]
  f4 0b                 ldsp16	r7, [sp+0x2]
  c4 ff ff              ldi16	r4, 0xffff
@@ -2771,7 +2768,7 @@ Disassembly of section .text:
  f4 6a                 stsp16	[sp+0xa], r6
  f4 73                 stsp16	[sp+0xc], r7
  f1 20                 mov	r4, r0
- e1 10 eb              call16	__avm_scan_peek
+ e1 14 eb              call16	__avm_scan_peek
  f1 0c                 mov	r1, r4
  f0 0d 2d              cmpi.s8	r1, 0x2d
  d0 05                 breq8	0x5 <L36>
@@ -2779,7 +2776,7 @@ Disassembly of section .text:
  d1 22                 brne8	0x22 <L37>
 <L36>:
  f1 20                 mov	r4, r0
- e1 21 eb              call16	__avm_scan_take
+ e1 25 eb              call16	__avm_scan_take
  c4 fe ff              ldi16	r4, 0xfffe
  c5 ff ff              ldi16	r5, 0xffff
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -2795,7 +2792,7 @@ Disassembly of section .text:
  da 6e 01              breq16	0x16e <L52>
 <L37>:
  f1 20                 mov	r4, r0
- e1 dd ea              call16	__avm_scan_peek
+ e1 e1 ea              call16	__avm_scan_peek
  f1 14                 mov	r2, r4
  c8 d0                 addi.s8	r4, -0x30
  cc 0a                 cmpi.s8	r4, 0xa
@@ -2822,7 +2819,7 @@ Disassembly of section .text:
 <L39>:
  f0 32 0e              ldsp16	r2, [sp+0xe]
  f1 22                 mov	r4, r2
- e1 c3 ea              call16	__avm_scan_take
+ e1 c7 ea              call16	__avm_scan_take
  c4 ff ff              ldi16	r4, 0xffff
  c5 ff ff              ldi16	r5, 0xffff
  f4 2a                 ldsp16	r6, [sp+0xa]
@@ -2836,7 +2833,7 @@ Disassembly of section .text:
  f0 69 c8              cmp32	q3, q2
  d0 0d                 breq8	0xd <L40>
  f1 22                 mov	r4, r2
- e1 83 ea              call16	__avm_scan_peek
+ e1 87 ea              call16	__avm_scan_peek
  f1 14                 mov	r2, r4
  c8 d0                 addi.s8	r4, -0x30
  cc 0a                 cmpi.s8	r4, 0xa
@@ -2932,7 +2929,7 @@ Disassembly of section .text:
 <L48>:
  f0 30 0e              ldsp16	r0, [sp+0xe]
  f1 20                 mov	r4, r0
- e1 d7 e9              call16	__avm_scan_take
+ e1 db e9              call16	__avm_scan_take
  c4 ff ff              ldi16	r4, 0xffff
  c5 ff ff              ldi16	r5, 0xffff
  f7 66                 add32	q1, q2
@@ -2942,12 +2939,12 @@ Disassembly of section .text:
  d0 2a                 breq8	0x2a <L50>
 <L49>:
  f1 20                 mov	r4, r0
- e1 a1 e9              call16	__avm_scan_peek
+ e1 a5 e9              call16	__avm_scan_peek
  f1 04                 mov	r0, r4
  f0 0c ff              cmpi.s8	r0, -0x1
  d0 1e                 breq8	0x1e <L50>
  f1 74                 zext8	r4
- e1 35 f1              call16	isalnum
+ e1 39 f1              call16	isalnum
  f0 0c 5f              cmpi.s8	r0, 0x5f
  d0 d3                 breq8	-0x2d <L48>
  f6 2c                 tst16	r4
@@ -2955,7 +2952,7 @@ Disassembly of section .text:
  f0 0c 29              cmpi.s8	r0, 0x29
  d1 0b                 brne8	0xb <L50>
  f4 38                 ldsp16	r4, [sp+0xe]
- e1 a4 e9              call16	__avm_scan_take
+ e1 a8 e9              call16	__avm_scan_take
  a0                    xor	r4, r4
  c5 c0 7f              ldi16	r5, 0x7fc0
  d4 97                 jmp8	-0x69 <L45>
@@ -3331,7 +3328,7 @@ Disassembly of section .text:
  fa 7f                 lsr16i	r4, 0xf
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 8a 2c           ldi16	r0, 0x2c8a
+ f0 04 86 2c           ldi16	r0, 0x2c86
  f0 01 00              ldi8	r1, 0x0
  d4 21                 jmp8	0x21 <L6>
 <L3>:

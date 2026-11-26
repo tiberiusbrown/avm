@@ -33,7 +33,7 @@
       126138   count_leading_zeros.c
       211390   count_trailing_zeros.c
       736662   crc16.c
-     2001368   ctype_isalnum.c
+     1977896   ctype_isalnum.c
      1714728   ctype_isalpha.c
      1729120   ctype_isblank.c
      1729120   ctype_iscntrl.c
@@ -41,7 +41,7 @@
      1609872   ctype_isgraph.c
      1609872   ctype_islower.c
      1609872   ctype_isprint.c
-     2024240   ctype_ispunct.c
+     1933848   ctype_ispunct.c
      1801080   ctype_isspace.c
      1609872   ctype_isupper.c
      1977896   ctype_isxdigit.c
@@ -344,8 +344,8 @@
      1464360   stdlib_ldiv.c
       824461   stdlib_llabs.c
     35291007   stdlib_lldiv.c
-     4402104   stdlib_strtod.c
-     4384824   stdlib_strtof.c
+     4400040   stdlib_strtod.c
+     4382760   stdlib_strtof.c
      6677703   stdlib_strtol.c
     58573427   stdlib_strtoll.c
      6749895   stdlib_strtoul.c

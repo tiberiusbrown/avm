@@ -128,16 +128,13 @@ Disassembly of section .text:
 <isalnum>:
  c1 20                 ldi8	r5, 0x20
  94                    or	r5, r4
- c9 85                 addi.s8	r5, -0x7b
- c6 e5 ff              ldi16	r6, 0xffe5
- 39                    cmp	r6, r5
- d2 07                 brult8	0x7 <L0>
+ c9 9f                 addi.s8	r5, -0x61
+ cd 1a                 cmpi.s8	r5, 0x1a
+ f8 15                 cset.ult	r5
  c8 d0                 addi.s8	r4, -0x30
  cc 0a                 cmpi.s8	r4, 0xa
  f8 14                 cset.ult	r4
- ef                    ret
-<L0>:
- c0 01                 ldi8	r4, 0x1
+ 91                    or	r4, r5
  ef                    ret
 
 <memset>:

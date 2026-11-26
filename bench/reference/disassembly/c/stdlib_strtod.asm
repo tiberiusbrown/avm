@@ -62,16 +62,13 @@ Disassembly of section .text:
 <isalnum>:
  c1 20                 ldi8	r5, 0x20
  94                    or	r5, r4
- c9 85                 addi.s8	r5, -0x7b
- c6 e5 ff              ldi16	r6, 0xffe5
- 39                    cmp	r6, r5
- d2 07                 brult8	0x7 <L0>
+ c9 9f                 addi.s8	r5, -0x61
+ cd 1a                 cmpi.s8	r5, 0x1a
+ f8 15                 cset.ult	r5
  c8 d0                 addi.s8	r4, -0x30
  cc 0a                 cmpi.s8	r4, 0xa
  f8 14                 cset.ult	r4
- ef                    ret
-<L0>:
- c0 01                 ldi8	r4, 0x1
+ 91                    or	r4, r5
  ef                    ret
 
 <isspace>:
@@ -198,7 +195,7 @@ Disassembly of section .text:
  f4 a9                 inc16	r1
 <L9>:
  ed 82 1f              ld8u	r4, [r1-1]
- e1 05 ff              call16	isalnum
+ e1 09 ff              call16	isalnum
  f6 2c                 tst16	r4
  d1 f4                 brne8	-0xc <L8>
  ed 82 1f              ld8u	r4, [r1-1]
@@ -597,7 +594,7 @@ Disassembly of section .text:
  cd 30                 cmpi.s8	r5, 0x30
  d0 f5                 breq8	-0xb <L0>
  f2 30                 sub	r0, r0
- f0 06 fc 18           ldi16	r2, 0x18fc
+ f0 06 f8 18           ldi16	r2, 0x18f8
  f0 03 00              ldi8	r3, 0x0
 <L2>:
  44                    ld8u	r5, [r4]
@@ -993,7 +990,7 @@ Disassembly of section .text:
  fa 7f                 lsr16i	r4, 0xf
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 24 19           ldi16	r0, 0x1924
+ f0 04 20 19           ldi16	r0, 0x1920
  f0 01 00              ldi8	r1, 0x0
  d4 21                 jmp8	0x21 <L6>
 <L3>:

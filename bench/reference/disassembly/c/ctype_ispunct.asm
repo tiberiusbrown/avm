@@ -127,21 +127,21 @@ Disassembly of section .text:
 
 <ispunct>:
  04                    mov	r5, r4
+ c9 81                 addi.s8	r5, -0x7f
+ cd a2                 cmpi.s8	r5, -0x5e
+ d8 02                 bruge8	0x2 <L0>
  a0                    xor	r4, r4
- 09                    mov	r6, r5
- ca 81                 addi.s8	r6, -0x7f
- ce a2                 cmpi.s8	r6, -0x5e
- d2 11                 brult8	0x11 <L0>
- c2 20                 ldi8	r6, 0x20
- 99                    or	r6, r5
- ca 85                 addi.s8	r6, -0x7b
- c7 e5 ff              ldi16	r7, 0xffe5
- 3e                    cmp	r7, r6
- d2 06                 brult8	0x6 <L0>
- c9 c6                 addi.s8	r5, -0x3a
- cd f6                 cmpi.s8	r5, -0xa
- f8 14                 cset.ult	r4
+ ef                    ret
 <L0>:
+ c1 20                 ldi8	r5, 0x20
+ 94                    or	r5, r4
+ c9 85                 addi.s8	r5, -0x7b
+ cd e6                 cmpi.s8	r5, -0x1a
+ f8 15                 cset.ult	r5
+ c8 c6                 addi.s8	r4, -0x3a
+ cc f6                 cmpi.s8	r4, -0xa
+ f8 14                 cset.ult	r4
+ 81                    and	r4, r5
  ef                    ret
 
 <memset>:

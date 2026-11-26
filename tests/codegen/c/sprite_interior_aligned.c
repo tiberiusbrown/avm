@@ -72,6 +72,14 @@ static const uint8_t AVM_PROGMEM pm_16x9[2 + 128] = {
     16, 9, PV16(0, 0xff), PV16(16, 0x01), PV16(32, 0xff), PV16(48, 0x01)};
 static const uint8_t AVM_PROGMEM pm_7x3[2 + 28] = {7, 3, PV8(0, 0x07), PV4(8, 0x07), PV2(12, 0x07)};
 
+/* Distinct data in the last column of the final two pages. Clipping to these
+   bytes exercises a wide top/left offset and a reseek with a 510-byte stride. */
+static const uint8_t AVM_PROGMEM pm_255x255[2u + 255u * 32u * 2u] = {
+    255, 255,
+    [2u + 2u * (30u * 255u + 254u)] = 0xA0, 0xE0,
+    [2u + 2u * (31u * 255u + 254u)] = 0x55, 0x7F,
+};
+
 struct sheet {
     const uint8_t AVM_PROGMEM *data;
     uint8_t mode;
@@ -247,6 +255,16 @@ int avm_test_main(void)
                 ++index;
             }
         }
+    }
+    const struct sheet wide = {pm_255x255, MODE_PLUS_MASK, 1};
+    static const int wide_positions[][2] = {
+        {-254, -245}, {-253, -248}, {-254, -254},
+        {-255, -245}, {-254, -255}, {-256, -245}, {-254, INT16_MIN},
+    };
+    for(uint8_t p = 0; p != sizeof(wide_positions) / sizeof(wide_positions[0]); ++p) {
+        for(int cached = 0; cached != 2; ++cached)
+            if(check(index++, &wide, wide_positions[p][0], wide_positions[p][1], 0, cached))
+                return 1;
     }
     return 0;
 }

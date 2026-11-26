@@ -9433,19 +9433,6 @@ sprite_fast_try:
     andi  r30, 0x07                      ; padding bits of a partial page are
     breq  .Lsprite_fast_start            ; ignored and need masking
 .Lsprite_fast_generic:
-    brtc  .Lsprite_fast_single
-    ; A tile map tile: the general renderer runs under the text glyph register
-    ; frame and returns to the tile map service through .Ltext_emit_char_restore.
-    push  r8
-    push  r9
-    push  r12
-    push  r13
-    push  r14
-    push  r15
-    push  r18
-    push  r19
-    push  r22
-.Lsprite_fast_single:
     rjmp  draw_bitmap_seek_func
 
 .Lsprite_fast_start:
@@ -9585,10 +9572,10 @@ sprite_fast_try:
 ;   returns: an empty or fully invisible bitmap restarts the bytecode stream
 ;   immediately, and a drawn bitmap restores r8-r23 and restarts the stream in
 ;   sprite_exit_seek_func.
-;   With SREG.T set, the caller has pushed the text glyph register frame (r8, r9,
-;   r12-r15, r18, r19, r22), and every exit, including rejection, returns through
-;   .Ltext_emit_char_restore. Text glyphs use the internal T=1 entries below; the
-;   tile map service enters draw_bitmap_seek_func through the fast path's fallback.
+;   With SREG.T set, an invisible tile returns immediately. For a visible
+;   tile this entry pushes the glyph register frame (r8, r9, r12-r15, r18,
+;   r19, r22) and returns through .Ltext_emit_char_restore. Text glyphs
+;   supply that frame at draw_bitmap_seek_prepared_text_func.
 ;
 ; Data layout and semantics match the four sprite SYS services. This entry is
 ; deliberately exported so future text/glyph SYS services can prepare their
@@ -9596,17 +9583,17 @@ sprite_fast_try:
 ;
 ; Preservation contracts:
 ;   With SREG.T clear, draw_bitmap_seek_func / draw_bitmap_seek_nonempty_func
-;   push and restore all native r8-r23 (the complete AVM register file).
+;   preserve native r8-r23.
 ;   With SREG.T set, the caller preserves architectural state for its whole SYS,
 ;   so the renderer may clobber r8-r23 beyond the glyph frame it restores and
-;   skips the per-draw register save.
+;   skips the full per-draw register save.
 ;   VM_PC, VM_FLAGS, VM_SP, and the permanent constants are untouched. Native
 ;   r0:r1, r24:r27, r30:r31, GPIOR1:GPIOR2, and SREG are call-clobbered.
 ;
 ; Persistent working allocation after the optional pushes:
 ;   r8              source width during setup; overwrite row-valid mask
 ;   r9              source height during setup; overwrite low preserve mask
-;   r10:r11         full source-row stride in bytes
+;   r10:r11         full source-row stride for horizontally clipped draws
 ;   r12             visible source rows remaining
 ;   r13             drawing mode during setup; loop counter while rendering
 ;   r14             framebuffer row advance (128-visibleColumns)
@@ -9627,7 +9614,7 @@ sprite_fast_try:
     brts  .Lsprite_raw_reject_return
     jmp   seek_and_dispatch_func_disabled
 .Lsprite_raw_reject_return:
-    rjmp  .Lsprite_finish_text
+    ret
 .global draw_bitmap_seek_func
 draw_bitmap_seek_func:
     ; Reject invisible or empty bitmaps before touching architectural state or
@@ -9649,201 +9636,139 @@ draw_bitmap_seek_nonempty_func:
     cpc   VM_R5H, ZERO
     brge  .Lsprite_raw_reject
 
+    ; Nonnegative origins within the screen are visible because both
+    ; dimensions are nonzero. For a negative origin, origin+size-1 cannot
+    ; exceed 253, so its high byte is zero exactly when it is visible.
+    sbrs  VM_R4H, 7
+    rjmp  .Lsprite_x_visible
     movw  r30, VM_R4
+    sbiw  r30, 1
     add   r30, r0
     adc   r31, ZERO
-    cp    ZERO, r30
-    cpc   ZERO, r31
-    brge  .Lsprite_raw_reject
-
+    brne  .Lsprite_raw_reject
+.Lsprite_x_visible:
+    sbrs  VM_R5H, 7
+    rjmp  .Lsprite_raw_visible
     movw  r30, VM_R5
+    sbiw  r30, 1
     add   r30, r1
     adc   r31, ZERO
-    cp    ZERO, r30
-    cpc   ZERO, r31
-    brge  .Lsprite_raw_reject
+    brne  .Lsprite_raw_reject
 
-; Internal renderer entry for text callers that have already proved nonempty
-; dimensions and complete screen intersection. The caller must set SREG.T to
-; select the no-preservation contract before entering.
-draw_bitmap_seek_visible_text_func:
 .Lsprite_raw_visible:
-    ; Start the selected-frame command before preserving architectural inputs.
-    ; The sixteen pushes and the clipping work occupy the command-transfer
-    ; interval. Because the exact cycle-17 boundary is intentionally missed,
-    ; the eventual address-high handoff drains SPDR before transmitting.
-    fx_disable
-    ldi   r30, SFC_READ
-    fx_enable
-    out   SPDR, r30
-
-    brts  .Lsprite_raw_registers_ready
+    brtc  draw_bitmap_seek_visible_text_func
+    ; Only a visible tile needs the frame shared with prepared text.
     push  r8
     push  r9
-    push  r10
-    push  r11
     push  r12
     push  r13
     push  r14
     push  r15
-    push  r16
     push  r18
+    push  r19
+    push  r22
+
+; Internal entry for a visible bitmap with the glyph frame already installed
+; when T is set.
+draw_bitmap_seek_visible_text_func:
+    ; Only the first physical source address is needed before address-high.
+    ; Save the registers used to calculate it while the command transfers.
+    ; The three save groups match the restore order in sprite_exit_seek_func.
+    ldi   r30, SFC_READ
+    fx_enable
+    out   SPDR, r30
+
+    brts  .Lsprite_source_inputs_ready
+    push  r8
+    push  r9
+    push  r12
+    push  r13
     push  r19
     push  r20
     push  r21
     push  r22
-    push  r23
-
-.Lsprite_raw_registers_ready:
+.Lsprite_source_inputs_ready:
     movw  r8, r0                    ; source width and height
+    mov   r13, r27                  ; mode
     movw  r20, r24
-    mov   r22, r26                  ; selected frame image-relative pointer
+    mov   r22, r26                  ; selected frame pointer
 
-    ; Establish the shared renderer pointer contract immediately: r20:r22 is
-    ; physical from this point onward for both generic sprites and prepared
-    ; text. Top/left clipping and later row-stride advances therefore operate
-    ; identically, and clipped-row reseeks never translate the pointer again.
     lds   r24, data_page_data+0
     add   r21, r24
     lds   r24, data_page_data+1
     adc   r22, r24
 
-    mov   r13, r27                  ; drawing mode (setup only)
-
-    ; Full source-row stride in bytes.
-    mov   r10, r8
-    clr   r11
-    cpi   r27, SPRITE_MODE_PLUS_MASK
-    brne  .Lsprite_stride_ready
-    lsl   r10
-    rol   r11
-.Lsprite_stride_ready:
-
-    ; Compute pages = ceil(height/8) for every mode. Only OVERWRITE needs a
-    ; valid-bit mask for the final source page; PLUS_MASK, SELF_MASKED, and
-    ; ERASE require unused high bits in their source data to be zero.
-    ; r23 retains top, bottom, horizontal-reseek, and overwrite-partial flags.
-    ; Native SREG.T remains solely the renderer preservation contract.
-    clr   r23
-    mov   r25, r9
-    lsr   r25
-    lsr   r25
-    lsr   r25
-    mov   r24, r9
-    andi  r24, 0x07                 ; height remainder
-    breq  .Lsprite_height_aligned
-
-    inc   r25
-    tst   r13                       ; only mode 0 (OVERWRITE) masks padding
-    brne  .Lsprite_nonoverwrite_unaligned
-    ori   r23, (1 << SPRITE_FLAG_PARTIAL)
-
-    ; Fixed-time mask = (1 << remainder) - 1. Each SBRC and its one-word
-    ; instruction consume two cycles whether the instruction executes or is
-    ; skipped, so remainders 1-7 all take the same eight cycles.
-    ldi   r30, 1
-    sbrc  r24, 1
-    ldi   r30, 4
-    sbrc  r24, 0
-    lsl   r30
-    sbrc  r24, 2
-    swap  r30
-    dec   r30
-    rjmp  .Lsprite_final_mask_ready
-
-.Lsprite_nonoverwrite_unaligned:
-.Lsprite_height_aligned:
-    ldi   r30, 0xFF
-.Lsprite_final_mask_ready:
-    mov   r15, r30                  ; overwrite final-page valid-bit mask
-    mov   r12, r25                  ; total source pages
-
-    ; pageStart = arithmetic y / 8. Visibility checks constrain y to the range
-    ; in which the compact low-byte continuation is exact.
+    ; Nonnegative y supplies the destination page directly. For negative y
+    ; skip floor(-y/8) source pages. The first surviving row begins one page
+    ; above the display only when y has a nonzero bit shift.
     mov   r24, VM_R5L
-    asr   VM_R5H
-    ror   r24
-    asr   r24
-    asr   r24
+    sbrc  VM_R5H, 7
+    rjmp  .Lsprite_top_clip
+    clr   r12
+    lsr   r24
+    lsr   r24
+    lsr   r24
+    mov   r19, r24
+    rjmp  .Lsprite_top_clip_done
+.Lsprite_top_clip:
+    neg   r24
+    mov   r12, r24
+    lsr   r12
+    lsr   r12
+    lsr   r12
+    andi  r24, 0x07
+    neg   r24
+    sbc   r19, r19
+.Lsprite_top_clip_done:
 
-    ; Skip complete source pages above the display. With a nonzero bit shift,
-    ; pageStart == -1 remains visible through its high contribution; aligned
-    ; sprites skip that otherwise-empty row as well.
-    mov   r25, VM_R5L
-    andi  r25, 0x07
-    breq  .Lsprite_top_clip_aligned
+    mov   r31, VM_R4L               ; framebuffer x
+    mov   r30, r8                   ; width remaining before right clipping
+    clr   r25                       ; number of source columns skipped
+    sbrs  VM_R4H, 7
+    rjmp  .Lsprite_left_clip_done
+    mov   r25, r31
+    neg   r25
+    sub   r30, r25
+    clr   r31
+.Lsprite_left_clip_done:
 
-    cpi   r24, 0xFF
-    brge  .Lsprite_top_clip_done
-    mov   r25, r24
-    com   r25                       ; skip = -pageStart - 1
-    rjmp  .Lsprite_apply_top_skip
-
-.Lsprite_top_clip_aligned:
-    tst   r24
-    brpl  .Lsprite_top_clip_done
-    mov   r25, r24
-    neg   r25                       ; skip = -pageStart
-
-.Lsprite_apply_top_skip:
-    ; source += skip * rowStride; pages -= skip; pageStart += skip.
-    movw  r30, r10
-    mul   r25, r30
+    ; Add topSkip*width + leftSkip in columns, then scale for plus-mask.
+    ; This uses one 8x8 product and one 24-bit pointer addition even if both
+    ; axes clip. The combined offset fits in 16 bits at 255x255 in every mode.
+    mov   r24, r12
+    or    r24, r25
+    breq  .Lsprite_source_ready
+    mul   r12, r8
+    add   r0, r25
+    adc   r1, ZERO
+    cpi   r27, SPRITE_MODE_PLUS_MASK
+    brne  .Lsprite_add_source_skip
+    lsl   r0
+    rol   r1
+.Lsprite_add_source_skip:
     add   r20, r0
     adc   r21, r1
     adc   r22, ZERO
-    mul   r25, r31
-    add   r21, r0
-    adc   r22, r1
-    sub   r12, r25
-    add   r24, r25
-
-.Lsprite_top_clip_done:
-    mov   r19, r24                  ; clipped signed destination page index
-
-    ; Horizontal clipping. r16 becomes visible columns and r31 start X.
-    ; r17 remains untouched so prepared text retains call-lifetime status.
-    mov   r25, VM_R4L
-    sbrs  VM_R4H, 7
-    rjmp  .Lsprite_x_nonnegative
-
-    neg   r25                       ; leftSkip = -x, guaranteed < width
-    mov   r16, r8
-    sub   r16, r25
-
-    ; source += leftSkip * bytesPerColumn.
-    mov   r30, r25
-    clr   r31
-    mov   r24, r13
-    cpi   r24, SPRITE_MODE_PLUS_MASK
-    brne  .Lsprite_left_skip_ready
-    lsl   r30
-    rol   r31
-.Lsprite_left_skip_ready:
-    add   r20, r30
-    adc   r21, r31
-    adc   r22, ZERO
-    clr   r31                       ; framebuffer x = 0
-    rjmp  .Lsprite_clip_right
-
-.Lsprite_x_nonnegative:
-    mov   r31, r25                  ; framebuffer x
-    mov   r16, r8
-
-.Lsprite_clip_right:
-    ldi   r24, 128
-    sub   r24, r31                  ; columns available on screen
-    cp    r24, r16
-    brsh  .Lsprite_right_clip_done
-    mov   r16, r24
-.Lsprite_right_clip_done:
-
-    ; The command transfer is complete and its response is unused.
+.Lsprite_source_ready:
     out   SPDR, r22                  ; physical address high
 
-    ; X = framebuffer + pageStart*128 + x. With x in 0..127, moving
-    ; pageStart's low bit into XL bit 7 leaves the other x bits intact.
-    ; ASR handles pageStart == -1, which starts one page before the display.
+    ; Right clipping and framebuffer addressing do not change the source
+    ; pointer. Save their working registers after address-high is in flight.
+    brts  .Lsprite_clip_right
+    push  r16
+    push  r14
+    push  r23
+.Lsprite_clip_right:
+    ldi   r24, 128
+    sub   r24, r31
+    cp    r24, r30
+    brlo  .Lsprite_width_ready
+    mov   r24, r30
+.Lsprite_width_ready:
+    mov   r16, r24
+
+    ; X = framebuffer + pageStart*128 + x. ASR supplies page parity to XL
+    ; and handles pageStart == -1 as one page before the framebuffer.
     mov   r26, r31
     lsl   r26
     mov   r27, r19
@@ -9851,44 +9776,74 @@ draw_bitmap_seek_visible_text_func:
     ror   r26
     subi  r27, hi8(-data_display)
 
-    cpi   r19, 0xFF
-    brne  .Lsprite_not_top_row
+    clr   r23
+    sbrc  r19, 7
     ori   r23, (1 << SPRITE_FLAG_TOP)
-.Lsprite_not_top_row:
-    nop
-
-    ; Clip source rows against the bottom. If the original final source page is
-    ; removed, its partial-page mask is no longer relevant.
-    ldi   r24, 8
-    sub   r24, r19                  ; maximum visible source rows
-    cp    r24, r12
-    brsh  .Lsprite_bottom_count_ready
-    mov   r12, r24
-    andi  r23, 0xF7                 ; clear SPRITE_FLAG_PARTIAL
-.Lsprite_bottom_count_ready:
-
-    mov   r24, r19
-    add   r24, r12
-
-    out   SPDR, r21                  ; physical address middle
-
-    cpi   r24, 8
-    brne  .Lsprite_not_bottom_row
-    ori   r23, (1 << SPRITE_FLAG_BOTTOM)
-.Lsprite_not_bottom_row:
-
-    ; The retained source pointer is needed only when horizontal clipping means
-    ; the visible bytes do not end at the next source row. Keep that condition
-    ; in the spare renderer metadata bit so native T remains the preservation
-    ; contract through every arithmetic instruction and protected SPI handoff.
     cpse  r16, r8
     ori   r23, (1 << SPRITE_FLAG_RESEEK)
 
     ldi   r24, 128
     sub   r24, r16
     mov   r14, r24                  ; framebuffer row advance
+    out   SPDR, r21                  ; physical address middle
 
-    ; Fixed-time coefficient construction overlaps the middle-address byte.
+    brts  .Lsprite_clip_bottom
+    push  r10
+    push  r11
+    push  r15
+    push  r18
+.Lsprite_clip_bottom:
+    ; First count the source rows left after top clipping. An exact fit at
+    ; the bottom keeps the final-page mask. Truncation drops that source page.
+    mov   r24, r9
+    dec   r24
+    lsr   r24
+    lsr   r24
+    lsr   r24
+    sub   r24, r12
+    inc   r24
+    mov   r12, r24
+    ldi   r25, 8
+    sub   r25, r19
+    cp    r12, r25
+    brlo  .Lsprite_bottom_ready
+    breq  .Lsprite_mark_bottom
+    mov   r12, r25
+    clr   r9                        ; no partial source page remains
+.Lsprite_mark_bottom:
+    ori   r23, (1 << SPRITE_FLAG_BOTTOM)
+.Lsprite_bottom_ready:
+
+    ; Keep the full stride only for draws that have to seek between rows.
+    sbrs  r23, SPRITE_FLAG_RESEEK
+    rjmp  .Lsprite_stride_ready
+    mov   r10, r8
+    clr   r11
+    mov   r24, r13
+    cpi   r24, SPRITE_MODE_PLUS_MASK
+    brne  .Lsprite_stride_ready
+    lsl   r10
+    rol   r11
+.Lsprite_stride_ready:
+
+    ; Only overwrite needs a valid-bit mask for a surviving partial page.
+    tst   r13
+    brne  .Lsprite_final_mask_ready
+    mov   r24, r9
+    andi  r24, 0x07
+    breq  .Lsprite_final_mask_ready
+    ori   r23, (1 << SPRITE_FLAG_PARTIAL)
+    ldi   r25, 1
+    sbrc  r24, 1
+    ldi   r25, 4
+    sbrc  r24, 0
+    lsl   r25
+    sbrc  r24, 2
+    swap  r25
+    dec   r25
+    mov   r15, r25
+.Lsprite_final_mask_ready:
+
     mov   r24, VM_R5L
     ldi   r18, 1
     sbrc  r24, 1
@@ -9897,8 +9852,6 @@ draw_bitmap_seek_visible_text_func:
     lsl   r18
     sbrc  r24, 2
     swap  r18                        ; r18 = 1 << (y & 7)
-
-    nop                              ; address data requires an 18-cycle gap
     out   SPDR, r20                  ; physical address low
 
     ; Select one mode-specific row dispatcher once. GPIOR1:GPIOR2 are free
@@ -10091,19 +10044,21 @@ draw_bitmap_seek_prepared_text_func:
 ; always use their full-row loops and rely on canonical zero padding.
 .macro emit_sprite_overwrite_dispatch label, top_full, top_partial, middle_full, middle_partial, bottom_full, bottom_partial
 \label:
-    sbrs  r24, SPRITE_FLAG_PARTIAL
-    rjmp  .Lsprite_overwrite_kind_\@
     cp    r12, ONE
-    brne  .Lsprite_overwrite_kind_\@
+    brne  .Lsprite_overwrite_full_\@
+    sbrs  r24, SPRITE_FLAG_PARTIAL
+    rjmp  .Lsprite_overwrite_last_\@
     mov   r8, r15
     ori   r24, 0x80
-.Lsprite_overwrite_kind_\@:
+.Lsprite_overwrite_last_\@:
     sbrc  r24, SPRITE_FLAG_TOP
     rjmp  .Lsprite_overwrite_top_\@
-    cp    r12, ONE
-    brne  .Lsprite_overwrite_middle_\@
     sbrc  r24, SPRITE_FLAG_BOTTOM
     rjmp  .Lsprite_overwrite_bottom_\@
+    rjmp  .Lsprite_overwrite_middle_\@
+.Lsprite_overwrite_full_\@:
+    sbrc  r24, SPRITE_FLAG_TOP
+    rjmp  \top_full
 .Lsprite_overwrite_middle_\@:
     movw  r30, r26
     subi  r30, 0x80
@@ -10546,21 +10501,23 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     adc   r21, r25
     adc   r22, ZERO
 
-    mov   r25, r21
-
-    ; Five useful setup cycles after command launch plus this complete
-    ; twelve-cycle delay place address high at the exact cycle-18 handoff.
-    rcall sprite_delay_12
+    rcall sprite_delay_13
     out   SPDR, r22
 
-    ; Remaining meaningful bytes use exact 18-cycle standard handoffs.
-    rcall sprite_delay_17
-    out   SPDR, r25
-    rcall sprite_delay_17
+    ; The preceding row cleared TOP, so the next row can enter its mode
+    ; dispatcher directly. Set up the inputs while address bytes transfer.
+    mov   r24, r23
+    mov   r13, r16
+    rcall sprite_delay_15
+    out   SPDR, r21
+    in    r30, GPIOR1
+    in    r31, GPIOR2
+    rcall sprite_delay_15
     out   SPDR, r20
     rcall sprite_delay_16
     out   SPDR, ZERO
-    rjmp  .Lsprite_row_dispatch
+    rcall sprite_delay_7
+    ijmp
 
 .Lsprite_bottom_done:
     ; Bottom is necessarily the last visible source row.
@@ -10571,17 +10528,14 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     ; The final dummy transfer is still shifting out. Four pops outlast it, so
     ; the seek below may raise chip select; the other twelve restores run in
     ; the idle gaps of that seek instead of in front of it.
-    pop   r23
-    pop   r22
-    pop   r21
-    pop   r20
+    pop   r18
+    pop   r15
+    pop   r11
+    pop   r10
 
-; Restart the bytecode stream after a drawn sprite. This is
-; seek_and_dispatch_func_disabled with the remaining register restores placed
-; in its SPI gaps: three in the command-to-address-high gap and eight in the
-; address-high gap. Every gap keeps its exact length. The pending-audio poll stays in the command gap; its
-; service path runs before any of these restores, so the rare restart repeats
-; them from the top.
+; Restart the bytecode stream with three register restores during the command
+; and eight during address-high. Poll pending audio ticks before consuming
+; any of these registers so the audio path can restart the seek.
 sprite_exit_seek_func:
     fx_disable
     ldi   r30, SFC_READ
@@ -10597,17 +10551,17 @@ sprite_exit_seek_func:
     tst   r30
     brne  sprite_exit_audio_service
 
-    pop   r19
-    pop   r18
+    pop   r23
+    pop   r14
     pop   r16
     nop
     out   SPDR, r27
-    pop   r15
-    pop   r14
+    pop   r22
+    pop   r21
+    pop   r20
+    pop   r19
     pop   r13
     pop   r12
-    pop   r11
-    pop   r10
     pop   r9
     pop   r8
     nop
@@ -10683,10 +10637,8 @@ sprite_delay_7:
 ; architectural registers, VM_FLAGS and VM_SP are preserved.
 ;
 ; Each tile enters .Lsprite_cached_load with SREG.T set, so both sprite paths
-; return here: the interior fast path with RET, the generic renderer through the
-; text glyph register frame that the fast path's fallback pushes. Loop state
-; lives in registers both paths preserve (the glyph frame, plus r17 and Y, which
-; the renderer does not write):
+; return here. A visible generic draw preserves the glyph register frame.
+; Loop state also uses r17 and Y, which both paths preserve.
 ;   r8  draw mode         r9  options          r12:r17 current x (low:high)
 ;   r13 rows left         r14 columns left     r15 sprite width
 ;   r18:r19 current y     r22 columns          Y   next entry

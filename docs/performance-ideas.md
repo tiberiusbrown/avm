@@ -32,7 +32,7 @@
 | Wider compare-and-branch fusion | under 1% | at least 1 KB | Rejected | |
 | Display loop at a 17-cycle byte cadence | at most 0.5 M cycles | about 0 | Unvalidated | Needs OLED timing validation |
 
-Interpreter flash is the shared constraint. The interpreter uses 28,108 of 29,696 bytes, leaving 1,588 bytes for ISA work. The experiments below used earlier builds with 364 bytes free. [Interpreter timing and size history](isa_interpreter_implementation.md#5-timing-model)
+Interpreter flash is the shared constraint. The interpreter uses 28,100 of 29,696 bytes, leaving 1,596 bytes for ISA work. The experiments below used earlier builds with 364 bytes free. [Interpreter timing and size history](isa_interpreter_implementation.md#5-timing-model)
 
 ## 4. `CALLT`: fused table call
 
@@ -286,9 +286,13 @@ Calls that fall back to the general renderer pay for the test: 4 cycles for unal
 
 Later setup changes save 19–20 cycles on frame zero by bypassing stride calculation. The aligned path starts the command six cycles earlier and translates the physical pointer while the command transfers. The generic path computes the framebuffer pointer from page parity and moves the top-row check after address-high, saving three cycles on a visible draw. Together the changes save four flash bytes and 3–26 cycles across the 184 single-sprite instruction benchmarks. [Instruction timings](../bench/reference/cycles_instruction.txt)
 
+The generic renderer now calculates the clipped physical pointer before address-high and delays the remaining register saves and framebuffer setup until the address bytes are in flight. The offsets along both axes use one product and one 24-bit pointer addition. Clipped-row reseeks prepare their column counter and dispatch target during the address transfers. Invisible tiles return before saving a register frame.
+
+The unaligned 16×9 cached overwrite case reaches address-high 48 cycles after the read command, down from 94 in the preceding build. Its first pixel read advances by 18 cycles, including the earlier visibility check and shorter first-row dispatch. The clipped 9×5 tile map takes 36,429 cycles, down from 36,694, and the empty-sprite tile map takes 1,345 cycles, down from 1,697. [Instruction timings](../bench/reference/cycles_instruction.txt)
+
 Remaining ideas:
 
-- **Front end of the general renderer.** Sending address-high earlier requires splitting source-pointer calculation from framebuffer setup and making room for the deferred work in the later SPI intervals.
+- **Further setup scheduling.** In the unaligned 16×9 example, the middle-to-low gap is 49 cycles. Row counts, stride, and masks still share that gap, so shortening it requires moving work into the first data transfer or reducing the instruction count.
 - **Cached stride in `set_sprite`** (about 10 cycles). The cached-sprite state sits inside the packed private RAM layout that the audio map depends on.
 - **Peeling the last byte** of the fast loops, about 12 cycles per fast draw (0.2% of the replay): today each loop starts one transfer past the frame and waits for it. A batch service gains it once per tile.
 - **Clipped and unaligned fast paths.** Extending the fast path to horizontally clipped aligned sprites would add about 0.5% of the replay for about 150 B. Unaligned sprites need the shift loops and registers; the general renderer already streams them at 18 cycles per byte.

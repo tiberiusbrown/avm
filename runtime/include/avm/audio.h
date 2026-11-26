@@ -61,6 +61,8 @@ uint8_t avm_audio_get_volume(void);
 uint8_t avm_audio_get_music_volume(void);
 uint8_t avm_audio_get_sfx_volume(void);
 void avm_audio_enable(void);
+/* Stop both streams and disable output. Cancels a queued music fade and
+   restores the music attenuation saved when the fade began. */
 void avm_audio_disable(void);
 enum { AVM_AUDIO_RATE_8KHZ = 0, AVM_AUDIO_RATE_16KHZ = 1 };
 /* Default 16 kHz (15625 Hz); 8 kHz is 7812.5 Hz.

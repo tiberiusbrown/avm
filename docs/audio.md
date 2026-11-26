@@ -1138,8 +1138,9 @@ original saved attenuation and the current fade progress, so repeated calls
 neither lower the eventual restore gain nor restart the fade. An active fade
 takes priority over the runtime's stopped-music check: if the current song
 ends before handoff, a replacement request still updates that pending fade.
-Immediate music PLAY, stop and disable cancel the queue
-without restoring its saved gain. Pause freezes music sequencing but does not
+Immediate music PLAY and stop cancel the queue at the current attenuation.
+Disable cancels the queue and restores the saved music attenuation.
+Pause freezes music sequencing but does not
 freeze the fade clock. If the current song ends, a pending fade still runs.
 The raw interpreter queue command (SYS audio command 16) also queues while
 stopped; the public runtime wrapper checks the current RAM status and uses

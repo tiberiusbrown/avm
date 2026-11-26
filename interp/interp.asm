@@ -15823,7 +15823,9 @@ sys_audio_impl:
 .Laudio_resume:
     lds  r24, data_audio_music+AUDIO_STATUS
     cpi  r24, 2
-    brne .Laudio_command_done
+    breq 1f
+    rjmp .Laudio_command_done
+1:
     ldi  r24, 1
 .Laudio_set_status:
     sts  data_audio_music+AUDIO_STATUS, r24
@@ -15841,7 +15843,12 @@ sys_audio_impl:
     rcall audio_enable
     rjmp .Laudio_command_done
 .Laudio_disable_command:
+    lds  r24, data_audio_fade_volume
+    tst  r24
+    breq 1f
+    sts  data_audio_music_volume, r24
     sts  data_audio_fade_volume, ZERO
+1:
     sts  data_audio_music+AUDIO_STATUS, ZERO
     sts  data_audio_sfx+AUDIO_STATUS, ZERO
     sts  data_audio_sfx+AUDIO_MASK, ZERO

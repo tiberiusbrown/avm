@@ -715,10 +715,18 @@ void sequence(harness& h) {
         h.elapsed(7);
         require(start()==queued && h.c().data[musicvolume]==7 && h.word(music+3)==255,
             "queued song did not consume remaining catch-up time");
-        for(unsigned cancel : {0u,2u,7u}) {
+        for(unsigned cancel : {0u,2u}) {
             h.command(16,0x20000); h.command(cancel,queued);
-            require(!h.c().data[fade_volume],"play/stop/disable did not cancel the queued song");
+            require(!h.c().data[fade_volume],"play/stop did not cancel the queued song");
         }
+        h.command(11,173); h.play_midi({1,0,0x11,60,31,255,0,1});
+        h.command(16,queued); h.elapsed(11);
+        require(h.c().data[musicvolume]==162,"disable fixture did not lower music attenuation");
+        h.command(7);
+        require(!h.c().data[fade_volume] && !h.c().data[music+5] &&
+            h.c().data[musicvolume]==173,"disable did not cancel the fade and restore attenuation");
+        h.command(7);
+        require(h.c().data[musicvolume]==173,"disable without a fade changed attenuation");
     });
     h.test("default gain uses nearly the complete pin amplitude",[&]{
         h.command(5,128);

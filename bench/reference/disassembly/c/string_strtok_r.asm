@@ -135,7 +135,7 @@ Disassembly of section .text:
  cd 20                 cmpi.s8	r5, 0x20
  f0 04 02 01           ldi16	r0, 0x102
  db 13 ff              brne16	-0xed <L0>
- f0 5b 00 01           stm16	[0x100], r3
+ f0 ec 00              stm16	[0x100], r3
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 26                 adjsp	0x26

@@ -185,9 +185,9 @@ Disassembly of section .text:
  f4 29                 ldsp16	r5, [sp+0xa]
  f4 02                 ldsp16	r6, [sp+0x0]
  f4 0b                 ldsp16	r7, [sp+0x2]
- e1 a7 00              call16	avm_hypot_overflows
+ e1 a5 00              call16	avm_hypot_overflows
  f4 a4                 tst8	r4
- db 95 00              brne16	0x95 <L8>
+ db 94 00              brne16	0x94 <L8>
  c6 ff ff              ldi16	r6, 0xffff
  c7 7f 5d              ldi16	r7, 0x5d7f
  f2 68                 mov32	q2, q0
@@ -201,7 +201,7 @@ Disassembly of section .text:
  c4 ff ff              ldi16	r4, 0xffff
  c1 7f                 ldi8	r5, 0x7f
  f0 69 84              cmp32	q2, q1
- d2 48                 brult8	0x48 <L7>
+ d2 47                 brult8	0x47 <L7>
  aa                    xor	r6, r6
  c7 80 7e              ldi16	r7, 0x7e80
  f4 10                 ldsp16	r4, [sp+0x4]
@@ -236,8 +236,8 @@ Disassembly of section .text:
  3e                    cmp	r7, r6
  dc cc fe              brult16	-0x134 <L0>
  c2 22                 ldi8	r6, 0x22
- f0 5e 04 02           stm16	[0x204], r6
- e0 c3 fe              jmp16	-317 <L0>
+ f0 f9 04              stm16	[0x204], r6
+ e0 c4 fe              jmp16	-316 <L0>
 <L7>:
  aa                    xor	r6, r6
  c7 80 61              ldi16	r7, 0x6180
@@ -260,13 +260,13 @@ Disassembly of section .text:
  aa                    xor	r6, r6
  c7 80 1d              ldi16	r7, 0x1d80
  ff 02                 fmul
- e0 98 fe              jmp16	-360 <L0>
+ e0 99 fe              jmp16	-359 <L0>
 <L8>:
  c0 22                 ldi8	r4, 0x22
- f0 5c 04 02           stm16	[0x204], r4
+ f0 f1 04              stm16	[0x204], r4
  a0                    xor	r4, r4
  c5 80 7f              ldi16	r5, 0x7f80
- e0 8b fe              jmp16	-373 <L0>
+ e0 8d fe              jmp16	-371 <L0>
 
 <avm_hypot_overflows>:
  b3                    push16	r3

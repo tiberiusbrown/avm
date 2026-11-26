@@ -10,7 +10,7 @@ Disassembly of section .text:
  b0                    push16	r0
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
- f0 06 e8 0f           ldi16	r2, 0xfe8
+ f0 06 e7 0f           ldi16	r2, 0xfe7
  f0 03 00              ldi8	r3, 0x0
  f0 05 00 01           ldi16	r1, 0x100
 <L0>:
@@ -50,11 +50,11 @@ Disassembly of section .text:
  ff 08                 fabs	q0
  c6 80 7f              ldi16	r6, 0x7f80
  f5 0e                 cmp	r1, r6
- dd 9e 00              bruge16	0x9e <L6>
+ dd 9d 00              bruge16	0x9d <L6>
  aa                    xor	r6, r6
  af                    xor	r7, r7
  f0 69 0c              cmp32	q0, q3
- da 91 00              breq16	0x91 <L5>
+ da 90 00              breq16	0x90 <L5>
  aa                    xor	r6, r6
  c7 80 40              ldi16	r7, 0x4080
  f0 69 0c              cmp32	q0, q3
@@ -69,12 +69,12 @@ Disassembly of section .text:
  fb 77                 cmov.ne	r6, r7
  06                    mov	r5, r6
  a0                    xor	r4, r4
- d4 76                 jmp8	0x76 <L5>
+ d4 75                 jmp8	0x75 <L5>
 <L1>:
  c6 ff ff              ldi16	r6, 0xffff
  c7 9f 3f              ldi16	r7, 0x3f9f
  f0 69 c0              cmp32	q3, q0
- d2 46                 brult8	0x46 <L2>
+ d2 45                 brult8	0x45 <L2>
  08                    mov	r6, r4
  0d                    mov	r7, r5
  ff 02                 fmul
@@ -87,14 +87,14 @@ Disassembly of section .text:
  c6 ff ff              ldi16	r6, 0xffff
  c3 7f                 ldi8	r7, 0x7f
  f0 69 c0              cmp32	q3, q0
- d2 36                 brult8	0x36 <L5>
+ d2 35                 brult8	0x35 <L5>
  09                    mov	r6, r5
  c7 80 7f              ldi16	r7, 0x7f80
  8b                    and	r6, r7
  f6 2e                 tst16	r6
- d1 2d                 brne8	0x2d <L5>
+ d1 2c                 brne8	0x2c <L5>
  c2 22                 ldi8	r6, 0x22
- f0 5e 04 01           stm16	[0x104], r6
+ f0 f8 04              stm16	[0x104], r6
  d4 25                 jmp8	0x25 <L5>
 <L2>:
  f2 66                 mov32	q1, q2
@@ -126,7 +126,7 @@ Disassembly of section .text:
  aa                    xor	r6, r6
  c7 80 7f              ldi16	r7, 0x7f80
  f0 69 0c              cmp32	q0, q3
- da 69 ff              breq16	-0x97 <L0>
+ da 6a ff              breq16	-0x96 <L0>
  08                    mov	r6, r4
  0d                    mov	r7, r5
  d4 eb                 jmp8	-0x15 <L4>

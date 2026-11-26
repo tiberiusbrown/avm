@@ -8,17 +8,17 @@ Disassembly of section .text:
  b0                    push16	r0
  f0 05 00 01           ldi16	r1, 0x100
  d7 01                 sys	debug_break
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
 <L0>:
- d5 18                 call8	tail_direct
+ d5 17                 call8	tail_direct
  f1 04                 mov	r0, r4
- d5 18                 call8	tail_with_saved
+ d5 17                 call8	tail_with_saved
  f9 82                 xor	r4, r0
- d5 1f                 call8	tail_indirect
+ d5 1e                 call8	tail_indirect
  f4 b1                 dec16	r1
  f6 29                 tst16	r1
  d1 f0                 brne8	-0x10 <L0>
- f0 5c 02 01           stm16	[0x102], r4
+ f0 f0 02              stm16	[0x102], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

@@ -10,7 +10,7 @@ Disassembly of section .text:
  b0                    push16	r0
  d6 fd                 adjsp	-0x3
  f2 39                 sub	r1, r1
- f0 53 00 01           ldm16	r3, [0x100]
+ f0 cc 00              ldm16	r3, [0x100]
  d7 01                 sys	debug_break
  f0 04 04 01           ldi16	r0, 0x104
  f1 11                 mov	r2, r1
@@ -54,7 +54,7 @@ Disassembly of section .text:
  f0 04 04 01           ldi16	r0, 0x104
  f1 20                 mov	r4, r0
  c5 84 01              ldi16	r5, 0x184
- d5 28                 call8	_ZNSt3__115__sort_dispatchB11n240000in23INS_15_RangeAlgPolicyEPiNS_7greaterIvEEEEvT0_S5_RT1_
+ d5 27                 call8	_ZNSt3__115__sort_dispatchB11n240000in23INS_15_RangeAlgPolicyEPiNS_7greaterIvEEEEvT0_S5_RT1_
  c0 01                 ldi8	r4, 0x1
  f1 24                 mov	r5, r0
 <L4>:
@@ -68,7 +68,7 @@ Disassembly of section .text:
  f4 a9                 inc16	r1
  f0 0d 18              cmpi.s8	r1, 0x18
  d1 93                 brne8	-0x6d <L0>
- f0 5a 02 01           stm16	[0x102], r2
+ f0 e8 02              stm16	[0x102], r2
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 03                 adjsp	0x3

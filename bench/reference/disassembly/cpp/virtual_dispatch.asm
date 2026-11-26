@@ -10,13 +10,13 @@ Disassembly of section .text:
  d6 ee                 adjsp	-0x12
  c0 25                 ldi8	r4, 0x25
  f4 60                 stsp16	[sp+0x8], r4
- c4 26 0e              ldi16	r4, 0xe26
+ c4 24 0e              ldi16	r4, 0xe24
  c1 00                 ldi8	r5, 0x0
  f4 54                 stsp16	[sp+0x5], r4
  f1 4d                 stsp8	[sp+0x7], r5
  c4 aa 55              ldi16	r4, 0x55aa
  f4 4c                 stsp16	[sp+0x3], r4
- c4 2f 0e              ldi16	r4, 0xe2f
+ c4 2d 0e              ldi16	r4, 0xe2d
  c1 00                 ldi8	r5, 0x0
  f4 40                 stsp16	[sp+0x0], r4
  f1 39                 stsp8	[sp+0x2], r5
@@ -39,12 +39,12 @@ Disassembly of section .text:
  f0 16 0a              leasp	r6, 0xa
  18                    add	r6, r4
  62                    ld16	r4, [r6]
- d5 14                 call8	_ZL6invokePK9Operationj
+ d5 13                 call8	_ZL6invokePK9Operationj
  04                    mov	r5, r4
  f4 a8                 inc16	r0
  f5 02                 cmp	r0, r2
  d1 ec                 brne8	-0x14 <L0>
- f0 5d 00 01           stm16	[0x100], r5
+ f0 f4 00              stm16	[0x100], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 12                 adjsp	0x12
@@ -63,7 +63,6 @@ Disassembly of section .text:
  b8                    pop16	r0
  b9                    pop16	r1
  e7                    jmpp	q3
- 00                    nop
 
 <Add::apply(unsigned int) const>:
  ed 98 23              ld16	r4, [r4+3]

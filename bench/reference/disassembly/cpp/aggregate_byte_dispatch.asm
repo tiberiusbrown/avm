@@ -48,7 +48,7 @@ Disassembly of section .text:
  fa 38                 lsl16i	r4, 0x8
  92                    or	r4, r6
  ed a4 20              ld8u	r5, [r2+0]
- d5 20                 call8	_ZL8dispatch10ChunkCoord
+ d5 1f                 call8	_ZL8dispatch10ChunkCoord
  f2 0c                 add	r1, r4
  f0 0a 03              addi.s8	r2, 0x3
  f4 b3                 dec16	r3
@@ -57,7 +57,7 @@ Disassembly of section .text:
  f4 a8                 inc16	r0
  f0 0c 20              cmpi.s8	r0, 0x20
  d1 d8                 brne8	-0x28 <L1>
- f0 59 00 01           stm16	[0x100], r1
+ f0 e4 00              stm16	[0x100], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 02                 adjsp	0x2

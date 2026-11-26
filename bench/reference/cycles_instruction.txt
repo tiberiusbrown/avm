@@ -399,6 +399,10 @@
    73   LDM16 r0,0x0600
   295   LDM16 r0,avm_bench_flash_words (flash absolute F0)
    72   STM16 0x0600,r0
+   54   LDM8U r4,0x0100 (paged F0)
+   55   STM8 0x0297,r0 (paged F0)
+   55   LDM16 r3,0x03ff (paged F0)
+   57   STM16 0x0400,r7 (paged F0)
    83   LD32 q0,[r4]
   323   LD32 q0,[r4] (flash wide)
    80   ST32 [r4],q0

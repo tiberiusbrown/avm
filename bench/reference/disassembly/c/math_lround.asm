@@ -10,7 +10,7 @@ Disassembly of section .text:
  b0                    push16	r0
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
- f0 06 0f 0e           ldi16	r2, 0xe0f
+ f0 06 0e 0e           ldi16	r2, 0xe0e
  f0 03 00              ldi8	r3, 0x0
  f0 05 00 01           ldi16	r1, 0x100
 <L0>:
@@ -68,7 +68,7 @@ Disassembly of section .text:
  f0 69 c0              cmp32	q3, q0
  d0 ec                 breq8	-0x14 <L0>
  c2 21                 ldi8	r6, 0x21
- f0 5e 04 01           stm16	[0x104], r6
+ f0 f8 04              stm16	[0x104], r6
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret

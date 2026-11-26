@@ -33,7 +33,7 @@ Disassembly of section .text:
  d7 01                 sys	debug_break
  c0 0c                 ldi8	r4, 0xc
  d5 d1                 call8	fib
- f0 5c 00 01           stm16	[0x100], r4
+ f0 f0 00              stm16	[0x100], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  ef                    ret

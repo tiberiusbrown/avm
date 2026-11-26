@@ -119,7 +119,7 @@ Disassembly of section .text:
  f4 21                 ldsp16	r5, [sp+0x8]
  f0 6b 8c              st32	[r6], q2
  ff 0e                 ftos16
- f0 5c 00 01           stm16	[0x100], r4
+ f0 f0 00              stm16	[0x100], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 0a                 adjsp	0xa

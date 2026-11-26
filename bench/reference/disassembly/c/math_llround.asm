@@ -10,7 +10,7 @@ Disassembly of section .text:
  b0                    push16	r0
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
- f0 06 0d 0f           ldi16	r2, 0xf0d
+ f0 06 0a 0f           ldi16	r2, 0xf0a
  f0 03 00              ldi8	r3, 0x0
  f0 05 04 01           ldi16	r1, 0x104
 <L0>:
@@ -57,16 +57,16 @@ Disassembly of section .text:
  f2 30                 sub	r0, r0
  f0 05 00 5f           ldi16	r1, 0x5f00
  f0 69 c0              cmp32	q3, q0
- dd 9d 00              bruge16	0x9d <L5>
+ dd 9b 00              bruge16	0x9b <L5>
  f0 04 ff ff           ldi16	r0, 0xffff
  f0 05 ff 4e           ldi16	r1, 0x4eff
  f0 69 0c              cmp32	q0, q3
- d2 09                 brult8	0x9 <L0>
+ d2 08                 brult8	0x8 <L0>
  ff 12                 ftos32
  09                    mov	r6, r5
  fa df                 asr16i	r6, 0xf
  0e                    mov	r7, r6
- e0 80 00              jmp16	128 <L4>
+ d4 7f                 jmp8	0x7f <L4>
 <L0>:
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
@@ -81,13 +81,13 @@ Disassembly of section .text:
  f4 50                 stsp16	[sp+0x4], r4
  c2 b5                 ldi8	r6, 0xb5
  38                    cmp	r6, r4
- d2 1e                 brult8	0x1e <L1>
+ d2 1d                 brult8	0x1d <L1>
  c6 6a ff              ldi16	r6, 0xff6a
  f4 10                 ldsp16	r4, [sp+0x4]
  18                    add	r6, r4
  af                    xor	r7, r7
  f2 69                 mov32	q2, q1
- e1 7f 00              call16	__avm_ashlsi3
+ d5 7e                 call8	__avm_ashlsi3
  f2 62                 mov32	q0, q2
  c0 b6                 ldi8	r4, 0xb6
  f4 12                 ldsp16	r6, [sp+0x4]
@@ -95,7 +95,7 @@ Disassembly of section .text:
  08                    mov	r6, r4
  af                    xor	r7, r7
  f2 69                 mov32	q2, q1
- e1 9d 00              call16	__avm_lshrsi3
+ e1 9c 00              call16	__avm_lshrsi3
  f2 66                 mov32	q1, q2
  d4 12                 jmp8	0x12 <L2>
 <L1>:
@@ -105,7 +105,7 @@ Disassembly of section .text:
  08                    mov	r6, r4
  af                    xor	r7, r7
  f2 69                 mov32	q2, q1
- d5 61                 call8	__avm_ashlsi3
+ d5 60                 call8	__avm_ashlsi3
  f2 66                 mov32	q1, q2
  f2 30                 sub	r0, r0
  f2 39                 sub	r1, r1
@@ -153,8 +153,8 @@ Disassembly of section .text:
  f0 69 04              cmp32	q0, q1
  d0 e6                 breq8	-0x1a <L4>
  f0 00 21              ldi8	r0, 0x21
- f0 58 08 01           stm16	[0x108], r0
- d4 dd                 jmp8	-0x23 <L4>
+ f0 e0 08              stm16	[0x108], r0
+ d4 de                 jmp8	-0x22 <L4>
 
 <__avm_ashlsi3>:
  f6 2f                 tst16	r7

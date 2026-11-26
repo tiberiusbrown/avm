@@ -9,7 +9,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  c4 02 01              ldi16	r4, 0x102
- c6 f7 0d              ldi16	r6, 0xdf7
+ c6 f6 0d              ldi16	r6, 0xdf6
  c3 00                 ldi8	r7, 0x0
  c1 40                 ldi8	r5, 0x40
  d7 10                 sys	memcpy_p
@@ -40,7 +40,7 @@ Disassembly of section .text:
  f4 aa                 inc16	r2
  f0 0e 20              cmpi.s8	r2, 0x20
  d1 d3                 brne8	-0x2d <L0>
- f0 5d 00 01           stm16	[0x100], r5
+ f0 f4 00              stm16	[0x100], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

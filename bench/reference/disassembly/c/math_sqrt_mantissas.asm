@@ -183,7 +183,7 @@ Disassembly of section .text:
  d0 f3                 breq8	-0xd <L0>
 <L2>:
  c2 21                 ldi8	r6, 0x21
- f0 5e 84 01           stm16	[0x184], r6
+ f0 f8 84              stm16	[0x184], r6
  ff 16                 fsqrt
  ef                    ret
 

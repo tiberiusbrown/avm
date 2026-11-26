@@ -134,8 +134,8 @@ Disassembly of section .text:
  d1 b1                 brne8	-0x4f <L0>
 <L2>:
  f0 00 21              ldi8	r0, 0x21
- f0 58 08 01           stm16	[0x108], r0
- d4 a8                 jmp8	-0x58 <L0>
+ f0 e0 08              stm16	[0x108], r0
+ d4 a9                 jmp8	-0x57 <L0>
 
 <__avm_umulhisi3>:
  d6 fa                 adjsp	-0x6

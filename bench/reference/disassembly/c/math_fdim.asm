@@ -20,7 +20,7 @@ Disassembly of section .text:
  10                    add	r4, r4
  10                    add	r4, r4
  a5                    xor	r5, r5
- c6 89 0e              ldi16	r6, 0xe89
+ c6 88 0e              ldi16	r6, 0xe88
  c3 00                 ldi8	r7, 0x0
  f7 6b                 add32	q2, q3
  f0 64 88              ldp32	q2, [q2]
@@ -88,10 +88,10 @@ Disassembly of section .text:
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
- d4 0a                 jmp8	avm_fdim_special
+ d4 09                 jmp8	avm_fdim_special
 <L2>:
  c2 22                 ldi8	r6, 0x22
- f0 5e 04 01           stm16	[0x104], r6
+ f0 f8 04              stm16	[0x104], r6
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

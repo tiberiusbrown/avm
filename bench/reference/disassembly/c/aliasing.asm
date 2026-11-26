@@ -25,16 +25,16 @@ Disassembly of section .text:
 <L1>:
  f1 20                 mov	r4, r0
  f1 25                 mov	r5, r1
- d5 1c                 call8	overlap
+ d5 1b                 call8	overlap
  f9 52                 xor	r2, r4
  f1 21                 mov	r4, r1
  f1 24                 mov	r5, r0
- d5 14                 call8	overlap
+ d5 13                 call8	overlap
  f2 14                 add	r2, r4
  f4 b3                 dec16	r3
  f4 a3                 tst8	r3
  d1 ea                 brne8	-0x16 <L1>
- f0 5a 00 01           stm16	[0x100], r2
+ f0 e8 00              stm16	[0x100], r2
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

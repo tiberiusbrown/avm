@@ -26,21 +26,21 @@ Disassembly of section .text:
  c6 10 01              ldi16	r6, 0x110
  f0 6b 8c              st32	[r6], q2
  a5                    xor	r5, r5
- f0 5d 14 01           stm16	[0x114], r5
+ f0 f4 14              stm16	[0x114], r5
  c0 05                 ldi8	r4, 0x5
- f0 5c 16 01           stm16	[0x116], r4
+ f0 f0 16              stm16	[0x116], r4
  c0 0a                 ldi8	r4, 0xa
- f0 5c 18 01           stm16	[0x118], r4
+ f0 f0 18              stm16	[0x118], r4
  c0 0f                 ldi8	r4, 0xf
- f0 5c 1a 01           stm16	[0x11a], r4
+ f0 f0 1a              stm16	[0x11a], r4
  c0 14                 ldi8	r4, 0x14
- f0 5c 1c 01           stm16	[0x11c], r4
+ f0 f0 1c              stm16	[0x11c], r4
  c0 19                 ldi8	r4, 0x19
- f0 5c 1e 01           stm16	[0x11e], r4
+ f0 f0 1e              stm16	[0x11e], r4
  c0 1e                 ldi8	r4, 0x1e
- f0 5c 20 01           stm16	[0x120], r4
+ f0 f0 20              stm16	[0x120], r4
  c0 23                 ldi8	r4, 0x23
- f0 5c 22 01           stm16	[0x122], r4
+ f0 f0 22              stm16	[0x122], r4
  f2 30                 sub	r0, r0
  f2 39                 sub	r1, r1
  c7 14 01              ldi16	r7, 0x114

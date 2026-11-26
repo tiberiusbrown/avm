@@ -10,100 +10,100 @@ Disassembly of section .text:
  b0                    push16	r0
  d6 f4                 adjsp	-0xc
  c4 34 12              ldi16	r4, 0x1234
- f0 5c 14 01           stm16	[0x114], r4
+ f0 f0 14              stm16	[0x114], r4
  c4 d0 8a              ldi16	r4, 0x8ad0
- f0 5c 34 01           stm16	[0x134], r4
+ f0 f0 34              stm16	[0x134], r4
  c0 01                 ldi8	r4, 0x1
- f0 4c 04 01           stm8	[0x104], r4
+ f0 b0 04              stm8	[0x104], r4
  c5 45 13              ldi16	r5, 0x1345
- f0 5d 16 01           stm16	[0x116], r5
+ f0 f4 16              stm16	[0x116], r5
  c5 ab 8d              ldi16	r5, 0x8dab
- f0 5d 36 01           stm16	[0x136], r5
+ f0 f4 36              stm16	[0x136], r5
  c1 02                 ldi8	r5, 0x2
- f0 4d 05 01           stm8	[0x105], r5
+ f0 b4 05              stm8	[0x105], r5
  c5 56 14              ldi16	r5, 0x1456
- f0 5d 18 01           stm16	[0x118], r5
+ f0 f4 18              stm16	[0x118], r5
  c5 86 90              ldi16	r5, 0x9086
- f0 5d 38 01           stm16	[0x138], r5
+ f0 f4 38              stm16	[0x138], r5
  c1 03                 ldi8	r5, 0x3
- f0 4d 06 01           stm8	[0x106], r5
+ f0 b4 06              stm8	[0x106], r5
  c5 67 15              ldi16	r5, 0x1567
- f0 5d 1a 01           stm16	[0x11a], r5
+ f0 f4 1a              stm16	[0x11a], r5
  c5 61 93              ldi16	r5, 0x9361
- f0 5d 3a 01           stm16	[0x13a], r5
+ f0 f4 3a              stm16	[0x13a], r5
  c1 04                 ldi8	r5, 0x4
- f0 4d 07 01           stm8	[0x107], r5
+ f0 b4 07              stm8	[0x107], r5
  c5 78 16              ldi16	r5, 0x1678
- f0 5d 1c 01           stm16	[0x11c], r5
+ f0 f4 1c              stm16	[0x11c], r5
  c5 3c 96              ldi16	r5, 0x963c
- f0 5d 3c 01           stm16	[0x13c], r5
+ f0 f4 3c              stm16	[0x13c], r5
  c1 05                 ldi8	r5, 0x5
- f0 4d 08 01           stm8	[0x108], r5
+ f0 b4 08              stm8	[0x108], r5
  c5 89 17              ldi16	r5, 0x1789
- f0 5d 1e 01           stm16	[0x11e], r5
+ f0 f4 1e              stm16	[0x11e], r5
  c5 17 99              ldi16	r5, 0x9917
- f0 5d 3e 01           stm16	[0x13e], r5
+ f0 f4 3e              stm16	[0x13e], r5
  c1 06                 ldi8	r5, 0x6
- f0 4d 09 01           stm8	[0x109], r5
+ f0 b4 09              stm8	[0x109], r5
  c5 9a 18              ldi16	r5, 0x189a
- f0 5d 20 01           stm16	[0x120], r5
+ f0 f4 20              stm16	[0x120], r5
  c5 f2 9b              ldi16	r5, 0x9bf2
- f0 5d 40 01           stm16	[0x140], r5
+ f0 f4 40              stm16	[0x140], r5
  c1 07                 ldi8	r5, 0x7
- f0 4d 0a 01           stm8	[0x10a], r5
+ f0 b4 0a              stm8	[0x10a], r5
  c5 ab 19              ldi16	r5, 0x19ab
- f0 5d 22 01           stm16	[0x122], r5
+ f0 f4 22              stm16	[0x122], r5
  c5 cd 9e              ldi16	r5, 0x9ecd
- f0 5d 42 01           stm16	[0x142], r5
+ f0 f4 42              stm16	[0x142], r5
  c1 08                 ldi8	r5, 0x8
- f0 4d 0b 01           stm8	[0x10b], r5
+ f0 b4 0b              stm8	[0x10b], r5
  c5 bc 1a              ldi16	r5, 0x1abc
- f0 5d 24 01           stm16	[0x124], r5
+ f0 f4 24              stm16	[0x124], r5
  c5 a8 a1              ldi16	r5, 0xa1a8
- f0 5d 44 01           stm16	[0x144], r5
+ f0 f4 44              stm16	[0x144], r5
  c1 09                 ldi8	r5, 0x9
- f0 4d 0c 01           stm8	[0x10c], r5
+ f0 b4 0c              stm8	[0x10c], r5
  c5 cd 1b              ldi16	r5, 0x1bcd
- f0 5d 26 01           stm16	[0x126], r5
+ f0 f4 26              stm16	[0x126], r5
  c5 83 a4              ldi16	r5, 0xa483
- f0 5d 46 01           stm16	[0x146], r5
+ f0 f4 46              stm16	[0x146], r5
  c1 0a                 ldi8	r5, 0xa
- f0 4d 0d 01           stm8	[0x10d], r5
+ f0 b4 0d              stm8	[0x10d], r5
  c5 de 1c              ldi16	r5, 0x1cde
- f0 5d 28 01           stm16	[0x128], r5
+ f0 f4 28              stm16	[0x128], r5
  c5 5e a7              ldi16	r5, 0xa75e
- f0 5d 48 01           stm16	[0x148], r5
+ f0 f4 48              stm16	[0x148], r5
  c1 0b                 ldi8	r5, 0xb
- f0 4d 0e 01           stm8	[0x10e], r5
+ f0 b4 0e              stm8	[0x10e], r5
  c5 ef 1d              ldi16	r5, 0x1def
- f0 5d 2a 01           stm16	[0x12a], r5
+ f0 f4 2a              stm16	[0x12a], r5
  c5 39 aa              ldi16	r5, 0xaa39
- f0 5d 4a 01           stm16	[0x14a], r5
+ f0 f4 4a              stm16	[0x14a], r5
  c1 0c                 ldi8	r5, 0xc
- f0 4d 0f 01           stm8	[0x10f], r5
+ f0 b4 0f              stm8	[0x10f], r5
  c5 00 1f              ldi16	r5, 0x1f00
- f0 5d 2c 01           stm16	[0x12c], r5
+ f0 f4 2c              stm16	[0x12c], r5
  c5 14 ad              ldi16	r5, 0xad14
- f0 5d 4c 01           stm16	[0x14c], r5
+ f0 f4 4c              stm16	[0x14c], r5
  c1 0d                 ldi8	r5, 0xd
- f0 4d 10 01           stm8	[0x110], r5
+ f0 b4 10              stm8	[0x110], r5
  c5 11 20              ldi16	r5, 0x2011
- f0 5d 2e 01           stm16	[0x12e], r5
+ f0 f4 2e              stm16	[0x12e], r5
  c5 ef af              ldi16	r5, 0xafef
- f0 5d 4e 01           stm16	[0x14e], r5
+ f0 f4 4e              stm16	[0x14e], r5
  c1 0e                 ldi8	r5, 0xe
- f0 4d 11 01           stm8	[0x111], r5
+ f0 b4 11              stm8	[0x111], r5
  c5 22 21              ldi16	r5, 0x2122
- f0 5d 30 01           stm16	[0x130], r5
+ f0 f4 30              stm16	[0x130], r5
  c5 ca b2              ldi16	r5, 0xb2ca
- f0 5d 50 01           stm16	[0x150], r5
+ f0 f4 50              stm16	[0x150], r5
  c1 0f                 ldi8	r5, 0xf
- f0 4d 12 01           stm8	[0x112], r5
+ f0 b4 12              stm8	[0x112], r5
  c5 33 22              ldi16	r5, 0x2233
- f0 5d 32 01           stm16	[0x132], r5
+ f0 f4 32              stm16	[0x132], r5
  c5 a5 b5              ldi16	r5, 0xb5a5
- f0 5d 52 01           stm16	[0x152], r5
- f0 4c 13 01           stm8	[0x113], r4
+ f0 f4 52              stm16	[0x152], r5
+ f0 b0 13              stm8	[0x113], r4
  c4 67 45              ldi16	r4, 0x4567
  c5 23 81              ldi16	r5, 0x8123
  c6 54 01              ldi16	r6, 0x154

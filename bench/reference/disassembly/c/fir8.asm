@@ -23,57 +23,57 @@ Disassembly of section .text:
  f6 2e                 tst16	r6
  d1 f1                 brne8	-0xf <L0>
  c4 02 01              ldi16	r4, 0x102
- c6 0e 0f              ldi16	r6, 0xf0e
+ c6 fd 0e              ldi16	r6, 0xefd
  c3 00                 ldi8	r7, 0x0
  c1 10                 ldi8	r5, 0x10
  d7 10                 sys	memcpy_p
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
- f0 44 11 01           ldm8u	r4, [0x111]
+ f0 90 11              ldm8u	r4, [0x111]
  f6 44                 sext8	r4
  f0 3c 1e              stsp16	[sp+0x1e], r4
- f0 44 10 01           ldm8u	r4, [0x110]
+ f0 90 10              ldm8u	r4, [0x110]
  f6 44                 sext8	r4
  f0 3c 1c              stsp16	[sp+0x1c], r4
- f0 44 0f 01           ldm8u	r4, [0x10f]
+ f0 90 0f              ldm8u	r4, [0x10f]
  f6 44                 sext8	r4
  f0 3c 1a              stsp16	[sp+0x1a], r4
- f0 44 0e 01           ldm8u	r4, [0x10e]
+ f0 90 0e              ldm8u	r4, [0x10e]
  f6 44                 sext8	r4
  f0 3c 18              stsp16	[sp+0x18], r4
- f0 44 0d 01           ldm8u	r4, [0x10d]
+ f0 90 0d              ldm8u	r4, [0x10d]
  f6 44                 sext8	r4
  f0 3c 16              stsp16	[sp+0x16], r4
- f0 44 0c 01           ldm8u	r4, [0x10c]
+ f0 90 0c              ldm8u	r4, [0x10c]
  f6 44                 sext8	r4
  f0 3c 14              stsp16	[sp+0x14], r4
- f0 44 0b 01           ldm8u	r4, [0x10b]
+ f0 90 0b              ldm8u	r4, [0x10b]
  f6 44                 sext8	r4
  f0 3c 12              stsp16	[sp+0x12], r4
- f0 44 0a 01           ldm8u	r4, [0x10a]
+ f0 90 0a              ldm8u	r4, [0x10a]
  f6 44                 sext8	r4
  f0 3c 10              stsp16	[sp+0x10], r4
- f0 44 09 01           ldm8u	r4, [0x109]
+ f0 90 09              ldm8u	r4, [0x109]
  f6 44                 sext8	r4
  f4 78                 stsp16	[sp+0xe], r4
- f0 44 08 01           ldm8u	r4, [0x108]
+ f0 90 08              ldm8u	r4, [0x108]
  f6 44                 sext8	r4
  f4 70                 stsp16	[sp+0xc], r4
- f0 44 07 01           ldm8u	r4, [0x107]
+ f0 90 07              ldm8u	r4, [0x107]
  f6 44                 sext8	r4
  f4 68                 stsp16	[sp+0xa], r4
- f0 44 06 01           ldm8u	r4, [0x106]
+ f0 90 06              ldm8u	r4, [0x106]
  f6 44                 sext8	r4
  f4 60                 stsp16	[sp+0x8], r4
- f0 44 05 01           ldm8u	r4, [0x105]
+ f0 90 05              ldm8u	r4, [0x105]
  f6 44                 sext8	r4
  f4 58                 stsp16	[sp+0x6], r4
- f0 44 04 01           ldm8u	r4, [0x104]
+ f0 90 04              ldm8u	r4, [0x104]
  f6 44                 sext8	r4
  f4 50                 stsp16	[sp+0x4], r4
- f0 44 03 01           ldm8u	r4, [0x103]
+ f0 90 03              ldm8u	r4, [0x103]
  f6 44                 sext8	r4
- f0 45 02 01           ldm8u	r5, [0x102]
+ f0 94 02              ldm8u	r5, [0x102]
  f6 45                 sext8	r5
  f0 05 12 01           ldi16	r1, 0x112
  f0 06 52 01           ldi16	r2, 0x152
@@ -154,7 +154,7 @@ Disassembly of section .text:
  f4 a8                 inc16	r0
  f0 0c 10              cmpi.s8	r0, 0x10
  db 67 ff              brne16	-0x99 <L1>
- f0 5b 00 01           stm16	[0x100], r3
+ f0 ec 00              stm16	[0x100], r3
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 20                 adjsp	0x20

@@ -100,7 +100,7 @@ Disassembly of section .text:
  f4 a8                 inc16	r0
  f5 03                 cmp	r0, r3
  d1 f0                 brne8	-0x10 <L7>
- f0 59 03 01           stm16	[0x103], r1
+ f0 e4 03              stm16	[0x103], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

@@ -7,7 +7,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d7 01                 sys	debug_break
- d5 22                 call8	populate
+ d5 21                 call8	populate
  a5                    xor	r5, r5
  f0 04 02 01           ldi16	r0, 0x102
  f0 01 80              ldi8	r1, 0x80
@@ -23,7 +23,7 @@ Disassembly of section .text:
  f4 ad                 inc16	r5
  f5 25                 cmp	r5, r1
  d1 f3                 brne8	-0xd <L0>
- f0 5e 00 01           stm16	[0x100], r6
+ f0 f8 00              stm16	[0x100], r6
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0
@@ -32,7 +32,7 @@ Disassembly of section .text:
 
 <populate>:
  c4 02 01              ldi16	r4, 0x102
- c6 d9 0d              ldi16	r6, 0xdd9
+ c6 d8 0d              ldi16	r6, 0xdd8
  c3 00                 ldi8	r7, 0x0
  c1 40                 ldi8	r5, 0x40
  d7 10                 sys	memcpy_p

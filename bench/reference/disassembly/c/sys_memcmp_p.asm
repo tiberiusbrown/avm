@@ -11,38 +11,38 @@ Disassembly of section .text:
  d6 fc                 adjsp	-0x4
  f0 04 0a 01           ldi16	r0, 0x10a
  f1 20                 mov	r4, r0
- c6 e2 0e              ldi16	r6, 0xee2
+ c6 db 0e              ldi16	r6, 0xedb
  c3 00                 ldi8	r7, 0x0
  c1 40                 ldi8	r5, 0x40
  d7 10                 sys	memcpy_p
  d7 01                 sys	debug_break
- c6 22 0e              ldi16	r6, 0xe22
+ c6 1b 0e              ldi16	r6, 0xe1b
  c3 00                 ldi8	r7, 0x0
- f0 55 06 01           ldm16	r5, [0x106]
+ f0 d4 06              ldm16	r5, [0x106]
  f1 20                 mov	r4, r0
  d7 13                 sys	memcmp_p
  f4 48                 stsp16	[sp+0x2], r4
- f0 55 00 01           ldm16	r5, [0x100]
+ f0 d4 00              ldm16	r5, [0x100]
  f1 20                 mov	r4, r0
  d7 13                 sys	memcmp_p
  f1 0c                 mov	r1, r4
- f0 55 02 01           ldm16	r5, [0x102]
+ f0 d4 02              ldm16	r5, [0x102]
  f1 20                 mov	r4, r0
  d7 13                 sys	memcmp_p
  f4 40                 stsp16	[sp+0x0], r4
- c6 62 0e              ldi16	r6, 0xe62
+ c6 5b 0e              ldi16	r6, 0xe5b
  c3 00                 ldi8	r7, 0x0
- f0 54 02 01           ldm16	r4, [0x102]
+ f0 d0 02              ldm16	r4, [0x102]
  f1 20                 mov	r4, r0
  d7 13                 sys	memcmp_p
  f1 1c                 mov	r3, r4
- c6 a2 0e              ldi16	r6, 0xea2
+ c6 9b 0e              ldi16	r6, 0xe9b
  c3 00                 ldi8	r7, 0x0
- f0 54 02 01           ldm16	r4, [0x102]
+ f0 d0 02              ldm16	r4, [0x102]
  f1 20                 mov	r4, r0
  d7 13                 sys	memcmp_p
  f1 14                 mov	r2, r4
- f0 55 04 01           ldm16	r5, [0x104]
+ f0 d4 04              ldm16	r5, [0x104]
  f1 20                 mov	r4, r0
  d7 13                 sys	memcmp_p
  f4 09                 ldsp16	r5, [sp+0x2]
@@ -52,7 +52,7 @@ Disassembly of section .text:
  f2 0b                 add	r1, r3
  f2 0a                 add	r1, r2
  f2 0c                 add	r1, r4
- f0 59 08 01           stm16	[0x108], r1
+ f0 e4 08              stm16	[0x108], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 04                 adjsp	0x4

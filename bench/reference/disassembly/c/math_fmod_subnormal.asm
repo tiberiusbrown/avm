@@ -22,7 +22,7 @@ Disassembly of section .text:
  10                    add	r4, r4
  f1 14                 mov	r2, r4
  f1 1f                 mov	r3, r7
- f0 04 c8 0f           ldi16	r0, 0xfc8
+ f0 04 c7 0f           ldi16	r0, 0xfc7
  f0 01 00              ldi8	r1, 0x0
  f7 64                 add32	q1, q0
  f0 68 04              ldp32	q0, [q1+]
@@ -158,8 +158,8 @@ Disassembly of section .text:
  d1 b1                 brne8	-0x4f <L0>
 <L2>:
  f0 00 21              ldi8	r0, 0x21
- f0 58 04 02           stm16	[0x204], r0
- d4 a8                 jmp8	-0x58 <L0>
+ f0 e1 04              stm16	[0x204], r0
+ d4 a9                 jmp8	-0x57 <L0>
 
 <__avm_umulhisi3>:
  d6 fa                 adjsp	-0x6

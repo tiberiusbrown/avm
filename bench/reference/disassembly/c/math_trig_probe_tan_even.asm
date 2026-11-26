@@ -83,7 +83,7 @@ Disassembly of section .text:
  a0                    xor	r4, r4
  c5 80 bf              ldi16	r5, 0xbf80
  f4 a0                 tst8	r0
- d0 15                 breq8	0x15 <L2>
+ d0 14                 breq8	0x14 <L2>
  ff 03                 fdiv
  d6 02                 adjsp	0x2
  b8                    pop16	r0
@@ -95,8 +95,8 @@ Disassembly of section .text:
  f6 2c                 tst16	r4
  d1 bd                 brne8	-0x43 <L0>
  c2 21                 ldi8	r6, 0x21
- f0 5e 28 01           stm16	[0x128], r6
- d4 b5                 jmp8	-0x4b <L0>
+ f0 f8 28              stm16	[0x128], r6
+ d4 b6                 jmp8	-0x4a <L0>
 <L2>:
  02                    mov	r4, r6
  07                    mov	r5, r7

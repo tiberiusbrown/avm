@@ -324,7 +324,7 @@ void test_header(char const* image_path, char const* listing)
 {
     auto image = read_file(image_path);
     require(image.size() >= 256, "image shorter than its header");
-    require(image[4] == 4, "runtimeVersion is not 4");
+    require(image[4] == 5, "runtimeVersion is not 5");
     uint32_t entry = symbol(listing, "__avm_trap_entry", false);
     require(image_u24(image, 0x0c) == entry, "header trapEntry differs from final symbol");
     require(entry >= 0x100, "trap entry address too low");
@@ -340,7 +340,7 @@ void test_header(char const* image_path, char const* listing)
                       uint32_t(image[0xfe]) << 16 | uint32_t(image[0xff]) << 24;
     require(stored == crc32(image.data(), 0xfc), "header CRC32 is wrong");
     symbol(listing, "__avm_trap_report", false);
-    std::cout << "Header: runtimeVersion 4, trapEntry 0x" << std::hex << entry
+    std::cout << "Header: runtimeVersion 5, trapEntry 0x" << std::hex << entry
               << ", crashInfo 0x" << crash << std::dec
               << ", CRC32 and reserved bytes verified.\n";
 }

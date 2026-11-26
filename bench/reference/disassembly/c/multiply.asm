@@ -103,7 +103,7 @@ Disassembly of section .text:
  ce 08                 cmpi.s8	r6, 0x8
  04                    mov	r5, r4
  d1 a5                 brne8	-0x5b <L1>
- f0 5c 80 01           stm16	[0x180], r4
+ f0 f0 80              stm16	[0x180], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 04                 adjsp	0x4

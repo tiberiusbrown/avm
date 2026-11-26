@@ -11,7 +11,7 @@ Disassembly of section .text:
  f0 04 34 12           ldi16	r0, 0x1234
  f2 39                 sub	r1, r1
  d7 01                 sys	debug_break
- f0 42 00 01           ldm8u	r2, [0x100]
+ f0 88 00              ldm8u	r2, [0x100]
  f0 03 07              ldi8	r3, 0x7
 <L0>:
  f1 25                 mov	r5, r1
@@ -20,12 +20,12 @@ Disassembly of section .text:
  21                    sub	r4, r5
  f1 74                 zext8	r4
  f1 24                 mov	r5, r0
- d5 15                 call8	local_buffer
+ d5 14                 call8	local_buffer
  f9 12                 xor	r0, r4
  f4 a9                 inc16	r1
  f0 0d 30              cmpi.s8	r1, 0x30
  d1 ea                 brne8	-0x16 <L0>
- f0 58 01 01           stm16	[0x101], r0
+ f0 e0 01              stm16	[0x101], r0
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

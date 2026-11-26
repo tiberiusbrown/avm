@@ -26,39 +26,39 @@ Disassembly of section .text:
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
  a5                    xor	r5, r5
- f0 4d 03 01           stm8	[0x103], r5
+ f0 b4 03              stm8	[0x103], r5
  c0 25                 ldi8	r4, 0x25
- f0 4c 04 01           stm8	[0x104], r4
+ f0 b0 04              stm8	[0x104], r4
  c0 4a                 ldi8	r4, 0x4a
- f0 4c 05 01           stm8	[0x105], r4
+ f0 b0 05              stm8	[0x105], r4
  c0 6f                 ldi8	r4, 0x6f
- f0 4c 06 01           stm8	[0x106], r4
+ f0 b0 06              stm8	[0x106], r4
  c0 94                 ldi8	r4, 0x94
- f0 4c 07 01           stm8	[0x107], r4
+ f0 b0 07              stm8	[0x107], r4
  c0 b9                 ldi8	r4, 0xb9
- f0 4c 08 01           stm8	[0x108], r4
+ f0 b0 08              stm8	[0x108], r4
  c0 de                 ldi8	r4, 0xde
- f0 4c 09 01           stm8	[0x109], r4
+ f0 b0 09              stm8	[0x109], r4
  c0 03                 ldi8	r4, 0x3
- f0 4c 0a 01           stm8	[0x10a], r4
+ f0 b0 0a              stm8	[0x10a], r4
  c0 28                 ldi8	r4, 0x28
- f0 4c 0b 01           stm8	[0x10b], r4
+ f0 b0 0b              stm8	[0x10b], r4
  c0 4d                 ldi8	r4, 0x4d
- f0 4c 0c 01           stm8	[0x10c], r4
+ f0 b0 0c              stm8	[0x10c], r4
  c0 72                 ldi8	r4, 0x72
- f0 4c 0d 01           stm8	[0x10d], r4
+ f0 b0 0d              stm8	[0x10d], r4
  c0 97                 ldi8	r4, 0x97
- f0 4c 0e 01           stm8	[0x10e], r4
+ f0 b0 0e              stm8	[0x10e], r4
  c0 bc                 ldi8	r4, 0xbc
- f0 4c 0f 01           stm8	[0x10f], r4
+ f0 b0 0f              stm8	[0x10f], r4
  c0 e1                 ldi8	r4, 0xe1
- f0 4c 10 01           stm8	[0x110], r4
+ f0 b0 10              stm8	[0x110], r4
  c0 06                 ldi8	r4, 0x6
- f0 4c 11 01           stm8	[0x111], r4
+ f0 b0 11              stm8	[0x111], r4
  c0 2b                 ldi8	r4, 0x2b
- f0 4c 12 01           stm8	[0x112], r4
+ f0 b0 12              stm8	[0x112], r4
  c0 81                 ldi8	r4, 0x81
- f0 4c 00 01           stm8	[0x100], r4
+ f0 b0 00              stm8	[0x100], r4
  d7 01                 sys	debug_break
  f1 15                 mov	r2, r5
 <L0>:
@@ -73,25 +73,25 @@ Disassembly of section .text:
  f0 00 10              ldi8	r0, 0x10
 <L2>:
  f0 6c 87              ld8u	r4, [r3+]
- f0 45 00 01           ldm8u	r5, [0x100]
+ f0 94 00              ldm8u	r5, [0x100]
  09                    mov	r6, r5
  fa 38                 lsl16i	r4, 0x8
  92                    or	r4, r6
  f1 25                 mov	r5, r1
- e1 5d ff              call16	_Z13consume_coord10ChunkCoord
+ e1 6f ff              call16	_Z13consume_coord10ChunkCoord
  f2 14                 add	r2, r4
  f4 b0                 dec16	r0
  f6 28                 tst16	r0
- d1 e8                 brne8	-0x18 <L2>
+ d1 e9                 brne8	-0x17 <L2>
  f4 08                 ldsp16	r4, [sp+0x2]
  f4 ac                 inc16	r4
  cc 10                 cmpi.s8	r4, 0x10
- d1 d2                 brne8	-0x2e <L1>
+ d1 d3                 brne8	-0x2d <L1>
  f4 01                 ldsp16	r5, [sp+0x0]
  f4 ad                 inc16	r5
  cd 08                 cmpi.s8	r5, 0x8
- d1 c7                 brne8	-0x39 <L0>
- f0 5a 01 01           stm16	[0x101], r2
+ d1 c8                 brne8	-0x38 <L0>
+ f0 e8 01              stm16	[0x101], r2
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 04                 adjsp	0x4

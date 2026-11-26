@@ -7,126 +7,126 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d7 01                 sys	debug_break
- f0 50 00 01           ldm16	r0, [0x100]
+ f0 c0 00              ldm16	r0, [0x100]
  f1 20                 mov	r4, r0
- e1 fd 00              call16	outer
+ e1 fc 00              call16	outer
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  f1 21                 mov	r4, r1
  f4 ac                 inc16	r4
- e1 f2 00              call16	outer
+ e1 f1 00              call16	outer
  f1 04                 mov	r0, r4
  f2 01                 add	r0, r1
  f1 20                 mov	r4, r0
  c8 02                 addi.s8	r4, 0x2
- e1 e7 00              call16	outer
+ e1 e6 00              call16	outer
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  f1 21                 mov	r4, r1
  c8 03                 addi.s8	r4, 0x3
- e1 dc 00              call16	outer
+ e1 db 00              call16	outer
  f1 04                 mov	r0, r4
  f2 01                 add	r0, r1
  f1 20                 mov	r4, r0
  c8 04                 addi.s8	r4, 0x4
- e1 d1 00              call16	outer
+ e1 d0 00              call16	outer
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  f1 21                 mov	r4, r1
  c8 05                 addi.s8	r4, 0x5
- e1 c6 00              call16	outer
+ e1 c5 00              call16	outer
  f1 04                 mov	r0, r4
  f2 01                 add	r0, r1
  f1 20                 mov	r4, r0
  c8 06                 addi.s8	r4, 0x6
- e1 bb 00              call16	outer
+ e1 ba 00              call16	outer
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  f1 21                 mov	r4, r1
  c8 07                 addi.s8	r4, 0x7
- e1 b0 00              call16	outer
+ e1 af 00              call16	outer
  f1 04                 mov	r0, r4
  f2 01                 add	r0, r1
  f1 20                 mov	r4, r0
  c8 08                 addi.s8	r4, 0x8
- e1 a5 00              call16	outer
+ e1 a4 00              call16	outer
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  f1 21                 mov	r4, r1
  c8 09                 addi.s8	r4, 0x9
- e1 9a 00              call16	outer
+ e1 99 00              call16	outer
  f1 04                 mov	r0, r4
  f2 01                 add	r0, r1
  f1 20                 mov	r4, r0
  c8 0a                 addi.s8	r4, 0xa
- e1 8f 00              call16	outer
+ e1 8e 00              call16	outer
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  f1 21                 mov	r4, r1
  c8 0b                 addi.s8	r4, 0xb
- e1 84 00              call16	outer
+ e1 83 00              call16	outer
  f1 04                 mov	r0, r4
  f2 01                 add	r0, r1
  f1 20                 mov	r4, r0
  c8 0c                 addi.s8	r4, 0xc
- d5 7a                 call8	outer
+ d5 79                 call8	outer
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  f1 21                 mov	r4, r1
  c8 0d                 addi.s8	r4, 0xd
- d5 70                 call8	outer
+ d5 6f                 call8	outer
  f1 04                 mov	r0, r4
  f2 01                 add	r0, r1
  f1 20                 mov	r4, r0
  c8 0e                 addi.s8	r4, 0xe
- d5 66                 call8	outer
+ d5 65                 call8	outer
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  f1 21                 mov	r4, r1
  c8 0f                 addi.s8	r4, 0xf
- d5 5c                 call8	outer
+ d5 5b                 call8	outer
  f1 04                 mov	r0, r4
  f2 01                 add	r0, r1
  f1 20                 mov	r4, r0
  c8 10                 addi.s8	r4, 0x10
- d5 52                 call8	outer
+ d5 51                 call8	outer
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  f1 21                 mov	r4, r1
  c8 11                 addi.s8	r4, 0x11
- d5 48                 call8	outer
+ d5 47                 call8	outer
  f1 04                 mov	r0, r4
  f2 01                 add	r0, r1
  f1 20                 mov	r4, r0
  c8 12                 addi.s8	r4, 0x12
- d5 3e                 call8	outer
+ d5 3d                 call8	outer
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  f1 21                 mov	r4, r1
  c8 13                 addi.s8	r4, 0x13
- d5 34                 call8	outer
+ d5 33                 call8	outer
  f1 04                 mov	r0, r4
  f2 01                 add	r0, r1
  f1 20                 mov	r4, r0
  c8 14                 addi.s8	r4, 0x14
- d5 2a                 call8	outer
+ d5 29                 call8	outer
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  f1 21                 mov	r4, r1
  c8 15                 addi.s8	r4, 0x15
- d5 20                 call8	outer
+ d5 1f                 call8	outer
  f1 04                 mov	r0, r4
  f2 01                 add	r0, r1
  f1 20                 mov	r4, r0
  c8 16                 addi.s8	r4, 0x16
- d5 16                 call8	outer
+ d5 15                 call8	outer
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  f1 21                 mov	r4, r1
  c8 17                 addi.s8	r4, 0x17
- d5 0c                 call8	outer
+ d5 0b                 call8	outer
  f2 21                 add	r4, r1
- f0 5c 02 01           stm16	[0x102], r4
+ f0 f0 02              stm16	[0x102], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

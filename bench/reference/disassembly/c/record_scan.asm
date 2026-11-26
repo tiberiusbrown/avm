@@ -103,7 +103,7 @@ Disassembly of section .text:
 <L5>:
  f9 4e                 xor	r2, r3
  f9 52                 xor	r2, r4
- f0 5a 20 02           stm16	[0x220], r2
+ f0 e9 20              stm16	[0x220], r2
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 02                 adjsp	0x2

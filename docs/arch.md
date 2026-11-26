@@ -1009,7 +1009,7 @@ SP = low16(SP + sign_extend8(simm8))
 
 ## 23. `F0` cold-form page
 
-Valid secondary values are `00-6D`. Values `6E-FF` are invalid.
+Valid secondary values are `00-6D` and `80-FF`. Values `6E-7F` are invalid.
 
 ### 23.1. Immediate and stack-relative forms
 
@@ -1040,6 +1040,17 @@ The offset does not modify `SP`.
 | `58-5F` | `STM16 addr16,rN` | 4 | `mem16le[addr16] = rN` |
 
 The low three secondary bits select `rN`.
+
+The three-byte forms use the same mnemonics and preserve `CC` like the
+four-byte forms. The encoding is `F0 1kkrrrpp address_low`. The `kk` field
+selects `LDM8U`, `STM8`, `LDM16`, or `STM16` in that order. The `rrr`
+field selects `r0-r7`. The high address byte is `pp + 1`, giving a starting
+address from `0x0100` through `0x04FF`. A word access increments the full
+16-bit address for its second byte.
+
+The assembler uses the three-byte form for a known address in that range.
+For a symbolic address it emits the four-byte form with
+`R_AVM_RELAX_DATA16` so the linker can choose using the final address.
 
 ### 23.3. Program-space forms
 
@@ -6552,6 +6563,10 @@ Relocation identifiers:
 | `6` | `R_AVM_PCREL16` |
 | `7` | `R_AVM_FAR24` |
 | `8` | `R_AVM_RELAX` |
+| `9` | `R_AVM_32` |
+| `10` | `R_AVM_DEBUG24` |
+| `11` | `R_AVM_PAGED_SRAM` |
+| `12` | `R_AVM_RELAX_DATA16` |
 
 ### 65.1. Relocation calculations
 
@@ -6566,6 +6581,10 @@ Relocation identifiers:
 | `R_AVM_PCREL16` | `S + A - (P + 3)` | Signed 16-bit little-endian operand | `-32768..32767` |
 | `R_AVM_FAR24` | `S + A` | 24-bit little-endian target | `0..0xFFFFFF` |
 | `R_AVM_RELAX` | Marker only | None | — |
+| `R_AVM_32` | `S + A` | 32-bit little-endian | `0..0xFFFFFFFF` |
+| `R_AVM_DEBUG24` | `S + A` | 24-bit little-endian | `0..0xFFFFFF` |
+| `R_AVM_PAGED_SRAM` | `S + A` | Secondary low two bits contain the page minus one, followed by the low address byte | `0x0100..0x04FF` |
+| `R_AVM_RELAX_DATA16` | `S + A` | 16-bit little-endian address at instruction offset two | `0..0xFFFF` |
 
 Every overflow is a link error. Silent truncation is forbidden except for the explicitly extracting `PROG_LO16` and `PROG_HI8` relocations.
 
@@ -6662,6 +6681,15 @@ The exact mnemonics `JMP8`, `JMP16`, `JMPF`, `CALL8`, `CALL16`, `CALLF`, `BREQ8`
 A relocation overflow in an exact form is an error.
 
 Indirect `JMPP` and `CALLP` are not relaxed.
+
+### 66.5. Absolute data-space relaxation
+
+`R_AVM_RELAX_DATA16` sits at the primary opcode of a four-byte `LDM8U`,
+`STM8`, `LDM16`, or `STM16`. When the final data address `S + A` is in
+`0x0100..0x04FF`, the linker replaces the instruction with its three-byte
+form and applies `R_AVM_PAGED_SRAM` at the secondary opcode. Other addresses
+retain the four-byte encoding. Links with `--no-relax` or `--emit-relocs`
+retain the original instruction and relocation field.
 
 ## 67. Linker responsibilities
 
@@ -6767,9 +6795,9 @@ ELF has no usable function or source-line data, and when the packer runs with
 `--no-crash-info`. The interpreter does not cache it. The guest reads it from
 program memory at offset `0x0F` when a fatal trap is reported.
 
-`runtimeVersion` is 4. Version 4 adds `crashInfo` at `0x0F`. The interpreter
-accepts only version 4 images, so images with older header revisions are
-rejected.
+`runtimeVersion` is 5. Version 4 adds `crashInfo` at `0x0F`. Version 5
+adds the three-byte absolute SRAM instructions. The interpreter accepts
+versions 4 and 5.
 
 ### 69.1. Fatal trap dispatch
 
@@ -8271,15 +8299,15 @@ runtimeVersion   complete execution-contract revision
 The fixed-register FF ISA uses:
 
 ```text
-runtimeVersion = 4
+runtimeVersion = 5
 EF_AVM_ABI_V2 = 2
 ```
 
 Version 3 adds the header `trapEntry` field and the fatal-trap contract in
 Section 69.1. Version 4 adds the header `crashInfo` field and the crash metadata
-in Section 69.2, which the packer includes by default. The ELF ABI flag `EF_AVM_ABI_V2`, the image magic, the header size,
-and the tail format are unchanged, because instruction encoding and the ordinary
-calling convention did not change.
+in Section 69.2, which the packer includes by default. Version 5 adds compact
+absolute SRAM encodings without changing the calling convention, ELF ABI flag
+`EF_AVM_ABI_V2`, image magic, header size, or tail format.
 
 `runtimeVersion` covers:
 

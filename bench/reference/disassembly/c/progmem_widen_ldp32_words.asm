@@ -7,21 +7,21 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d7 01                 sys	debug_break
- f0 04 2a 0e           ldi16	r0, 0xe2a
+ f0 04 27 0e           ldi16	r0, 0xe27
  f0 01 00              ldi8	r1, 0x0
  c2 40                 ldi8	r6, 0x40
  f2 68                 mov32	q2, q0
- d5 21                 call8	sum_words
- f0 5c 00 01           stm16	[0x100], r4
+ d5 1e                 call8	sum_words
+ f0 f0 00              stm16	[0x100], r4
  c2 41                 ldi8	r6, 0x41
  f2 68                 mov32	q2, q0
- d5 17                 call8	sum_words
- f0 5c 02 01           stm16	[0x102], r4
- c4 2c 0e              ldi16	r4, 0xe2c
+ d5 15                 call8	sum_words
+ f0 f0 02              stm16	[0x102], r4
+ c4 29 0e              ldi16	r4, 0xe29
  c1 00                 ldi8	r5, 0x0
  c2 3f                 ldi8	r6, 0x3f
- d5 0a                 call8	sum_words
- f0 5c 04 01           stm16	[0x104], r4
+ d5 09                 call8	sum_words
+ f0 f0 04              stm16	[0x104], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

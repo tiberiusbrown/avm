@@ -90,8 +90,8 @@ Disassembly of section .text:
  f6 2c                 tst16	r4
  d1 b1                 brne8	-0x4f <L0>
  c2 21                 ldi8	r6, 0x21
- f0 5e 28 01           stm16	[0x128], r6
- d4 a9                 jmp8	-0x57 <L0>
+ f0 f8 28              stm16	[0x128], r6
+ d4 aa                 jmp8	-0x56 <L0>
 
 <__avm_umulhisi3>:
  d6 fa                 adjsp	-0x6

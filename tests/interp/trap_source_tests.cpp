@@ -183,7 +183,7 @@ std::string c_string(absim::atmega32u4_t const& cpu, unsigned address, unsigned 
 void check_header(std::vector<uint8_t> const& image, bool metadata)
 {
     require(image.size() >= 256, "image shorter than its header");
-    require(image[4] == 4, "runtimeVersion is not 4");
+    require(image[4] == 5, "runtimeVersion is not 5");
     for(unsigned i = 0x12; i < 0xfc; ++i)
         require(image[i] == 0, "reserved header byte is not zero");
     uint32_t stored = uint32_t(image[0xfc]) | uint32_t(image[0xfd]) << 8 |

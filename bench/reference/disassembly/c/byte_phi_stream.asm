@@ -7,32 +7,32 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  f2 30                 sub	r0, r0
- f0 48 02 01           stm8	[0x102], r0
+ f0 a0 02              stm8	[0x102], r0
  c0 25                 ldi8	r4, 0x25
- f0 4c 03 01           stm8	[0x103], r4
+ f0 b0 03              stm8	[0x103], r4
  c0 4a                 ldi8	r4, 0x4a
- f0 4c 04 01           stm8	[0x104], r4
+ f0 b0 04              stm8	[0x104], r4
  c0 6f                 ldi8	r4, 0x6f
- f0 4c 05 01           stm8	[0x105], r4
+ f0 b0 05              stm8	[0x105], r4
  c0 94                 ldi8	r4, 0x94
- f0 4c 06 01           stm8	[0x106], r4
+ f0 b0 06              stm8	[0x106], r4
  c0 b9                 ldi8	r4, 0xb9
- f0 4c 07 01           stm8	[0x107], r4
+ f0 b0 07              stm8	[0x107], r4
  c0 de                 ldi8	r4, 0xde
- f0 4c 08 01           stm8	[0x108], r4
+ f0 b0 08              stm8	[0x108], r4
  c0 03                 ldi8	r4, 0x3
- f0 4c 09 01           stm8	[0x109], r4
+ f0 b0 09              stm8	[0x109], r4
  f0 01 80              ldi8	r1, 0x80
  d7 01                 sys	debug_break
 <L0>:
- d5 16                 call8	scan_ram
+ d5 15                 call8	scan_ram
  f2 04                 add	r0, r4
- d5 2f                 call8	scan_program
+ d5 2e                 call8	scan_program
  f2 04                 add	r0, r4
  f4 b1                 dec16	r1
  f6 29                 tst16	r1
  d1 f2                 brne8	-0xe <L0>
- f0 58 00 01           stm16	[0x100], r0
+ f0 e0 00              stm16	[0x100], r0
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0
@@ -68,7 +68,7 @@ Disassembly of section .text:
  c3 ff                 ldi8	r7, 0xff
  a5                    xor	r5, r5
  c2 07                 ldi8	r6, 0x7
- f0 04 3e 0e           ldi16	r0, 0xe3e
+ f0 04 35 0e           ldi16	r0, 0xe35
  f0 01 00              ldi8	r1, 0x0
  01                    mov	r4, r5
 <L0>:

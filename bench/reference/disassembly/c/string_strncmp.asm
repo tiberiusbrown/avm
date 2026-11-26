@@ -126,7 +126,7 @@ Disassembly of section .text:
  f4 b4                 dec16	r4
  f4 a4                 tst8	r4
  db 0d ff              brne16	-0xf3 <L0>
- f0 5a 00 01           stm16	[0x100], r2
+ f0 e8 00              stm16	[0x100], r2
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 02                 adjsp	0x2

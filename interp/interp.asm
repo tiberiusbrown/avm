@@ -747,7 +747,8 @@
 #define AVM_HEADER_MAGIC1       0x56
 #define AVM_HEADER_MAGIC2       0x4D
 #define AVM_HEADER_MAGIC3       0x01
-#define AVM_RUNTIME_VERSION          0x04
+#define AVM_RUNTIME_VERSION_MIN      0x04
+#define AVM_RUNTIME_VERSION          0x05
 
 ; Fatal trap context at physical SRAM 0x0200 (see runtime/include/avm/trap.h).
 #define AVM_TRAP_CONTEXT_ADDR        0x0200
@@ -2042,7 +2043,12 @@ primary_EF_ret:
 ; final natural slot width. F1-F9, FA, FB-FD, and FE execute implemented
 ; entries. F0 uses one-word veneers; secondaries 00-6D are implemented.
 ; F0 bound 0x6E, one-word veneer slots.
-emit_primary_bounded_page primary_F0_cold_veneer_page, 0x6E, f0_veneer_table, secondary_width_1_stub
+primary_F0_cold_veneer_page:
+    ldi  SECONDARY_MULTIPLIER, 1
+    ldi  r30, lo8(pm(f0_veneer_table))
+    ldi  r31, hi8(pm(f0_veneer_table))
+    rjmp f0_decode
+    assert_primary_slot_width primary_F0_cold_veneer_page
 ; F1 bound 0x90, two-word slots.
 emit_primary_bounded_page primary_F1_dense_2word_page, 0x78, f1_table, bounded_width_2_decode
 ; F2 bound 0x6C, three-word slots.
@@ -2808,14 +2814,6 @@ bounded_width_2_decode_end:
 .endif
 
 bounded_page_decoder_start:
-secondary_width_1_stub:
-    ldi  SECONDARY_MULTIPLIER, 1
-    rjmp bounded_page_decode
-secondary_width_1_stub_end:
-.if (secondary_width_1_stub_end - secondary_width_1_stub) != 4
-    .error "one-word secondary-width stub is not exactly two AVR words"
-.endif
-
 secondary_width_3_stub:
     ldi  SECONDARY_MULTIPLIER, 3
     rjmp bounded_page_decode
@@ -2874,8 +2872,8 @@ secondary_overflow:
     rjmp secondary_overflow_dispatch
 
 bounded_page_decoder_end:
-.if (bounded_page_decoder_end - bounded_page_decoder_start) != 42
-    .error "generic bounded decoder, four width stubs and the overflow landing must occupy 21 AVR words"
+.if (bounded_page_decoder_end - bounded_page_decoder_start) != 38
+    .error "generic bounded decoder, four width stubs and the overflow landing must occupy 19 AVR words"
 .endif
 
 ; F4 decoder. The primary slot reaches it on cycle 14, and the secondary byte
@@ -3099,6 +3097,69 @@ cmov_gate_end:
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Fill the three cycles before the secondary read with the PC carry chain.
+; Existing F0 forms reach bounded_page_valid at cycle 24, as before.
+f0_decode_start:
+f0_decode:
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    in    SECONDARY_OPCODE, SPDR
+    out   SPDR, ZERO
+    cpi   SECONDARY_OPCODE, 0x6e
+    brsh  f0_paged_check
+    nop
+    rjmp  bounded_page_valid
+
+f0_paged_check:
+    sbrs  SECONDARY_OPCODE, 7
+    rjmp  invalid_secondary
+
+; F0 1kkrrrpp addrlo. X names AVM rN, Z names SRAM page pp+1.
+; Decode both pointers and advance VM_PC while addrlo is in flight.
+f0_paged_address:
+    mov   r26, SECONDARY_OPCODE
+    lsr   r26
+    andi  r26, 0x0e
+    subi  r26, -8
+    mov   r27, ZERO
+    mov   r31, SECONDARY_OPCODE
+    andi  r31, 0x03
+    inc   r31
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    in    r30, SPDR
+    out   SPDR, ZERO
+
+
+; Copy Z to X for loads. Swap the pointers for stores.
+f0_paged_direction:
+    sbrs  SECONDARY_OPCODE, 5
+    rjmp  f0_paged_copy
+    movw  r0, r30
+    movw  r30, r26
+    movw  r26, r0
+
+f0_paged_copy:
+    ld    r0, Z+
+    st    X+, r0
+    sbrc  SECONDARY_OPCODE, 6
+    rjmp  f0_paged_high
+    sbrs  SECONDARY_OPCODE, 5
+    st    X, ZERO
+    rjmp  cluster_tail_18_delay_1
+
+f0_paged_high:
+    ld    r0, Z
+    st    X, r0
+    rjmp  cluster_tail_18
+f0_paged_end:
+.if (f0_paged_end - f0_decode_start) != 78
+    .error "F0 decoder and paged SRAM forms must occupy exactly 39 AVR words"
+.endif
+
 ; Post-table migration scaffolding
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
@@ -4408,7 +4469,7 @@ cluster_a_tail_18:
     dispatch
 cluster_a_end:
 .if (cluster_a_end - cluster_a_start) != 42
-    .error "secondary cadence Cluster A must occupy 21 AVR words"
+    .error "secondary cadence Cluster A must occupy 19 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -7727,8 +7788,9 @@ startup_read_header:
 
     ; One coarse compatibility byte covers the ISA, ABI, and runtime services.
     rcall fx_startup_read_byte
-    cpi  r30, AVM_RUNTIME_VERSION
-    brne startup_invalid_image
+    subi r30, AVM_RUNTIME_VERSION_MIN
+    cpi  r30, AVM_RUNTIME_VERSION - AVM_RUNTIME_VERSION_MIN + 1
+    brsh startup_invalid_image
 
     ; entryPoint, packed little-endian 24-bit image-relative address.
     rcall fx_startup_read_byte

@@ -72,7 +72,7 @@ Disassembly of section .text:
  f2 03                 add	r0, r3
  ed 92 22              ld16	r4, [r1+2]
  f1 24                 mov	r5, r0
- e1 e8 0a              call16	__avm_mulhisi3
+ e1 e7 0a              call16	__avm_mulhisi3
  c2 80                 ldi8	r6, 0x80
  af                    xor	r7, r7
  f7 6e                 add32	q3, q2
@@ -97,7 +97,7 @@ Disassembly of section .text:
  c4 ff 7f              ldi16	r4, 0x7fff
  d4 b1                 jmp8	-0x4f <L4>
 <L6>:
- f0 5a 00 02           stm16	[0x200], r2
+ f0 e9 00              stm16	[0x200], r2
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 06                 adjsp	0x6

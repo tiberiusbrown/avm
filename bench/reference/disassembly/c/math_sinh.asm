@@ -10,7 +10,7 @@ Disassembly of section .text:
  b0                    push16	r0
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
- f0 06 9a 0f           ldi16	r2, 0xf9a
+ f0 06 98 0f           ldi16	r2, 0xf98
  f0 03 00              ldi8	r3, 0x0
  f0 05 00 01           ldi16	r1, 0x100
 <L0>:
@@ -81,7 +81,7 @@ Disassembly of section .text:
  c7 0f 41              ldi16	r7, 0x410f
  3e                    cmp	r7, r6
  d2 1a                 brult8	0x1a <L3>
- d5 6b                 call8	__avm_expf_noerrno
+ d5 69                 call8	__avm_expf_noerrno
  08                    mov	r6, r4
  0d                    mov	r7, r5
  a0                    xor	r4, r4
@@ -100,11 +100,11 @@ Disassembly of section .text:
  c6 fd d4              ldi16	r6, 0xd4fd
  c7 b2 42              ldi16	r7, 0x42b2
  f0 69 8c              cmp32	q2, q3
- d8 31                 bruge8	0x31 <L7>
+ d8 30                 bruge8	0x30 <L7>
  c6 18 72              ldi16	r6, 0x7218
  c7 31 bf              ldi16	r7, 0xbf31
  ff 00                 fadd
- d5 3e                 call8	__avm_expf_noerrno
+ d5 3c                 call8	__avm_expf_noerrno
  f9 56                 xor	r2, r5
  08                    mov	r6, r4
  f9 c9                 or	r6, r2
@@ -125,8 +125,8 @@ Disassembly of section .text:
  ef                    ret
 <L6>:
  c0 22                 ldi8	r4, 0x22
- f0 5c 04 01           stm16	[0x104], r4
- e0 73 ff              jmp16	-141 <L0>
+ f0 f0 04              stm16	[0x104], r4
+ e0 74 ff              jmp16	-140 <L0>
 <L7>:
  c4 00 80              ldi16	r4, 0x8000
  f9 84                 and	r4, r1
@@ -135,10 +135,10 @@ Disassembly of section .text:
  31                    cmp	r4, r5
  fb 56                 cmov.ne	r2, r6
  c0 22                 ldi8	r4, 0x22
- f0 5c 04 01           stm16	[0x104], r4
+ f0 f0 04              stm16	[0x104], r4
  f1 26                 mov	r5, r2
  a0                    xor	r4, r4
- d4 db                 jmp8	-0x25 <L5>
+ d4 dd                 jmp8	-0x23 <L5>
 
 <__avm_expf_noerrno>:
  b3                    push16	r3

@@ -52,14 +52,14 @@ Disassembly of section .text:
  d1 d0                 brne8	-0x30 <L1>
 <L2>:
  c4 00 7a              ldi16	r4, 0x7a00
- f0 5c d6 01           stm16	[0x1d6], r4
+ f0 f0 d6              stm16	[0x1d6], r4
  c0 7a                 ldi8	r4, 0x7a
- f0 5c 3f 01           stm16	[0x13f], r4
+ f0 f0 3f              stm16	[0x13f], r4
  f2 30                 sub	r0, r0
- f0 48 17 02           stm8	[0x217], r0
- f0 48 95 01           stm8	[0x195], r0
- f0 48 54 01           stm8	[0x154], r0
- f0 48 41 01           stm8	[0x141], r0
+ f0 a1 17              stm8	[0x217], r0
+ f0 a0 95              stm8	[0x195], r0
+ f0 a0 54              stm8	[0x154], r0
+ f0 a0 41              stm8	[0x141], r0
  d7 01                 sys	debug_break
  c5 41 01              ldi16	r5, 0x141
  01                    mov	r4, r5
@@ -86,7 +86,7 @@ Disassembly of section .text:
  f1 25                 mov	r5, r1
  d7 19                 sys	strcmp
  18                    add	r6, r4
- f0 5e 42 01           stm16	[0x142], r6
+ f0 f8 42              stm16	[0x142], r6
  d7 01                 sys	debug_break
  f1 20                 mov	r4, r0
  b8                    pop16	r0

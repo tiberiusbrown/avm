@@ -20,13 +20,13 @@ Disassembly of section .text:
  f7 54                 st16	[r6+], r4
  59                    st8	[r6], r5
  af                    xor	r7, r7
- f0 4f 0e 02           stm8	[0x20e], r7
+ f0 bd 0e              stm8	[0x20e], r7
  f0 05 0f 02           ldi16	r1, 0x20f
  f1 21                 mov	r4, r1
  c1 64                 ldi8	r5, 0x64
  c2 20                 ldi8	r6, 0x20
  d7 11                 sys	memset
- f0 4f 2f 02           stm8	[0x22f], r7
+ f0 bd 2f              stm8	[0x22f], r7
  c4 00 01              ldi16	r4, 0x100
  c5 00 01              ldi16	r5, 0x100
  c2 65                 ldi8	r6, 0x65
@@ -35,7 +35,7 @@ Disassembly of section .text:
  f4 b4                 dec16	r4
  f6 2c                 tst16	r4
  d1 f8                 brne8	-0x8 <L0>
- f0 4f 00 02           stm8	[0x200], r7
+ f0 bd 00              stm8	[0x200], r7
  d7 01                 sys	debug_break
  f1 22                 mov	r4, r2
  d7 1a                 sys	strlen
@@ -52,7 +52,7 @@ Disassembly of section .text:
  c4 00 01              ldi16	r4, 0x100
  d7 1a                 sys	strlen
  14                    add	r5, r4
- f0 5d 04 02           stm16	[0x204], r5
+ f0 f5 04              stm16	[0x204], r5
  d7 01                 sys	debug_break
  03                    mov	r4, r7
  b8                    pop16	r0

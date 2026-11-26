@@ -9,50 +9,50 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  c4 12 01              ldi16	r4, 0x112
- f0 5c 02 01           stm16	[0x102], r4
- c6 79 0e              ldi16	r6, 0xe79
+ f0 f0 02              stm16	[0x102], r4
+ c6 70 0e              ldi16	r6, 0xe70
  c3 00                 ldi8	r7, 0x0
  c1 18                 ldi8	r5, 0x18
  d7 10                 sys	memcpy_p
  f0 05 5a 01           ldi16	r1, 0x15a
- f0 59 04 01           stm16	[0x104], r1
+ f0 e4 04              stm16	[0x104], r1
  f0 06 2a 01           ldi16	r2, 0x12a
  f1 22                 mov	r4, r2
- c6 91 0e              ldi16	r6, 0xe91
+ c6 88 0e              ldi16	r6, 0xe88
  c3 00                 ldi8	r7, 0x0
  d7 10                 sys	memcpy_p
  f0 04 a2 01           ldi16	r0, 0x1a2
- f0 58 06 01           stm16	[0x106], r0
+ f0 e0 06              stm16	[0x106], r0
  f0 07 42 01           ldi16	r3, 0x142
  f1 23                 mov	r4, r3
- c6 a9 0e              ldi16	r6, 0xea9
+ c6 a0 0e              ldi16	r6, 0xea0
  c3 00                 ldi8	r7, 0x0
  d7 10                 sys	memcpy_p
- f0 5a 08 01           stm16	[0x108], r2
+ f0 e8 08              stm16	[0x108], r2
  f1 21                 mov	r4, r1
- c6 c1 0e              ldi16	r6, 0xec1
+ c6 b8 0e              ldi16	r6, 0xeb8
  c3 00                 ldi8	r7, 0x0
  d7 10                 sys	memcpy_p
  c4 72 01              ldi16	r4, 0x172
- f0 5c 0a 01           stm16	[0x10a], r4
- c6 d9 0e              ldi16	r6, 0xed9
+ f0 f0 0a              stm16	[0x10a], r4
+ c6 d0 0e              ldi16	r6, 0xed0
  c3 00                 ldi8	r7, 0x0
  d7 10                 sys	memcpy_p
  f0 05 ba 01           ldi16	r1, 0x1ba
- f0 59 0c 01           stm16	[0x10c], r1
+ f0 e4 0c              stm16	[0x10c], r1
  f0 06 8a 01           ldi16	r2, 0x18a
  f1 22                 mov	r4, r2
- c6 f1 0e              ldi16	r6, 0xef1
+ c6 e8 0e              ldi16	r6, 0xee8
  c3 00                 ldi8	r7, 0x0
  d7 10                 sys	memcpy_p
- f0 5b 0e 01           stm16	[0x10e], r3
+ f0 ec 0e              stm16	[0x10e], r3
  f1 20                 mov	r4, r0
- c6 09 0f              ldi16	r6, 0xf09
+ c6 00 0f              ldi16	r6, 0xf00
  c3 00                 ldi8	r7, 0x0
  d7 10                 sys	memcpy_p
- f0 5a 10 01           stm16	[0x110], r2
+ f0 e8 10              stm16	[0x110], r2
  f1 21                 mov	r4, r1
- c6 21 0f              ldi16	r6, 0xf21
+ c6 18 0f              ldi16	r6, 0xf18
  c3 00                 ldi8	r7, 0x0
  d7 10                 sys	memcpy_p
  aa                    xor	r6, r6
@@ -88,7 +88,7 @@ Disassembly of section .text:
  f4 aa                 inc16	r2
  f0 0e 20              cmpi.s8	r2, 0x20
  d1 ca                 brne8	-0x36 <L0>
- f0 5e 00 01           stm16	[0x100], r6
+ f0 f8 00              stm16	[0x100], r6
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

@@ -130,16 +130,16 @@ Disassembly of section .text:
  f0 04 ff ff           ldi16	r0, 0xffff
  f0 05 ff ff           ldi16	r1, 0xffff
  f0 69 08              cmp32	q0, q2
- d9 10                 brsge8	0x10 <L6>
+ d9 0f                 brsge8	0xf <L6>
  08                    mov	r6, r4
  0d                    mov	r7, r5
  d4 d5                 jmp8	-0x2b <L2>
 <L5>:
  c0 22                 ldi8	r4, 0x22
- f0 5c 08 01           stm16	[0x108], r4
+ f0 f0 08              stm16	[0x108], r4
  a0                    xor	r4, r4
  c5 80 ff              ldi16	r5, 0xff80
- d4 cb                 jmp8	-0x35 <L3>
+ d4 cc                 jmp8	-0x34 <L3>
 <L6>:
  f2 30                 sub	r0, r0
  f0 05 80 7f           ldi16	r1, 0x7f80
@@ -148,14 +148,14 @@ Disassembly of section .text:
  c6 c0 7f              ldi16	r6, 0x7fc0
  99                    or	r6, r5
  06                    mov	r5, r6
- d4 b9                 jmp8	-0x47 <L3>
+ d4 ba                 jmp8	-0x46 <L3>
 <L7>:
  c2 21                 ldi8	r6, 0x21
- f0 5e 08 01           stm16	[0x108], r6
+ f0 f8 08              stm16	[0x108], r6
  c6 c0 7f              ldi16	r6, 0x7fc0
  99                    or	r6, r5
  06                    mov	r5, r6
- d4 ac                 jmp8	-0x54 <L3>
+ d4 ae                 jmp8	-0x52 <L3>
 
 <memset>:
  0c                    mov	r7, r4

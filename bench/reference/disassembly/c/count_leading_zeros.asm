@@ -7,175 +7,175 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  c4 01 80              ldi16	r4, 0x8001
- f0 5c 02 01           stm16	[0x102], r4
+ f0 f0 02              stm16	[0x102], r4
  c4 0c 89              ldi16	r4, 0x890c
- f0 5c 04 01           stm16	[0x104], r4
+ f0 f0 04              stm16	[0x104], r4
  c4 1b 92              ldi16	r4, 0x921b
- f0 5c 06 01           stm16	[0x106], r4
+ f0 f0 06              stm16	[0x106], r4
  c4 26 9b              ldi16	r4, 0x9b26
- f0 5c 08 01           stm16	[0x108], r4
+ f0 f0 08              stm16	[0x108], r4
  c4 35 a4              ldi16	r4, 0xa435
- f0 5c 0a 01           stm16	[0x10a], r4
+ f0 f0 0a              stm16	[0x10a], r4
  c4 40 ad              ldi16	r4, 0xad40
- f0 5c 0c 01           stm16	[0x10c], r4
+ f0 f0 0c              stm16	[0x10c], r4
  c4 4f b6              ldi16	r4, 0xb64f
- f0 5c 0e 01           stm16	[0x10e], r4
+ f0 f0 0e              stm16	[0x10e], r4
  c4 5a bf              ldi16	r4, 0xbf5a
- f0 5c 10 01           stm16	[0x110], r4
+ f0 f0 10              stm16	[0x110], r4
  c4 69 c8              ldi16	r4, 0xc869
- f0 5c 12 01           stm16	[0x112], r4
+ f0 f0 12              stm16	[0x112], r4
  c4 74 d1              ldi16	r4, 0xd174
- f0 5c 14 01           stm16	[0x114], r4
+ f0 f0 14              stm16	[0x114], r4
  c4 83 da              ldi16	r4, 0xda83
- f0 5c 16 01           stm16	[0x116], r4
+ f0 f0 16              stm16	[0x116], r4
  c4 8e e3              ldi16	r4, 0xe38e
- f0 5c 18 01           stm16	[0x118], r4
+ f0 f0 18              stm16	[0x118], r4
  c4 9d ec              ldi16	r4, 0xec9d
- f0 5c 1a 01           stm16	[0x11a], r4
+ f0 f0 1a              stm16	[0x11a], r4
  c4 a8 f5              ldi16	r4, 0xf5a8
- f0 5c 1c 01           stm16	[0x11c], r4
+ f0 f0 1c              stm16	[0x11c], r4
  c4 b7 fe              ldi16	r4, 0xfeb7
- f0 5c 1e 01           stm16	[0x11e], r4
+ f0 f0 1e              stm16	[0x11e], r4
  c4 c2 07              ldi16	r4, 0x7c2
- f0 5c 20 01           stm16	[0x120], r4
+ f0 f0 20              stm16	[0x120], r4
  c4 d1 10              ldi16	r4, 0x10d1
- f0 5c 22 01           stm16	[0x122], r4
+ f0 f0 22              stm16	[0x122], r4
  c4 dc 19              ldi16	r4, 0x19dc
- f0 5c 24 01           stm16	[0x124], r4
+ f0 f0 24              stm16	[0x124], r4
  c4 eb 22              ldi16	r4, 0x22eb
- f0 5c 26 01           stm16	[0x126], r4
+ f0 f0 26              stm16	[0x126], r4
  c4 f6 2b              ldi16	r4, 0x2bf6
- f0 5c 28 01           stm16	[0x128], r4
+ f0 f0 28              stm16	[0x128], r4
  c4 05 35              ldi16	r4, 0x3505
- f0 5c 2a 01           stm16	[0x12a], r4
+ f0 f0 2a              stm16	[0x12a], r4
  c4 10 3e              ldi16	r4, 0x3e10
- f0 5c 2c 01           stm16	[0x12c], r4
+ f0 f0 2c              stm16	[0x12c], r4
  c4 1f 47              ldi16	r4, 0x471f
- f0 5c 2e 01           stm16	[0x12e], r4
+ f0 f0 2e              stm16	[0x12e], r4
  c4 2a 50              ldi16	r4, 0x502a
- f0 5c 30 01           stm16	[0x130], r4
+ f0 f0 30              stm16	[0x130], r4
  aa                    xor	r6, r6
  f0 00 14              ldi8	r0, 0x14
  d7 01                 sys	debug_break
  c3 01                 ldi8	r7, 0x1
  f0 05 50 0d           ldi16	r1, 0xd50
 <L0>:
- f0 54 02 01           ldm16	r4, [0x102]
+ f0 d0 02              ldm16	r4, [0x102]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 04 01           ldm16	r4, [0x104]
+ f0 d0 04              ldm16	r4, [0x104]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 06 01           ldm16	r4, [0x106]
+ f0 d0 06              ldm16	r4, [0x106]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 08 01           ldm16	r4, [0x108]
+ f0 d0 08              ldm16	r4, [0x108]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 0a 01           ldm16	r4, [0x10a]
+ f0 d0 0a              ldm16	r4, [0x10a]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 0c 01           ldm16	r4, [0x10c]
+ f0 d0 0c              ldm16	r4, [0x10c]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 0e 01           ldm16	r4, [0x10e]
+ f0 d0 0e              ldm16	r4, [0x10e]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 10 01           ldm16	r4, [0x110]
+ f0 d0 10              ldm16	r4, [0x110]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 12 01           ldm16	r4, [0x112]
+ f0 d0 12              ldm16	r4, [0x112]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 14 01           ldm16	r4, [0x114]
+ f0 d0 14              ldm16	r4, [0x114]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 16 01           ldm16	r4, [0x116]
+ f0 d0 16              ldm16	r4, [0x116]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 18 01           ldm16	r4, [0x118]
+ f0 d0 18              ldm16	r4, [0x118]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 1a 01           ldm16	r4, [0x11a]
+ f0 d0 1a              ldm16	r4, [0x11a]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 1c 01           ldm16	r4, [0x11c]
+ f0 d0 1c              ldm16	r4, [0x11c]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 1e 01           ldm16	r4, [0x11e]
+ f0 d0 1e              ldm16	r4, [0x11e]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 20 01           ldm16	r4, [0x120]
+ f0 d0 20              ldm16	r4, [0x120]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 22 01           ldm16	r4, [0x122]
+ f0 d0 22              ldm16	r4, [0x122]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 24 01           ldm16	r4, [0x124]
+ f0 d0 24              ldm16	r4, [0x124]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 26 01           ldm16	r4, [0x126]
+ f0 d0 26              ldm16	r4, [0x126]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 28 01           ldm16	r4, [0x128]
+ f0 d0 28              ldm16	r4, [0x128]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 2a 01           ldm16	r4, [0x12a]
+ f0 d0 2a              ldm16	r4, [0x12a]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 2c 01           ldm16	r4, [0x12c]
+ f0 d0 2c              ldm16	r4, [0x12c]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 2e 01           ldm16	r4, [0x12e]
+ f0 d0 2e              ldm16	r4, [0x12e]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
  29                    sub	r6, r5
- f0 54 30 01           ldm16	r4, [0x130]
+ f0 d0 30              ldm16	r4, [0x130]
  93                    or	r4, r7
  ff 0d                 u16tof
  fa 87                 lsr16i	r5, 0x7
@@ -183,8 +183,8 @@ Disassembly of section .text:
  f2 29                 add	r6, r1
  f4 b0                 dec16	r0
  f4 a0                 tst8	r0
- db 07 ff              brne16	-0xf9 <L0>
- f0 5e 00 01           stm16	[0x100], r6
+ db 1f ff              brne16	-0xe1 <L0>
+ f0 f8 00              stm16	[0x100], r6
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

@@ -37,7 +37,7 @@ Disassembly of section .text:
  f4 af                 inc16	r7
  cf 10                 cmpi.s8	r7, 0x10
  d1 d0                 brne8	-0x30 <L0>
- f0 5c 03 01           stm16	[0x103], r4
+ f0 f0 03              stm16	[0x103], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 02                 adjsp	0x2

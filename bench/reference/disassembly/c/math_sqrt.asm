@@ -10,7 +10,7 @@ Disassembly of section .text:
  b0                    push16	r0
  a0                    xor	r4, r4
  c5 04 01              ldi16	r5, 0x104
- f0 04 31 0e           ldi16	r0, 0xe31
+ f0 04 30 0e           ldi16	r0, 0xe30
  f0 01 00              ldi8	r1, 0x0
 <L0>:
  08                    mov	r6, r4
@@ -91,7 +91,7 @@ Disassembly of section .text:
  d0 f3                 breq8	-0xd <L0>
 <L2>:
  c2 21                 ldi8	r6, 0x21
- f0 5e 84 01           stm16	[0x184], r6
+ f0 f8 84              stm16	[0x184], r6
  ff 16                 fsqrt
  ef                    ret
 

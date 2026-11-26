@@ -213,8 +213,8 @@ Disassembly of section .text:
  f6 2c                 tst16	r4
  db 7c ff              brne16	-0x84 <L0>
  c2 21                 ldi8	r6, 0x21
- f0 5e 80 02           stm16	[0x280], r6
- e0 73 ff              jmp16	-141 <L0>
+ f0 f9 80              stm16	[0x280], r6
+ e0 74 ff              jmp16	-140 <L0>
 
 <__avm_umulhisi3>:
  d6 fa                 adjsp	-0x6

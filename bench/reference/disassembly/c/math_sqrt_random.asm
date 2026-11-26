@@ -23,7 +23,7 @@ Disassembly of section .text:
  f0 03 7f              ldi8	r3, 0x7f
 <L0>:
  f2 6a                 mov32	q3, q0
- e1 80 0b              call16	__avm_mulsi3
+ e1 7f 0b              call16	__avm_mulsi3
  08                    mov	r6, r4
  0d                    mov	r7, r5
  c4 5f f3              ldi16	r4, 0xf35f
@@ -113,7 +113,7 @@ Disassembly of section .text:
  d0 f3                 breq8	-0xd <L0>
 <L2>:
  c2 21                 ldi8	r6, 0x21
- f0 5e fc 04           stm16	[0x4fc], r6
+ f0 fb fc              stm16	[0x4fc], r6
  ff 16                 fsqrt
  ef                    ret
 

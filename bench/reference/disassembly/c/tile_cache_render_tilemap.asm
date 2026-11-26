@@ -33,14 +33,14 @@ Disassembly of section .text:
 <L1>:
  f4 40                 stsp16	[sp+0x0], r4
  fa 72                 lsr16i	r4, 0x2
- f0 5c 02 01           stm16	[0x102], r4
+ f0 f0 02              stm16	[0x102], r4
  f4 00                 ldsp16	r4, [sp+0x0]
- f0 5c 00 01           stm16	[0x100], r4
+ f0 f0 00              stm16	[0x100], r4
  d5 11                 call8	render_tile_cache
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 ac                 inc16	r4
  cc 40                 cmpi.s8	r4, 0x40
- d1 e8                 brne8	-0x18 <L1>
+ d1 ea                 brne8	-0x16 <L1>
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 02                 adjsp	0x2
@@ -52,9 +52,9 @@ Disassembly of section .text:
 <render_tile_cache>:
  b2                    push16	r2
  b0                    push16	r0
- f0 56 02 01           ldm16	r6, [0x102]
- f0 57 00 01           ldm16	r7, [0x100]
- c4 24 0e              ldi16	r4, 0xe24
+ f0 d8 02              ldm16	r6, [0x102]
+ f0 dc 00              ldm16	r7, [0x100]
+ c4 20 0e              ldi16	r4, 0xe20
  c1 00                 ldi8	r5, 0x0
  d7 22                 sys	set_sprite
  c0 0f                 ldi8	r4, 0xf

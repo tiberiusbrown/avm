@@ -5,11 +5,11 @@ Disassembly of section .text:
 
 <avm_test_main>:
  d7 01                 sys	debug_break
- c4 c9 0f              ldi16	r4, 0xfc9
+ c4 c7 0f              ldi16	r4, 0xfc7
  c1 00                 ldi8	r5, 0x0
  d7 22                 sys	set_sprite
- f0 55 02 01           ldm16	r5, [0x102]
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d4 02              ldm16	r5, [0x102]
+ f0 d0 00              ldm16	r4, [0x100]
  af                    xor	r7, r7
  aa                    xor	r6, r6
  d7 23                 sys	draw_overwrite

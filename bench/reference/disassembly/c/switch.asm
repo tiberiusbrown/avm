@@ -17,18 +17,18 @@ Disassembly of section .text:
 <L0>:
  f1 21                 mov	r4, r1
  f9 88                 and	r4, r2
- d5 1f                 call8	dense_dispatch
+ d5 1e                 call8	dense_dispatch
  04                    mov	r5, r4
  f1 23                 mov	r4, r3
  f1 74                 zext8	r4
- d5 5a                 call8	sparse_dispatch
+ d5 59                 call8	sparse_dispatch
  04                    mov	r5, r4
  f4 a9                 inc16	r1
  f0 0b 25              addi.s8	r3, 0x25
  f4 b0                 dec16	r0
  f6 28                 tst16	r0
  d1 e7                 brne8	-0x19 <L0>
- f0 5d 00 01           stm16	[0x100], r5
+ f0 f4 00              stm16	[0x100], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

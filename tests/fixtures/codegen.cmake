@@ -52,6 +52,7 @@ avm_fixture(codegen/c/late_cleanup.c KIND C SUITE core OPT_LEVELS ALL EXPECT_PAS
 avm_fixture(codegen/c/loop_record_stride.c KIND C SUITE core OPT_LEVELS ALL EXPECTED codegen/c/loop_record_stride_output.txt)
 avm_fixture(codegen/c/mul_i32_constant.c KIND C SUITE core OPT_LEVELS ALL EXPECTED codegen/c/mul_i32_constant_output.txt)
 avm_fixture(codegen/c/mul_i32_narrow.c KIND C SUITE core OPT_LEVELS ALL EXPECTED codegen/c/mul_i32_narrow_output.txt)
+avm_fixture(codegen/c/paged_sram.c KIND C SUITE core OPT_LEVELS ALL EXPECTED codegen/c/paged_sram_output.txt)
 avm_fixture(codegen/c/preserve_none.c KIND C SUITE core OPT_LEVELS ALL EXPECT_PASS)
 avm_fixture(codegen/c/progmem_address_hoisting.c KIND C SUITE core OPT_LEVELS ALL LINK_OPTIONS --image-base=0x100 --section-start=.data=0x100 --section-start=.flash=0x0B00 --section-start=.text=0x600 --section-start=.rodata=0x10000 --section-start=.high_program_bytes=0x1FFFC EXPECT_PASS)
 avm_fixture(codegen/c/progmem_widen.c KIND C SUITE core OPT_LEVELS ALL EXPECTED codegen/c/progmem_widen_output.txt)

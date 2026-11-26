@@ -820,8 +820,20 @@ The cold stack-relative values include the shared operand fetch, dynamic registe
 |---|---|---:|---:|
 | `40-47` | `LDM8U rN,addr16` | 4 | 72 |
 | `48-4F` | `STM8 addr16,rN` | 4 | 72 |
-| `50-57` | `LDM16 rN,addr16` | 4 | 72 |
+| `50-57` | `LDM16 rN,addr16` | 4 | 73 |
 | `58-5F` | `STM16 addr16,rN` | 4 | 72 |
+| `80-9F` | `LDM8U rN,addr16` (paged SRAM) | 3 | 54 |
+| `A0-BF` | `STM8 addr16,rN` (paged SRAM) | 3 | 55 |
+| `C0-DF` | `LDM16 rN,addr16` (paged SRAM) | 3 | 55 |
+| `E0-FF` | `STM16 addr16,rN` (paged SRAM) | 3 | 57 |
+
+The dedicated F0 decoder advances the guest PC before reading the secondary
+at cycle 17. It routes secondaries `00-6D` to the existing veneer dispatch
+at cycle 24. For the paged forms it decodes the page and register while
+the low address byte is in flight, reads that byte at cycle 35, and starts
+the following opcode at cycle 36. A shared byte-copy path swaps the SRAM and
+register-file pointers for stores. Loads and stores in this range never enter
+the AS0 flash-window reader. [Encoding](arch.md#232-absolute-data-space-forms)
 
 ### 9.3. Program-space forms
 

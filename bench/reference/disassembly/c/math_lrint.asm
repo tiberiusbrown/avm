@@ -10,7 +10,7 @@ Disassembly of section .text:
  b0                    push16	r0
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
- f0 06 4b 0e           ldi16	r2, 0xe4b
+ f0 06 4a 0e           ldi16	r2, 0xe4a
  f0 03 00              ldi8	r3, 0x0
  f0 05 00 01           ldi16	r1, 0x100
 <L0>:
@@ -103,8 +103,8 @@ Disassembly of section .text:
  f0 69 c0              cmp32	q3, q0
  d0 ec                 breq8	-0x14 <L2>
  c2 21                 ldi8	r6, 0x21
- f0 5e 04 01           stm16	[0x104], r6
- d4 e4                 jmp8	-0x1c <L2>
+ f0 f8 04              stm16	[0x104], r6
+ d4 e5                 jmp8	-0x1b <L2>
 
 <__avm_umulhisi3>:
  d6 fa                 adjsp	-0x6

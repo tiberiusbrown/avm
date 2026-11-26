@@ -226,7 +226,7 @@ Disassembly of section .text:
  f4 ad                 inc16	r5
  cd 20                 cmpi.s8	r5, 0x20
  db 2b ff              brne16	-0xd5 <L0>
- f0 5e 00 01           stm16	[0x100], r6
+ f0 f8 00              stm16	[0x100], r6
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 16                 adjsp	0x16

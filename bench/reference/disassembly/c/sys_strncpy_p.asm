@@ -8,43 +8,43 @@ Disassembly of section .text:
  b2                    push16	r2
  b0                    push16	r0
  d7 01                 sys	debug_break
- c6 1b 0e              ldi16	r6, 0xe1b
+ c6 10 0e              ldi16	r6, 0xe10
  c3 00                 ldi8	r7, 0x0
  c4 06 01              ldi16	r4, 0x106
- f0 55 07 01           ldm16	r5, [0x107]
+ f0 d4 07              ldm16	r5, [0x107]
  d7 16                 sys	strncpy_p
  c4 09 01              ldi16	r4, 0x109
- f0 55 00 01           ldm16	r5, [0x100]
+ f0 d4 00              ldm16	r5, [0x100]
  d7 16                 sys	strncpy_p
- f0 06 3c 0e           ldi16	r2, 0xe3c
+ f0 06 31 0e           ldi16	r2, 0xe31
  f0 03 00              ldi8	r3, 0x0
  c4 0d 01              ldi16	r4, 0x10d
- f0 55 02 01           ldm16	r5, [0x102]
+ f0 d4 02              ldm16	r5, [0x102]
  f2 6b                 mov32	q3, q1
  d7 16                 sys	strncpy_p
- c6 40 0e              ldi16	r6, 0xe40
+ c6 35 0e              ldi16	r6, 0xe35
  c3 00                 ldi8	r7, 0x0
  c4 15 01              ldi16	r4, 0x115
- f0 50 02 01           ldm16	r0, [0x102]
+ f0 c0 02              ldm16	r0, [0x102]
  d7 16                 sys	strncpy_p
  c4 1d 01              ldi16	r4, 0x11d
- f0 56 02 01           ldm16	r6, [0x102]
- c6 1b 0e              ldi16	r6, 0xe1b
+ f0 d8 02              ldm16	r6, [0x102]
+ c6 10 0e              ldi16	r6, 0xe10
  c3 00                 ldi8	r7, 0x0
  d7 16                 sys	strncpy_p
  c4 25 01              ldi16	r4, 0x125
- f0 55 04 01           ldm16	r5, [0x104]
+ f0 d4 04              ldm16	r5, [0x104]
  f2 6b                 mov32	q3, q1
  d7 16                 sys	strncpy_p
- f0 44 14 01           ldm8u	r4, [0x114]
- f0 45 09 01           ldm8u	r5, [0x109]
+ f0 90 14              ldm8u	r4, [0x114]
+ f0 94 09              ldm8u	r5, [0x109]
  14                    add	r5, r4
- f0 44 24 01           ldm8u	r4, [0x124]
+ f0 90 24              ldm8u	r4, [0x124]
  11                    add	r4, r5
- f0 45 44 01           ldm8u	r5, [0x144]
+ f0 94 44              ldm8u	r5, [0x144]
  14                    add	r5, r4
  c9 06                 addi.s8	r5, 0x6
- f0 5d 0b 01           stm16	[0x10b], r5
+ f0 f4 0b              stm16	[0x10b], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

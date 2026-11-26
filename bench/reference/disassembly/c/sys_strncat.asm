@@ -8,37 +8,37 @@ Disassembly of section .text:
  d7 01                 sys	debug_break
  f0 04 04 01           ldi16	r0, 0x104
  c4 08 01              ldi16	r4, 0x108
- f0 56 9a 01           ldm16	r6, [0x19a]
+ f0 d8 9a              ldm16	r6, [0x19a]
  f1 24                 mov	r5, r0
  d7 1c                 sys	strncat
  c5 99 01              ldi16	r5, 0x199
  c4 9e 01              ldi16	r4, 0x19e
- f0 56 00 01           ldm16	r6, [0x100]
+ f0 d8 00              ldm16	r6, [0x100]
  d7 1c                 sys	strncat
  c4 a6 01              ldi16	r4, 0x1a6
- f0 55 00 01           ldm16	r5, [0x100]
+ f0 d4 00              ldm16	r5, [0x100]
  f1 24                 mov	r5, r0
  d7 1c                 sys	strncat
  c4 18 01              ldi16	r4, 0x118
- f0 57 00 01           ldm16	r7, [0x100]
+ f0 dc 00              ldm16	r7, [0x100]
  d7 1c                 sys	strncat
  c5 48 01              ldi16	r5, 0x148
  c4 30 01              ldi16	r4, 0x130
- f0 56 02 01           ldm16	r6, [0x102]
+ f0 d8 02              ldm16	r6, [0x102]
  d7 1c                 sys	strncat
  c4 69 01              ldi16	r4, 0x169
- f0 56 00 01           ldm16	r6, [0x100]
+ f0 d8 00              ldm16	r6, [0x100]
  f1 24                 mov	r5, r0
  d7 1c                 sys	strncat
- f0 44 22 01           ldm8u	r4, [0x122]
- f0 45 a8 01           ldm8u	r5, [0x1a8]
+ f0 90 22              ldm8u	r4, [0x122]
+ f0 94 a8              ldm8u	r5, [0x1a8]
  14                    add	r5, r4
- f0 44 3b 01           ldm8u	r4, [0x13b]
+ f0 90 3b              ldm8u	r4, [0x13b]
  11                    add	r4, r5
- f0 45 8b 01           ldm8u	r5, [0x18b]
+ f0 94 8b              ldm8u	r5, [0x18b]
  14                    add	r5, r4
  c9 06                 addi.s8	r5, 0x6
- f0 5d 9c 01           stm16	[0x19c], r5
+ f0 f4 9c              stm16	[0x19c], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

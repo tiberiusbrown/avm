@@ -11,7 +11,7 @@ Disassembly of section .text:
  d6 fc                 adjsp	-0x4
  f0 05 02 01           ldi16	r1, 0x102
  f1 21                 mov	r4, r1
- c6 6c 0e              ldi16	r6, 0xe6c
+ c6 6b 0e              ldi16	r6, 0xe6b
  c3 00                 ldi8	r7, 0x0
  c1 20                 ldi8	r5, 0x20
  d7 10                 sys	memcpy_p
@@ -19,7 +19,7 @@ Disassembly of section .text:
  d7 01                 sys	debug_break
  c2 1f                 ldi8	r6, 0x1f
  c3 03                 ldi8	r7, 0x3
- f0 06 40 0e           ldi16	r2, 0xe40
+ f0 06 3f 0e           ldi16	r2, 0xe3f
  f0 03 00              ldi8	r3, 0x0
  01                    mov	r4, r5
  f1 05                 mov	r0, r5
@@ -43,13 +43,13 @@ Disassembly of section .text:
  af                    xor	r7, r7
  f7 6d                 add32	q3, q1
  f0 63 4c              ldp24	q1, [q3]
- d5 3f                 call8	mix_byte
+ d5 3e                 call8	mix_byte
  f1 0c                 mov	r1, r4
  f1 28                 mov	r6, r0
  f2 69                 mov32	q2, q1
- f0 06 40 0e           ldi16	r2, 0xe40
+ f0 06 3f 0e           ldi16	r2, 0xe3f
  f0 03 00              ldi8	r3, 0x0
- d5 35                 call8	read_page
+ d5 34                 call8	read_page
  c3 03                 ldi8	r7, 0x3
  c2 1f                 ldi8	r6, 0x1f
  04                    mov	r5, r4
@@ -65,7 +65,7 @@ Disassembly of section .text:
  f4 a8                 inc16	r0
  f0 0c 10              cmpi.s8	r0, 0x10
  d1 b0                 brne8	-0x50 <L0>
- f0 5d 00 01           stm16	[0x100], r5
+ f0 f4 00              stm16	[0x100], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 04                 adjsp	0x4

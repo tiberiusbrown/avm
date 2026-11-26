@@ -93,7 +93,7 @@ Disassembly of section .text:
  d1 c4                 brne8	-0x3c <L5>
  d4 aa                 jmp8	-0x56 <L2>
 <L8>:
- f0 5f 00 01           stm16	[0x100], r7
+ f0 fc 00              stm16	[0x100], r7
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 02                 adjsp	0x2

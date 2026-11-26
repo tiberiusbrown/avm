@@ -26,7 +26,7 @@ Disassembly of section .text:
  d1 f1                 brne8	-0xf <L0>
  a0                    xor	r4, r4
  d7 01                 sys	debug_break
- f0 06 18 11           ldi16	r2, 0x1118
+ f0 06 17 11           ldi16	r2, 0x1117
  f0 03 00              ldi8	r3, 0x0
  08                    mov	r6, r4
 <L1>:
@@ -43,7 +43,7 @@ Disassembly of section .text:
  f7 69                 add32	q2, q1
  f0 67 48              ldp24	q1, [q2+]
  f0 60 e4              ldp8u	r7, [q1]
- f0 06 18 11           ldi16	r2, 0x1118
+ f0 06 17 11           ldi16	r2, 0x1117
  f0 03 00              ldi8	r3, 0x0
  1b                    add	r6, r7
  f0 63 88              ldp24	q2, [q2]
@@ -56,7 +56,7 @@ Disassembly of section .text:
  f4 ac                 inc16	r4
  cc 10                 cmpi.s8	r4, 0x10
  d1 cb                 brne8	-0x35 <L1>
- f0 5e 00 01           stm16	[0x100], r6
+ f0 f8 00              stm16	[0x100], r6
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 02                 adjsp	0x2

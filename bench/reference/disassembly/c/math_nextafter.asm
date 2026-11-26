@@ -20,7 +20,7 @@ Disassembly of section .text:
  10                    add	r4, r4
  10                    add	r4, r4
  a5                    xor	r5, r5
- c6 7e 0e              ldi16	r6, 0xe7e
+ c6 7d 0e              ldi16	r6, 0xe7d
  c3 00                 ldi8	r7, 0x0
  f7 6b                 add32	q2, q3
  f0 64 88              ldp32	q2, [q2]
@@ -128,8 +128,8 @@ Disassembly of section .text:
  3e                    cmp	r7, r6
  d2 a5                 brult8	-0x5b <L1>
  c2 22                 ldi8	r6, 0x22
- f0 5e 04 01           stm16	[0x104], r6
- d4 9d                 jmp8	-0x63 <L1>
+ f0 f8 04              stm16	[0x104], r6
+ d4 9e                 jmp8	-0x62 <L1>
 
 <__avm_umulhisi3>:
  d6 fa                 adjsp	-0x6

@@ -10,7 +10,7 @@ Disassembly of section .text:
  b0                    push16	r0
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
- f0 06 80 0f           ldi16	r2, 0xf80
+ f0 06 7f 0f           ldi16	r2, 0xf7f
  f0 03 00              ldi8	r3, 0x0
  f0 05 00 01           ldi16	r1, 0x100
 <L0>:
@@ -75,7 +75,7 @@ Disassembly of section .text:
  c7 0f 41              ldi16	r7, 0x410f
  f0 69 c8              cmp32	q3, q2
  d2 1b                 brult8	0x1b <L3>
- d5 5d                 call8	__avm_expf_noerrno
+ d5 5c                 call8	__avm_expf_noerrno
  08                    mov	r6, r4
  0d                    mov	r7, r5
  a0                    xor	r4, r4
@@ -100,7 +100,7 @@ Disassembly of section .text:
  c6 18 72              ldi16	r6, 0x7218
  c7 31 bf              ldi16	r7, 0xbf31
  ff 00                 fadd
- d5 2f                 call8	__avm_expf_noerrno
+ d5 2e                 call8	__avm_expf_noerrno
  c6 80 7f              ldi16	r6, 0x7f80
  a9                    xor	r6, r5
  0c                    mov	r7, r4
@@ -121,7 +121,7 @@ Disassembly of section .text:
  f0 69 c8              cmp32	q3, q2
  d0 8d                 breq8	-0x73 <L0>
  c0 22                 ldi8	r4, 0x22
- f0 5c 04 01           stm16	[0x104], r4
+ f0 f0 04              stm16	[0x104], r4
  a0                    xor	r4, r4
  c5 80 7f              ldi16	r5, 0x7f80
  b8                    pop16	r0

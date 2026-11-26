@@ -10,7 +10,7 @@ Disassembly of section .text:
  b0                    push16	r0
  f0 04 f0 ff           ldi16	r0, 0xfff0
  d7 01                 sys	debug_break
- f0 06 ad 0e           ldi16	r2, 0xead
+ f0 06 a8 0e           ldi16	r2, 0xea8
  f0 03 00              ldi8	r3, 0x0
  f0 05 00 01           ldi16	r1, 0x100
 <L0>:
@@ -75,7 +75,7 @@ Disassembly of section .text:
  d9 54                 brsge8	0x54 <L4>
  c7 ea fe              ldi16	r7, 0xfeea
  f5 2e                 cmp	r7, r2
- d9 65                 brsge8	0x65 <L5>
+ d9 64                 brsge8	0x64 <L5>
  f4 a6                 tst8	r6
  d1 0d                 brne8	0xd <L1>
  2a                    sub	r6, r6
@@ -88,7 +88,7 @@ Disassembly of section .text:
 <L1>:
  f2 2a                 add	r6, r2
  f5 2b                 cmp	r6, r3
- d9 5d                 brsge8	0x5d <L6>
+ d9 5b                 brsge8	0x5b <L6>
  ce 01                 cmpi.s8	r6, 0x1
  d3 0a                 brslt8	0xa <L2>
  c7 7f 80              ldi16	r7, 0x807f
@@ -99,7 +99,7 @@ Disassembly of section .text:
  d4 23                 jmp8	0x23 <L3>
 <L2>:
  ce e9                 cmpi.s8	r6, -0x17
- d3 5c                 brslt8	0x5c <L7>
+ d3 59                 brslt8	0x59 <L7>
  c7 7f 80              ldi16	r7, 0x807f
  8d                    and	r7, r5
  fa 57                 lsl16i	r6, 0x7
@@ -115,7 +115,7 @@ Disassembly of section .text:
  1b                    add	r6, r7
  c7 ff 80              ldi16	r7, 0x80ff
  3e                    cmp	r7, r6
- d8 4b                 bruge8	0x4b <L8>
+ d8 47                 bruge8	0x47 <L8>
 <L3>:
  b8                    pop16	r0
  b9                    pop16	r1
@@ -131,40 +131,40 @@ Disassembly of section .text:
  31                    cmp	r4, r5
  fb 77                 cmov.ne	r6, r7
  c0 22                 ldi8	r4, 0x22
- f0 5c 04 01           stm16	[0x104], r4
+ f0 f0 04              stm16	[0x104], r4
  06                    mov	r5, r6
  a0                    xor	r4, r4
- d4 e3                 jmp8	-0x1d <L3>
+ d4 e4                 jmp8	-0x1c <L3>
 <L5>:
  c2 22                 ldi8	r6, 0x22
- f0 5e 04 01           stm16	[0x104], r6
+ f0 f8 04              stm16	[0x104], r6
  aa                    xor	r6, r6
  c7 00 80              ldi16	r7, 0x8000
  8d                    and	r7, r5
  02                    mov	r4, r6
  07                    mov	r5, r7
- d4 d4                 jmp8	-0x2c <L3>
+ d4 d6                 jmp8	-0x2a <L3>
 <L6>:
  c0 22                 ldi8	r4, 0x22
- f0 5c 04 01           stm16	[0x104], r4
+ f0 f0 04              stm16	[0x104], r4
  c4 00 80              ldi16	r4, 0x8000
  81                    and	r4, r5
  c5 80 7f              ldi16	r5, 0x7f80
  94                    or	r5, r4
  a0                    xor	r4, r4
- d4 c3                 jmp8	-0x3d <L3>
+ d4 c6                 jmp8	-0x3a <L3>
 <L7>:
  c2 22                 ldi8	r6, 0x22
- f0 5e 04 01           stm16	[0x104], r6
+ f0 f8 04              stm16	[0x104], r6
  aa                    xor	r6, r6
  c7 00 80              ldi16	r7, 0x8000
  82                    and	r4, r6
  87                    and	r5, r7
- d4 b5                 jmp8	-0x4b <L3>
+ d4 b9                 jmp8	-0x47 <L3>
 <L8>:
  c2 22                 ldi8	r6, 0x22
- f0 5e 04 01           stm16	[0x104], r6
- d4 ad                 jmp8	-0x53 <L3>
+ f0 f8 04              stm16	[0x104], r6
+ d4 b2                 jmp8	-0x4e <L3>
 
 <__avm_umulhisi3>:
  d6 fa                 adjsp	-0x6

@@ -10,21 +10,21 @@ Disassembly of section .text:
  b0                    push16	r0
  d6 f6                 adjsp	-0xa
  c0 d9                 ldi8	r4, 0xd9
- f0 4c 02 01           stm8	[0x102], r4
+ f0 b0 02              stm8	[0x102], r4
  c0 ba                 ldi8	r4, 0xba
- f0 4c 03 01           stm8	[0x103], r4
+ f0 b0 03              stm8	[0x103], r4
  c0 9b                 ldi8	r4, 0x9b
- f0 4c 04 01           stm8	[0x104], r4
+ f0 b0 04              stm8	[0x104], r4
  c0 7c                 ldi8	r4, 0x7c
- f0 4c 05 01           stm8	[0x105], r4
+ f0 b0 05              stm8	[0x105], r4
  c0 5d                 ldi8	r4, 0x5d
- f0 4c 06 01           stm8	[0x106], r4
+ f0 b0 06              stm8	[0x106], r4
  c0 3e                 ldi8	r4, 0x3e
- f0 4c 07 01           stm8	[0x107], r4
+ f0 b0 07              stm8	[0x107], r4
  c0 1f                 ldi8	r4, 0x1f
- f0 4c 08 01           stm8	[0x108], r4
+ f0 b0 08              stm8	[0x108], r4
  f2 42                 sub	r2, r2
- f0 4a 09 01           stm8	[0x109], r2
+ f0 a8 09              stm8	[0x109], r2
  d7 01                 sys	debug_break
  f0 05 02 01           ldi16	r1, 0x102
  f0 14 02              leasp	r4, 0x2
@@ -103,7 +103,7 @@ Disassembly of section .text:
  14                    add	r5, r4
  f3 64                 ldsp8u	r4, [sp+0x9]
  11                    add	r4, r5
- f0 5c 00 01           stm16	[0x100], r4
+ f0 f0 00              stm16	[0x100], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 0a                 adjsp	0xa

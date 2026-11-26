@@ -5,21 +5,21 @@ Disassembly of section .text:
 
 <avm_test_main>:
  d7 01                 sys	debug_break
- c4 25 0e              ldi16	r4, 0xe25
+ c4 22 0e              ldi16	r4, 0xe22
  c1 00                 ldi8	r5, 0x0
  c2 40                 ldi8	r6, 0x40
- d5 22                 call8	sum_byte_pairs
- f0 5c 00 01           stm16	[0x100], r4
- c4 26 0e              ldi16	r4, 0xe26
+ d5 1f                 call8	sum_byte_pairs
+ f0 f0 00              stm16	[0x100], r4
+ c4 23 0e              ldi16	r4, 0xe23
  c1 00                 ldi8	r5, 0x0
  c2 3f                 ldi8	r6, 0x3f
- d5 15                 call8	sum_byte_pairs
- f0 5c 02 01           stm16	[0x102], r4
- c4 27 0e              ldi16	r4, 0xe27
+ d5 13                 call8	sum_byte_pairs
+ f0 f0 02              stm16	[0x102], r4
+ c4 24 0e              ldi16	r4, 0xe24
  c1 00                 ldi8	r5, 0x0
  c2 41                 ldi8	r6, 0x41
- d5 08                 call8	sum_byte_pairs
- f0 5c 04 01           stm16	[0x104], r4
+ d5 07                 call8	sum_byte_pairs
+ f0 f0 04              stm16	[0x104], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  ef                    ret

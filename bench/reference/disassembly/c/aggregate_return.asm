@@ -18,7 +18,7 @@ Disassembly of section .text:
  f0 2c 10              stsp8	[sp+0x10], r4
  c4 aa 55              ldi16	r4, 0x55aa
  f4 78                 stsp16	[sp+0xe], r4
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  f4 70                 stsp16	[sp+0xc], r4
  f2 42                 sub	r2, r2
  f2 4b                 sub	r3, r3

@@ -17,7 +17,7 @@ Disassembly of section .text:
  d7 01                 sys	debug_break
  c5 04 01              ldi16	r5, 0x104
  f0 04 64 01           ldi16	r0, 0x164
- f0 57 00 01           ldm16	r7, [0x100]
+ f0 dc 00              ldm16	r7, [0x100]
  f1 20                 mov	r4, r0
  0b                    mov	r6, r7
  d7 0f                 sys	memcpy
@@ -36,7 +36,7 @@ Disassembly of section .text:
  f6 2f                 tst16	r7
  d1 f7                 brne8	-0x9 <L1>
 <L2>:
- f0 5c 02 01           stm16	[0x102], r4
+ f0 f0 02              stm16	[0x102], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

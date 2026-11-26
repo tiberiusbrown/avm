@@ -14,23 +14,23 @@ Disassembly of section .text:
  f1 0c                 mov	r1, r4
  f4 a8                 inc16	r0
  f0 0c 10              cmpi.s8	r0, 0x10
- da a4 00              breq16	0xa4 <L17>
+ da 9c 00              breq16	0x9c <L17>
 <L1>:
- f0 45 00 01           ldm8u	r5, [0x100]
+ f0 94 00              ldm8u	r5, [0x100]
  f4 a5                 tst8	r5
  d0 10                 breq8	0x10 <L2>
  01                    mov	r4, r5
  f4 b4                 dec16	r4
  f2 0c                 add	r1, r4
  c9 fe                 addi.s8	r5, -0x2
- e1 4a 0b              call16	__avm_umulhisi3
+ e1 42 0b              call16	__avm_umulhisi3
  f7 82                 lsr32.1	q2
  f2 21                 add	r4, r1
  d4 02                 jmp8	0x2 <L3>
 <L2>:
  f1 21                 mov	r4, r1
 <L3>:
- f0 45 00 01           ldm8u	r5, [0x100]
+ f0 94 00              ldm8u	r5, [0x100]
  f4 a5                 tst8	r5
  d0 0a                 breq8	0xa <L5>
  aa                    xor	r6, r6
@@ -42,7 +42,7 @@ Disassembly of section .text:
  39                    cmp	r6, r5
  d1 f7                 brne8	-0x9 <L4>
 <L5>:
- f0 45 00 01           ldm8u	r5, [0x100]
+ f0 94 00              ldm8u	r5, [0x100]
  f4 a5                 tst8	r5
  d0 0a                 breq8	0xa <L7>
  aa                    xor	r6, r6
@@ -54,7 +54,7 @@ Disassembly of section .text:
  39                    cmp	r6, r5
  d1 f7                 brne8	-0x9 <L6>
 <L7>:
- f0 45 00 01           ldm8u	r5, [0x100]
+ f0 94 00              ldm8u	r5, [0x100]
  f4 a5                 tst8	r5
  d0 0a                 breq8	0xa <L9>
  aa                    xor	r6, r6
@@ -66,7 +66,7 @@ Disassembly of section .text:
  39                    cmp	r6, r5
  d1 f7                 brne8	-0x9 <L8>
 <L9>:
- f0 45 00 01           ldm8u	r5, [0x100]
+ f0 94 00              ldm8u	r5, [0x100]
  f4 a5                 tst8	r5
  d0 0a                 breq8	0xa <L11>
  aa                    xor	r6, r6
@@ -78,7 +78,7 @@ Disassembly of section .text:
  39                    cmp	r6, r5
  d1 f7                 brne8	-0x9 <L10>
 <L11>:
- f0 45 00 01           ldm8u	r5, [0x100]
+ f0 94 00              ldm8u	r5, [0x100]
  f4 a5                 tst8	r5
  d0 0a                 breq8	0xa <L13>
  aa                    xor	r6, r6
@@ -90,7 +90,7 @@ Disassembly of section .text:
  39                    cmp	r6, r5
  d1 f7                 brne8	-0x9 <L12>
 <L13>:
- f0 45 00 01           ldm8u	r5, [0x100]
+ f0 94 00              ldm8u	r5, [0x100]
  f4 a5                 tst8	r5
  d0 0a                 breq8	0xa <L15>
  aa                    xor	r6, r6
@@ -102,9 +102,9 @@ Disassembly of section .text:
  39                    cmp	r6, r5
  d1 f7                 brne8	-0x9 <L14>
 <L15>:
- f0 45 00 01           ldm8u	r5, [0x100]
+ f0 94 00              ldm8u	r5, [0x100]
  f4 a5                 tst8	r5
- da 67 ff              breq16	-0x99 <L0>
+ da 6f ff              breq16	-0x91 <L0>
  aa                    xor	r6, r6
  f1 0c                 mov	r1, r4
 <L16>:
@@ -116,9 +116,9 @@ Disassembly of section .text:
  d1 f6                 brne8	-0xa <L16>
  f4 a8                 inc16	r0
  f0 0c 10              cmpi.s8	r0, 0x10
- db 5c ff              brne16	-0xa4 <L1>
+ db 64 ff              brne16	-0x9c <L1>
 <L17>:
- f0 59 01 01           stm16	[0x101], r1
+ f0 e4 01              stm16	[0x101], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

@@ -9,69 +9,69 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  c0 03                 ldi8	r4, 0x3
- f0 4c 02 01           stm8	[0x102], r4
+ f0 b0 02              stm8	[0x102], r4
  c4 34 12              ldi16	r4, 0x1234
- f0 5c 12 01           stm16	[0x112], r4
+ f0 f0 12              stm16	[0x112], r4
  c0 14                 ldi8	r4, 0x14
- f0 4c 03 01           stm8	[0x103], r4
+ f0 b0 03              stm8	[0x103], r4
  c4 35 13              ldi16	r4, 0x1335
- f0 5c 14 01           stm16	[0x114], r4
+ f0 f0 14              stm16	[0x114], r4
  c0 25                 ldi8	r4, 0x25
- f0 4c 04 01           stm8	[0x104], r4
+ f0 b0 04              stm8	[0x104], r4
  c4 36 14              ldi16	r4, 0x1436
- f0 5c 16 01           stm16	[0x116], r4
+ f0 f0 16              stm16	[0x116], r4
  c0 36                 ldi8	r4, 0x36
- f0 4c 05 01           stm8	[0x105], r4
+ f0 b0 05              stm8	[0x105], r4
  c4 37 15              ldi16	r4, 0x1537
- f0 5c 18 01           stm16	[0x118], r4
+ f0 f0 18              stm16	[0x118], r4
  c0 47                 ldi8	r4, 0x47
- f0 4c 06 01           stm8	[0x106], r4
+ f0 b0 06              stm8	[0x106], r4
  c4 38 16              ldi16	r4, 0x1638
- f0 5c 1a 01           stm16	[0x11a], r4
+ f0 f0 1a              stm16	[0x11a], r4
  c0 58                 ldi8	r4, 0x58
- f0 4c 07 01           stm8	[0x107], r4
+ f0 b0 07              stm8	[0x107], r4
  c4 39 17              ldi16	r4, 0x1739
- f0 5c 1c 01           stm16	[0x11c], r4
+ f0 f0 1c              stm16	[0x11c], r4
  c0 69                 ldi8	r4, 0x69
- f0 4c 08 01           stm8	[0x108], r4
+ f0 b0 08              stm8	[0x108], r4
  c4 3a 18              ldi16	r4, 0x183a
- f0 5c 1e 01           stm16	[0x11e], r4
+ f0 f0 1e              stm16	[0x11e], r4
  c0 7a                 ldi8	r4, 0x7a
- f0 4c 09 01           stm8	[0x109], r4
+ f0 b0 09              stm8	[0x109], r4
  c4 3b 19              ldi16	r4, 0x193b
- f0 5c 20 01           stm16	[0x120], r4
+ f0 f0 20              stm16	[0x120], r4
  c0 8b                 ldi8	r4, 0x8b
- f0 4c 0a 01           stm8	[0x10a], r4
+ f0 b0 0a              stm8	[0x10a], r4
  c4 3c 1a              ldi16	r4, 0x1a3c
- f0 5c 22 01           stm16	[0x122], r4
+ f0 f0 22              stm16	[0x122], r4
  c0 9c                 ldi8	r4, 0x9c
- f0 4c 0b 01           stm8	[0x10b], r4
+ f0 b0 0b              stm8	[0x10b], r4
  c4 3d 1b              ldi16	r4, 0x1b3d
- f0 5c 24 01           stm16	[0x124], r4
+ f0 f0 24              stm16	[0x124], r4
  c0 ad                 ldi8	r4, 0xad
- f0 4c 0c 01           stm8	[0x10c], r4
+ f0 b0 0c              stm8	[0x10c], r4
  c4 3e 1c              ldi16	r4, 0x1c3e
- f0 5c 26 01           stm16	[0x126], r4
+ f0 f0 26              stm16	[0x126], r4
  c0 be                 ldi8	r4, 0xbe
- f0 4c 0d 01           stm8	[0x10d], r4
+ f0 b0 0d              stm8	[0x10d], r4
  c4 3f 1d              ldi16	r4, 0x1d3f
- f0 5c 28 01           stm16	[0x128], r4
+ f0 f0 28              stm16	[0x128], r4
  c0 cf                 ldi8	r4, 0xcf
- f0 4c 0e 01           stm8	[0x10e], r4
+ f0 b0 0e              stm8	[0x10e], r4
  c4 40 1e              ldi16	r4, 0x1e40
- f0 5c 2a 01           stm16	[0x12a], r4
+ f0 f0 2a              stm16	[0x12a], r4
  c0 e0                 ldi8	r4, 0xe0
- f0 4c 0f 01           stm8	[0x10f], r4
+ f0 b0 0f              stm8	[0x10f], r4
  c4 41 1f              ldi16	r4, 0x1f41
- f0 5c 2c 01           stm16	[0x12c], r4
+ f0 f0 2c              stm16	[0x12c], r4
  c0 f1                 ldi8	r4, 0xf1
- f0 4c 10 01           stm8	[0x110], r4
+ f0 b0 10              stm8	[0x110], r4
  c4 42 20              ldi16	r4, 0x2042
- f0 5c 2e 01           stm16	[0x12e], r4
+ f0 f0 2e              stm16	[0x12e], r4
  c0 02                 ldi8	r4, 0x2
- f0 4c 11 01           stm8	[0x111], r4
+ f0 b0 11              stm8	[0x111], r4
  c4 43 21              ldi16	r4, 0x2143
- f0 5c 30 01           stm16	[0x130], r4
+ f0 f0 30              stm16	[0x130], r4
  a0                    xor	r4, r4
  d7 01                 sys	debug_break
  f1 1c                 mov	r3, r4
@@ -114,7 +114,7 @@ Disassembly of section .text:
  f4 ab                 inc16	r3
  f0 0f 18              cmpi.s8	r3, 0x18
  d1 af                 brne8	-0x51 <L0>
- f0 5c 00 01           stm16	[0x100], r4
+ f0 f0 00              stm16	[0x100], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

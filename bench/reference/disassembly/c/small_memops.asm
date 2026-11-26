@@ -9,7 +9,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  c4 02 01              ldi16	r4, 0x102
- c6 cf 0e              ldi16	r6, 0xecf
+ c6 ae 0e              ldi16	r6, 0xeae
  c3 00                 ldi8	r7, 0x0
  c1 20                 ldi8	r5, 0x20
  d7 10                 sys	memcpy_p
@@ -56,74 +56,74 @@ Disassembly of section .text:
  f1 24                 mov	r5, r0
  c2 0c                 ldi8	r6, 0xc
  d7 12                 sys	memmove
- f0 44 22 01           ldm8u	r4, [0x122]
+ f0 90 22              ldm8u	r4, [0x122]
  f2 21                 add	r4, r1
- f0 45 23 01           ldm8u	r5, [0x123]
+ f0 94 23              ldm8u	r5, [0x123]
  14                    add	r5, r4
- f0 44 24 01           ldm8u	r4, [0x124]
+ f0 90 24              ldm8u	r4, [0x124]
  11                    add	r4, r5
- f0 45 25 01           ldm8u	r5, [0x125]
+ f0 94 25              ldm8u	r5, [0x125]
  14                    add	r5, r4
- f0 44 26 01           ldm8u	r4, [0x126]
+ f0 90 26              ldm8u	r4, [0x126]
  11                    add	r4, r5
- f0 45 27 01           ldm8u	r5, [0x127]
+ f0 94 27              ldm8u	r5, [0x127]
  14                    add	r5, r4
- f0 44 28 01           ldm8u	r4, [0x128]
+ f0 90 28              ldm8u	r4, [0x128]
  11                    add	r4, r5
- f0 45 29 01           ldm8u	r5, [0x129]
+ f0 94 29              ldm8u	r5, [0x129]
  14                    add	r5, r4
- f0 44 2a 01           ldm8u	r4, [0x12a]
+ f0 90 2a              ldm8u	r4, [0x12a]
  11                    add	r4, r5
- f0 45 2b 01           ldm8u	r5, [0x12b]
+ f0 94 2b              ldm8u	r5, [0x12b]
  14                    add	r5, r4
- f0 44 2c 01           ldm8u	r4, [0x12c]
+ f0 90 2c              ldm8u	r4, [0x12c]
  11                    add	r4, r5
- f0 45 2d 01           ldm8u	r5, [0x12d]
+ f0 94 2d              ldm8u	r5, [0x12d]
  14                    add	r5, r4
- f0 44 2e 01           ldm8u	r4, [0x12e]
+ f0 90 2e              ldm8u	r4, [0x12e]
  11                    add	r4, r5
- f0 45 2f 01           ldm8u	r5, [0x12f]
+ f0 94 2f              ldm8u	r5, [0x12f]
  14                    add	r5, r4
- f0 44 30 01           ldm8u	r4, [0x130]
+ f0 90 30              ldm8u	r4, [0x130]
  11                    add	r4, r5
- f0 45 31 01           ldm8u	r5, [0x131]
+ f0 94 31              ldm8u	r5, [0x131]
  14                    add	r5, r4
- f0 44 32 01           ldm8u	r4, [0x132]
+ f0 90 32              ldm8u	r4, [0x132]
  11                    add	r4, r5
- f0 45 33 01           ldm8u	r5, [0x133]
+ f0 94 33              ldm8u	r5, [0x133]
  14                    add	r5, r4
- f0 44 34 01           ldm8u	r4, [0x134]
+ f0 90 34              ldm8u	r4, [0x134]
  11                    add	r4, r5
- f0 45 35 01           ldm8u	r5, [0x135]
+ f0 94 35              ldm8u	r5, [0x135]
  14                    add	r5, r4
- f0 44 36 01           ldm8u	r4, [0x136]
+ f0 90 36              ldm8u	r4, [0x136]
  11                    add	r4, r5
- f0 45 37 01           ldm8u	r5, [0x137]
+ f0 94 37              ldm8u	r5, [0x137]
  14                    add	r5, r4
- f0 44 38 01           ldm8u	r4, [0x138]
+ f0 90 38              ldm8u	r4, [0x138]
  11                    add	r4, r5
- f0 45 39 01           ldm8u	r5, [0x139]
+ f0 94 39              ldm8u	r5, [0x139]
  14                    add	r5, r4
- f0 44 3a 01           ldm8u	r4, [0x13a]
+ f0 90 3a              ldm8u	r4, [0x13a]
  11                    add	r4, r5
- f0 45 3b 01           ldm8u	r5, [0x13b]
+ f0 94 3b              ldm8u	r5, [0x13b]
  14                    add	r5, r4
- f0 44 3c 01           ldm8u	r4, [0x13c]
+ f0 90 3c              ldm8u	r4, [0x13c]
  11                    add	r4, r5
- f0 45 3d 01           ldm8u	r5, [0x13d]
+ f0 94 3d              ldm8u	r5, [0x13d]
  14                    add	r5, r4
- f0 44 3e 01           ldm8u	r4, [0x13e]
+ f0 90 3e              ldm8u	r4, [0x13e]
  11                    add	r4, r5
- f0 45 3f 01           ldm8u	r5, [0x13f]
+ f0 94 3f              ldm8u	r5, [0x13f]
  14                    add	r5, r4
- f0 44 40 01           ldm8u	r4, [0x140]
+ f0 90 40              ldm8u	r4, [0x140]
  11                    add	r4, r5
- f0 41 41 01           ldm8u	r1, [0x141]
+ f0 84 41              ldm8u	r1, [0x141]
  f2 0c                 add	r1, r4
  f4 b7                 dec16	r7
  f4 a7                 tst8	r7
- db 05 ff              brne16	-0xfb <L0>
- f0 59 00 01           stm16	[0x100], r1
+ db 25 ff              brne16	-0xdb <L0>
+ f0 e4 00              stm16	[0x100], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

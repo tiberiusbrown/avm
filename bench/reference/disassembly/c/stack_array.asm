@@ -7,84 +7,84 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d7 01                 sys	debug_break
- f0 54 00 01           ldm16	r4, [0x100]
- e1 c3 00              call16	stack_kernel
+ f0 d0 00              ldm16	r4, [0x100]
+ e1 b2 00              call16	stack_kernel
  f1 04                 mov	r0, r4
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  f4 ac                 inc16	r4
- e1 b8 00              call16	stack_kernel
+ e1 a8 00              call16	stack_kernel
  f1 0c                 mov	r1, r4
  f9 22                 xor	r1, r0
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  c8 02                 addi.s8	r4, 0x2
- e1 ab 00              call16	stack_kernel
+ e1 9c 00              call16	stack_kernel
  f1 04                 mov	r0, r4
  f9 06                 xor	r0, r1
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  c8 03                 addi.s8	r4, 0x3
- e1 9e 00              call16	stack_kernel
+ e1 90 00              call16	stack_kernel
  f1 0c                 mov	r1, r4
  f9 22                 xor	r1, r0
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  c8 04                 addi.s8	r4, 0x4
- e1 91 00              call16	stack_kernel
- f1 04                 mov	r0, r4
- f9 06                 xor	r0, r1
- f0 54 00 01           ldm16	r4, [0x100]
- c8 05                 addi.s8	r4, 0x5
  e1 84 00              call16	stack_kernel
+ f1 04                 mov	r0, r4
+ f9 06                 xor	r0, r1
+ f0 d0 00              ldm16	r4, [0x100]
+ c8 05                 addi.s8	r4, 0x5
+ d5 79                 call8	stack_kernel
  f1 0c                 mov	r1, r4
  f9 22                 xor	r1, r0
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  c8 06                 addi.s8	r4, 0x6
- d5 78                 call8	stack_kernel
+ d5 6e                 call8	stack_kernel
  f1 04                 mov	r0, r4
  f9 06                 xor	r0, r1
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  c8 07                 addi.s8	r4, 0x7
- d5 6c                 call8	stack_kernel
+ d5 63                 call8	stack_kernel
  f1 0c                 mov	r1, r4
  f9 22                 xor	r1, r0
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  c8 08                 addi.s8	r4, 0x8
- d5 60                 call8	stack_kernel
+ d5 58                 call8	stack_kernel
  f1 04                 mov	r0, r4
  f9 06                 xor	r0, r1
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  c8 09                 addi.s8	r4, 0x9
- d5 54                 call8	stack_kernel
+ d5 4d                 call8	stack_kernel
  f1 0c                 mov	r1, r4
  f9 22                 xor	r1, r0
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  c8 0a                 addi.s8	r4, 0xa
- d5 48                 call8	stack_kernel
+ d5 42                 call8	stack_kernel
  f1 04                 mov	r0, r4
  f9 06                 xor	r0, r1
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  c8 0b                 addi.s8	r4, 0xb
- d5 3c                 call8	stack_kernel
+ d5 37                 call8	stack_kernel
  f1 0c                 mov	r1, r4
  f9 22                 xor	r1, r0
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  c8 0c                 addi.s8	r4, 0xc
- d5 30                 call8	stack_kernel
+ d5 2c                 call8	stack_kernel
  f1 04                 mov	r0, r4
  f9 06                 xor	r0, r1
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  c8 0d                 addi.s8	r4, 0xd
- d5 24                 call8	stack_kernel
+ d5 21                 call8	stack_kernel
  f1 0c                 mov	r1, r4
  f9 22                 xor	r1, r0
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  c8 0e                 addi.s8	r4, 0xe
- d5 18                 call8	stack_kernel
+ d5 16                 call8	stack_kernel
  f1 04                 mov	r0, r4
  f9 06                 xor	r0, r1
- f0 54 00 01           ldm16	r4, [0x100]
+ f0 d0 00              ldm16	r4, [0x100]
  c8 0f                 addi.s8	r4, 0xf
- d5 0c                 call8	stack_kernel
+ d5 0b                 call8	stack_kernel
  f9 82                 xor	r4, r0
- f0 5c 02 01           stm16	[0x102], r4
+ f0 f0 02              stm16	[0x102], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

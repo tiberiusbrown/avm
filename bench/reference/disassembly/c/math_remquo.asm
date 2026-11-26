@@ -24,19 +24,19 @@ Disassembly of section .text:
  10                    add	r4, r4
  10                    add	r4, r4
  a5                    xor	r5, r5
- c6 44 0f              ldi16	r6, 0xf44
+ c6 42 0f              ldi16	r6, 0xf42
  c3 00                 ldi8	r7, 0x0
  f7 6b                 add32	q2, q3
  f0 64 88              ldp32	q2, [q2]
  f2 6a                 mov32	q3, q0
- e1 ca 0a              call16	remquof
+ e1 c9 0a              call16	remquof
  d6 02                 adjsp	0x2
  f0 6b 86              st32	[r3], q2
  f4 00                 ldsp16	r4, [sp+0x0]
- f0 5c 00 01           stm16	[0x100], r4
+ f0 f0 00              stm16	[0x100], r4
  f4 aa                 inc16	r2
  f0 0e 20              cmpi.s8	r2, 0x20
- d1 d0                 brne8	-0x30 <L0>
+ d1 d1                 brne8	-0x2f <L0>
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 02                 adjsp	0x2
@@ -228,10 +228,10 @@ Disassembly of section .text:
  ef                    ret
 <L10>:
  c0 21                 ldi8	r4, 0x21
- f0 5c 06 01           stm16	[0x106], r4
+ f0 f0 06              stm16	[0x106], r4
  a0                    xor	r4, r4
  c5 c0 7f              ldi16	r5, 0x7fc0
- d4 ed                 jmp8	-0x13 <L9>
+ d4 ee                 jmp8	-0x12 <L9>
 
 <__avm_umulhisi3>:
  d6 fa                 adjsp	-0x6

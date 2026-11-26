@@ -12,23 +12,23 @@ Disassembly of section .text:
  f2 42                 sub	r2, r2
  c0 20                 ldi8	r4, 0x20
  d7 01                 sys	debug_break
- c6 c1 0f              ldi16	r6, 0xfc1
+ c6 c0 0f              ldi16	r6, 0xfc0
  c3 00                 ldi8	r7, 0x0
  f0 3e 10              stsp16	[sp+0x10], r6
  f0 3f 12              stsp16	[sp+0x12], r7
- c6 a1 0f              ldi16	r6, 0xfa1
+ c6 a0 0f              ldi16	r6, 0xfa0
  c3 00                 ldi8	r7, 0x0
  f4 72                 stsp16	[sp+0xc], r6
  f4 7b                 stsp16	[sp+0xe], r7
- c6 8e 0f              ldi16	r6, 0xf8e
+ c6 8d 0f              ldi16	r6, 0xf8d
  c3 00                 ldi8	r7, 0x0
  f4 42                 stsp16	[sp+0x0], r6
  f4 4b                 stsp16	[sp+0x2], r7
- c6 e1 0f              ldi16	r6, 0xfe1
+ c6 e0 0f              ldi16	r6, 0xfe0
  c3 00                 ldi8	r7, 0x0
  f4 62                 stsp16	[sp+0x8], r6
  f4 6b                 stsp16	[sp+0xa], r7
- c6 01 10              ldi16	r6, 0x1001
+ c6 00 10              ldi16	r6, 0x1000
  c3 00                 ldi8	r7, 0x0
  f4 52                 stsp16	[sp+0x4], r6
  f4 5b                 stsp16	[sp+0x6], r7
@@ -202,7 +202,7 @@ Disassembly of section .text:
  f4 b4                 dec16	r4
  f4 a4                 tst8	r4
  db 87 fe              brne16	-0x179 <L0>
- f0 5a 00 01           stm16	[0x100], r2
+ f0 e8 00              stm16	[0x100], r2
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 28                 adjsp	0x28

@@ -10,7 +10,7 @@ Disassembly of section .text:
  b0                    push16	r0
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
- f0 06 4c 0f           ldi16	r2, 0xf4c
+ f0 06 4a 0f           ldi16	r2, 0xf4a
  f0 03 00              ldi8	r3, 0x0
  f0 05 00 01           ldi16	r1, 0x100
 <L0>:
@@ -191,17 +191,17 @@ Disassembly of section .text:
  f0 04 ff ff           ldi16	r0, 0xffff
  f0 05 ff ff           ldi16	r1, 0xffff
  f0 69 08              cmp32	q0, q2
- d9 12                 brsge8	0x12 <L5>
+ d9 11                 brsge8	0x11 <L5>
  08                    mov	r6, r4
  0d                    mov	r7, r5
  ff 00                 fadd
  d4 d5                 jmp8	-0x2b <L2>
 <L4>:
  c0 22                 ldi8	r4, 0x22
- f0 5c 04 01           stm16	[0x104], r4
+ f0 f0 04              stm16	[0x104], r4
  a0                    xor	r4, r4
  c5 80 ff              ldi16	r5, 0xff80
- d4 c9                 jmp8	-0x37 <L2>
+ d4 ca                 jmp8	-0x36 <L2>
 <L5>:
  f2 30                 sub	r0, r0
  f0 05 80 7f           ldi16	r1, 0x7f80
@@ -210,14 +210,14 @@ Disassembly of section .text:
  c6 c0 7f              ldi16	r6, 0x7fc0
  99                    or	r6, r5
  06                    mov	r5, r6
- d4 b7                 jmp8	-0x49 <L2>
+ d4 b8                 jmp8	-0x48 <L2>
 <L6>:
  c2 21                 ldi8	r6, 0x21
- f0 5e 04 01           stm16	[0x104], r6
+ f0 f8 04              stm16	[0x104], r6
  c6 c0 7f              ldi16	r6, 0x7fc0
  99                    or	r6, r5
  06                    mov	r5, r6
- d4 aa                 jmp8	-0x56 <L2>
+ d4 ac                 jmp8	-0x54 <L2>
 
 <__avm_umulhisi3>:
  d6 fa                 adjsp	-0x6

@@ -38,13 +38,13 @@ Disassembly of section .text:
  a5                    xor	r5, r5
  c6 24 01              ldi16	r6, 0x124
  f0 6b 8c              st32	[r6], q2
- f0 4c 00 01           stm8	[0x100], r4
+ f0 b0 00              stm8	[0x100], r4
  c0 0f                 ldi8	r4, 0xf
- f0 4c 01 01           stm8	[0x101], r4
+ f0 b0 01              stm8	[0x101], r4
  c0 20                 ldi8	r4, 0x20
- f0 4c 02 01           stm8	[0x102], r4
+ f0 b0 02              stm8	[0x102], r4
  c0 3f                 ldi8	r4, 0x3f
- f0 4c 03 01           stm8	[0x103], r4
+ f0 b0 03              stm8	[0x103], r4
  f2 42                 sub	r2, r2
  f2 4b                 sub	r3, r3
  a0                    xor	r4, r4

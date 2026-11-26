@@ -9,19 +9,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d7 01                 sys	debug_break
- f0 44 00 01           ldm8u	r4, [0x100]
+ f0 90 00              ldm8u	r4, [0x100]
  f4 a4                 tst8	r4
  d0 14                 breq8	0x14 <L0>
- f0 06 ae 02           ldi16	r2, 0x2ae
+ f0 06 ac 02           ldi16	r2, 0x2ac
  f0 03 00              ldi8	r3, 0x0
- c6 a5 02              ldi16	r6, 0x2a5
+ c6 a3 02              ldi16	r6, 0x2a3
  c3 00                 ldi8	r7, 0x0
  cc 01                 cmpi.s8	r4, 0x1
  fb 16                 cmov.eq	r2, r6
  fb 1f                 cmov.eq	r3, r7
  d4 07                 jmp8	0x7 <L1>
 <L0>:
- f0 06 a3 02           ldi16	r2, 0x2a3
+ f0 06 a1 02           ldi16	r2, 0x2a1
  f0 03 00              ldi8	r3, 0x0
 <L1>:
  c4 34 12              ldi16	r4, 0x1234
@@ -33,7 +33,7 @@ Disassembly of section .text:
  f0 08 11              addi.s8	r0, 0x11
  f5 01                 cmp	r0, r1
  d1 f6                 brne8	-0xa <L2>
- f0 5c 01 01           stm16	[0x101], r4
+ f0 f0 01              stm16	[0x101], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

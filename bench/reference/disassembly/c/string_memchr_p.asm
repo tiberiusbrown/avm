@@ -25,7 +25,7 @@ Disassembly of section .text:
  a1                    xor	r4, r5
  a4                    xor	r5, r4
  a1                    xor	r4, r5
- c6 9b 0e              ldi16	r6, 0xe9b
+ c6 9a 0e              ldi16	r6, 0xe9a
  c3 00                 ldi8	r7, 0x0
  f7 6b                 add32	q2, q3
  08                    mov	r6, r4
@@ -105,7 +105,7 @@ Disassembly of section .text:
  cf 20                 cmpi.s8	r7, 0x20
  a0                    xor	r4, r4
  db 54 ff              brne16	-0xac <L0>
- f0 5d 03 01           stm16	[0x103], r5
+ f0 f4 03              stm16	[0x103], r5
  d7 01                 sys	debug_break
  d6 12                 adjsp	0x12
  b8                    pop16	r0

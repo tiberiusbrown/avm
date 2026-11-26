@@ -305,7 +305,7 @@ Disassembly of section .text:
  d1 f3                 brne8	-0xd <L32>
  d4 d4                 jmp8	-0x2c <L29>
 <L33>:
- f0 59 00 02           stm16	[0x200], r1
+ f0 e5 00              stm16	[0x200], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 08                 adjsp	0x8

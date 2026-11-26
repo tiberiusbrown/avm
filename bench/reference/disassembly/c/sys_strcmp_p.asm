@@ -10,47 +10,47 @@ Disassembly of section .text:
  b0                    push16	r0
  f0 04 02 01           ldi16	r0, 0x102
  f1 20                 mov	r4, r0
- c6 e9 11              ldi16	r6, 0x11e9
+ c6 e6 11              ldi16	r6, 0x11e6
  c3 00                 ldi8	r7, 0x0
  c1 41                 ldi8	r5, 0x41
  d7 10                 sys	memcpy_p
  d7 01                 sys	debug_break
- c6 14 11              ldi16	r6, 0x1114
+ c6 11 11              ldi16	r6, 0x1111
  c3 00                 ldi8	r7, 0x0
  c4 00 0b              ldi16	r4, 0xb00
  d7 14                 sys	strcmp_p
  f1 14                 mov	r2, r4
- c6 97 11              ldi16	r6, 0x1197
+ c6 94 11              ldi16	r6, 0x1194
  c3 00                 ldi8	r7, 0x0
  f1 20                 mov	r4, r0
  d7 14                 sys	strcmp_p
  f1 1c                 mov	r3, r4
- c6 56 11              ldi16	r6, 0x1156
+ c6 53 11              ldi16	r6, 0x1153
  c3 00                 ldi8	r7, 0x0
  f1 20                 mov	r4, r0
  d7 14                 sys	strcmp_p
  f1 0c                 mov	r1, r4
- c6 15 11              ldi16	r6, 0x1115
+ c6 12 11              ldi16	r6, 0x1112
  c3 00                 ldi8	r7, 0x0
  f1 20                 mov	r4, r0
  d7 14                 sys	strcmp_p
  04                    mov	r5, r4
  a0                    xor	r4, r4
- f0 4c 12 01           stm8	[0x112], r4
+ f0 b0 12              stm8	[0x112], r4
  f1 20                 mov	r4, r0
  d7 14                 sys	strcmp_p
  c2 61                 ldi8	r6, 0x61
- f0 4e 12 01           stm8	[0x112], r6
+ f0 b8 12              stm8	[0x112], r6
  f2 26                 add	r5, r2
  f2 25                 add	r5, r1
  f2 27                 add	r5, r3
  14                    add	r5, r4
- c6 d8 11              ldi16	r6, 0x11d8
+ c6 d5 11              ldi16	r6, 0x11d5
  c3 00                 ldi8	r7, 0x0
  f1 20                 mov	r4, r0
  d7 14                 sys	strcmp_p
  14                    add	r5, r4
- f0 5d 00 01           stm16	[0x100], r5
+ f0 f4 00              stm16	[0x100], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

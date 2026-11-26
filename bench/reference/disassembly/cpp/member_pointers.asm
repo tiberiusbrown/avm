@@ -50,7 +50,7 @@ Disassembly of section .text:
  f4 00                 ldsp16	r4, [sp+0x0]
  f5 04                 cmp	r0, r4
  d1 c8                 brne8	-0x38 <L0>
- f0 5a 00 01           stm16	[0x100], r2
+ f0 e8 00              stm16	[0x100], r2
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 08                 adjsp	0x8
@@ -59,7 +59,6 @@ Disassembly of section .text:
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
- 00                    nop
 
 <Accumulator::add(unsigned int)>:
  68                    ld16	r6, [r4]

@@ -1,6 +1,6 @@
 # AVM performance optimization ideas
 
-**Status:** working record of proposed and evaluated ISA and interpreter optimizations. Nothing here is part of the ISA in [arch.md](arch.md), and no entry has been adopted unless it says so. Figures were measured on 2026-11-24 against repository revision `1ac7640`, from scratch prototypes and instruction traces, not from the committed interpreter; Section 7 was measured on 2026-11-25; its "before" figures are `ce20048`.
+**Status.** Working record of proposed and evaluated ISA and interpreter optimizations. Adopted changes are marked in the index. Sections 2–6 use the November 24 measurements against `1ac7640` unless otherwise indicated. Section 7 records the November 25 sprite work. Section 9 uses `206b7d8`.
 
 ## 1. Evidence levels
 
@@ -19,24 +19,24 @@
 
 | Idea | Gain | Interpreter cost | Evidence | Status |
 |---|---|---:|---|---|
-| [`CALLT [qN]`](#4-callt-fused-table-call) fused `ldp24` + `callp` | 0.62% of exploration (patched sites; about 0.74% if all) | +12 B | Prototyped | Shelved; opcodes in [Section 5](#5-primary-opcode-inventory) |
+| [`CALLT` and indexed `CALLT`](#91-table-indirect-calls) | 0.54% and 1.06% of exploration respectively | +44 B and +84 B standalone | Prototyped | Secondary encodings use previously invalid values |
 | 1-byte `LDSP16`/`STSP16 [sp+{0,2,4,6}]` on `r4-r7` | about 1.5% of exploration; 3.3% of benchmark cycles | about 0 (reuses 32 slots) | Trace estimate | Waiting on opcode supply ([Section 5.2](#52-demand-and-allocation-options)) |
 | [`SYS draw_tilemap`](#75-draw_tilemap) batch tile blit, 8/16-bit maps, all draw modes, RAM or flash window | 7.0% of exploration on top of the sprite fast path, pixel-identical | +204 B | Prototyped | Adopted 2026-11-25; replaces the earlier declined RAM-only form (8.3%, +176 B against the older renderer) |
 | [Interior aligned sprite fast path](#73-renderer-changes) | 2.18% of exploration | +248 B | Prototyped | Adopted 2026-11-25 |
 | [Tile copy cache](#74-batch-services-and-the-flash-window) inside a batch tile service | about 1.9% of exploration | about +110 B | Trace estimate | Not started |
-| `ENTER`/`LEAVE` (push or pop `r0-r3` with `adjsp`, `ret`) | about 1.1% | about 100 B | Trace estimate | Not started |
-| 3-byte paged absolute `LDM`/`STM` (page in the secondary byte, upper registers) | about 1.4% | about 170 B | Trace estimate | Not started |
-| `TST8` + `BR8` fusion | about 0.5% | about 130 B | Trace estimate | Not started |
+| [`ENTER`/`LEAVE`](#92-stack-frame-fusion) (four saved registers) | 0.98% of exploration | +84 B | Prototyped | Toolchain integration pending |
+| [Three-byte absolute SRAM loads and stores](#94-three-byte-absolute-sram-loads-and-stores) | 1.58% projected for exploration | +76 B | Prototyped | Implemented with the shared-copy handler and linker relaxation |
+| [`TST8` + short `BRNE8`](#93-short-byte-test-branches) | 0.16% of exploration | +40 B | Prototyped | Compact decoder |
 | Short forward skip instead of a stream re-seek | at most 0.05 M cycles | small | Rejected | Taken forward branches are mostly over 16 bytes |
 | `MUL` or swap shifts in the `FA` page | about 0.3 M cycles | about 190 B | Rejected | Decode overhead dominates |
 | Wider compare-and-branch fusion | under 1% | at least 1 KB | Rejected | |
-| Display loop at a 17-cycle byte cadence | at most 0.5 M cycles | about 0 | Unvalidated | Needs OLED timing validation |
+| OLED transmit at a 17-cycle byte cadence | — | — | Rejected | The cycle-17 handoff is for receive streams with dummy transmit bytes |
 
 Interpreter flash is the shared constraint. The interpreter uses 28,100 of 29,696 bytes, leaving 1,596 bytes for ISA work. The experiments below used earlier builds with 364 bytes free. [Interpreter timing and size history](isa_interpreter_implementation.md#5-timing-model)
 
 ## 4. `CALLT`: fused table call
 
-**Status:** shelved proposal. No encoding is reserved, and no interpreter, assembler, compiler or test has been changed. Sections 4.1-4.7 describe the instruction; Section 5 inventories the primary opcodes that could host it, which other proposals also want.
+**Status.** This section records the earlier primary-opcode prototype. Section 9.1 describes the current secondary-opcode proposals. The encodings remain experimental.
 
 ### 4.1. Motivation
 
@@ -127,10 +127,9 @@ Why it works:
 
 The 0.62% covers only the patched sites. Converting every fusable site is estimated at about 0.74% (2,978 × 175 cycles, scaled by 1.247 for interrupt time).
 
-### 4.5. Variants (unbuilt, estimates only)
+### 4.5. Tail-call variant (unbuilt)
 
 - **`jmpt [qN]`** replaces `ldp24` + `jmpp` for tail calls (2 static sites in `rpg.elf`, 1,192 dynamic in the device suite). The body is the same read, then `movw VM_PCL,r24 ; mov VM_PCH,r26 ; rjmp seek_and_dispatch_func`. Estimated +16 B and four more opcodes.
-- **Indexed `callt qB, rI`** is a two-byte form (opcode plus an operand byte: bits 1:0 = base pair, bits 4:2 = index register) that computes `qB + 3*rI` in the interpreter. It would replace the compiler's `xor/mov/mov + 3 × add32` sequence, about 165 cycles at all 25 sites. The operand would use the existing one-byte fetch helper (`fetch_simm8_then_ijmp`) and decode the registers through the register-file-as-memory trick the `F0` forms use. Estimated +50 B, one opcode, and about 290 cycles saved per call in the game. It is a second step, not a replacement for the plain form.
 
 ### 4.6. Toolchain and repository work required
 
@@ -231,7 +230,6 @@ Gains are fractions of avm_rpg exploration busy cycles. Only `SYS draw_tilemap` 
 
 - **`SYS draw_tilemap` (`SYS 0x3E`).** One service call draws a rows by columns array of tiles, replacing the per-tile guest loop and per-tile service restart. ABI: `r4` x, `r5` y, `r6` SRAM address of the tile array, `r7` = rows << 8 | cols, `r2` = skip << 8 | stride. It reused the generic sprite renderer unchanged and cost 172 B of code (+176 B in the image). Measured: busy cycles 88.10 M → 80.80 M (-8.3%), 398 of 398 frames identical, 1,600 randomized cases against a loop of `draw_overwrite` with no mismatch, a fixed 423 cycles per call and 896 per fully visible 16×16 tile. It was declined because it supports neither tile arrays in the flash window nor in program memory, and supporting both would add a lot of code.
 - **1-byte spill and fill.** `ldsp16 rD,[sp+off]` and `stsp16 [sp+off],rS` as primary opcodes for `rD`, `rS` in `r4-r7` and `off` in `{0, 2, 4, 6}`: 32 opcodes. Across the benchmarks this covers 74% of the compiler's upper-register spills and fills, and each saves about 20 cycles (38 → 18).
-- **`ENTER`/`LEAVE`.** In avm_rpg 7,658 four-register prologues (push `r3-r0`, `adjsp -n`) and matching epilogues (`adjsp +n`, pop `r0-r3`, `ret`) run per 398 frames. Fusing each into one 3-byte `F0` form is estimated at about 95 cycles saved per call.
 - **Audio interrupt.** Synthesis took 19.8% of busy cycles; reducing it is an interpreter change, not an ISA change, and was not analyzed.
 
 ## 7. Sprite drawing: renderer fast paths and batch tile services
@@ -370,3 +368,195 @@ With the RPG using the service, D would take the replay a further 1.9% or so dow
 - **Dynamic counts:** `avm_bench --c-only --jobs N --c-output X --stack-output Y --trace-output Z` (and `--cpp-only`) writes per-PC execution counts for every benchmark; join them with `avm-objdump -d build/bench/{c,cpp}/*.elf`. For the device suite, use a scratch copy of `projects/avm_rpg/tests/device_tests.cpp` with a PC histogram in `Device::step()` (an instruction boundary is a native PC word in `[0x100, 0x500)` with `(pc - 0x100) % 4 == 0`; guest PC is `r4:r6`), run with `RPG_NO_TIMING_CHECK=1`.
 - **Static counts:** `avm-objdump -d` on every AVM ELF and archive, counting the first byte of each instruction.
 - **Opcode bytes for exploration:** take them from `avm-objdump`, not from `avm-prof`, for builds made before the profiler's `.flash`-window fix (it misread program PCs in `0x0B00-0x0EB1`).
+
+## 9. ISA fusions and compact absolute addresses
+
+The scratch firmware builds use interpreter revision `206b7d8` (28,100 bytes). The
+RPG trace uses the production guest from `a36520f` and spans 398 displayed frames
+and 77,189,226 cycles outside frame waits. Projected savings apply the measured
+interrupt-free instruction deltas to the trace counts. The proposed encodings
+are provisional.
+
+### 9.1. Table-indirect calls
+
+Plain `CALLT [qN]` uses `F0 70–73`. The handler locates the three-byte table
+entry through `qN`, then calls the existing program-byte reader with native
+`Z = 24` and a count of three. The reader consumes the address before writing
+the target to `r24:r26`. The handler advances the guest PC past the instruction
+and jumps to the checked `CALLP` push-and-seek tail. That tail pushes the same
+24-bit return address and seeks directly to the target.
+
+Indexed `CALLT qB,rI` adds an operand byte with `(rI << 5) | (qB << 2)`. In
+the combined prototype it uses `F0 74`. The standalone prototype uses `F0 6E`.
+It reads the unsigned 16-bit index and the low 24 bits of the base, then adds the
+index three times to form the address of the packed table entry. It joins the
+same three-byte reader and call tail.
+
+```asm
+; r1:r27:r26 = base, r30:r24 = index
+.rept 3
+    add   r26, r24
+    adc   r27, r30
+    adc   r1, ZERO
+.endr
+movw  r24, r26
+mov   r26, r1
+rjmp  callt_read_and_push
+```
+
+| Form | Old → new cycles | Interpreter growth | RPG projection |
+|---|---:|---:|---:|
+| Plain, standalone | 436 → 296 | 44 B | 416,780 cycles over 2,977 adjacent load/call pairs |
+| Indexed, standalone | 601 → 322 | 84 B | 819,702 cycles over 2,938 complete index/load/call sequences |
+| Indexed, added to plain | 461 → 322 | 68 B | 408,382 additional cycles over those same complete sequences |
+
+All four hot static sites have the complete indexed pattern. Plain `CALLT`
+was also exercised with each of the four base pairs. Compiler fusion must
+prove eliminated temporaries have no other use, including as call arguments,
+and preserve the indirect-call stack records and legal unwind edges.
+
+### 9.2. Stack frame fusion
+
+`F0 6E u8` (`ENTER`) reserves an unsigned local-frame size after saving
+`r3,r2,r1,r0` in the existing layout. The handler computes `SP - u8 - 8`,
+checks the stack floor, saves the registers with eight `ST -Y` operations
+and installs the computed SP. `F0 6F u8` (`LEAVE`) adds the local-frame
+size, checks that the saved registers and packed return address fit, then uses
+eight `LD Y+` operations before jumping to the existing `RET` slot.
+
+| Sequence | Old → new cycles | RPG executions |
+|---|---:|---:|
+| Four pushes and negative `ADJSP` | 111 → 65 | 7,595 |
+| Positive `ADJSP`, four pops and `RET` | 217 → 163 | 7,591 |
+
+The standalone pair adds 84 interpreter bytes and projects to 759,284 cycles
+saved. Both operations keep the existing layout for valid frames. `ENTER`
+checks before the first save. `LEAVE` checks the entire restore span.
+Compiler unwind information must describe the fused saves and restores.
+
+### 9.3. Short byte-test branches
+
+`F4 B8–BF rel8` encodes `TST8 rN` plus `BRNE8`. The compact handler uses
+the F4 overflow path, decodes the selected register and compares its low byte
+with zero. It copies native status to `VM_FLAGS` before branching. The
+taken path reuses the existing signed-displacement seek, and the fallthrough
+consumes the displacement and continues streaming.
+
+| Form | Fallthrough cycles | Taken cycles | Added bytes | RPG cycles saved |
+|---|---:|---:|---:|---:|
+| Separate `TST8` and short branch | 70 | 154 | — | — |
+| Compact `BRNE8` fusion | 53 | 144 | 40 | 127,134 |
+| Dense `BRNE8` fusion | 52 | 143 | 72 | 135,240 |
+| Dense `BREQ8` fusion added to dense `BRNE8` | 52 | 143 | 72 | 104,713 additional |
+
+The compact form targets the 6,582 fallthrough and 1,524 taken `BRNE8` pairs.
+The dense table's one-cycle improvement costs 32 more bytes. The combined
+fusion build and the compact branch build reproduce all 896 reference
+instruction timings.
+
+### 9.4. Three-byte absolute SRAM loads and stores
+
+The short forms encode the high address byte in the secondary opcode. All
+four operations, four pages and eight registers fit in `F0 80–FF`. Putting the
+page in the low two bits saves two AVR instructions in the address decoder
+and lets it advance the complete guest PC before reading the third guest byte.
+
+```text
+F0 | 1 kk rrr pp | address_low
+       kk = 0 LDM8U, 1 STM8, 2 LDM16, 3 STM16
+      rrr = r0–r7
+       pp = address_high - 1
+```
+
+For example, `ldm8u r4,[0x0297]` changes from `F0 44 97 02` to
+`F0 91 97`. The encoded address is the starting address. A word transfer at
+a page boundary increments the complete 16-bit pointer, including when the
+second byte lands at `0x0500`. The decoder uses ordinary AVR SRAM operations
+throughout. The existing four-byte forms continue to serve other starting
+addresses and AS0 flash-window loads.
+[AVM data-space layout](arch.md#10-static-storage-and-framebuffer)
+
+The dedicated F0 entry reads the secondary at cycle 17 and starts the next
+transfer at cycle 18. After the range check, it decodes the register pointer
+into `X`, decodes the page into `ZH` and advances `VM_PC`. It reads the
+address low byte into `ZL` at cycle 35 and starts fetching the next opcode at
+cycle 36. Existing F0 forms rejoin the shared veneer dispatch at its original
+cycle. The new encodings use a single handler and occupy no veneer slots.
+
+The smaller variant swaps the pointers for stores so both directions share a
+byte copy. It copies a second byte for words, zeroes the register high byte
+for `LDM8U`, and leaves the adjacent SRAM byte alone for `STM8`.
+
+```asm
+; X = register-file address, Z = SRAM address, r24 = secondary
+    sbrs  r24, 5
+    rjmp  paged_copy
+    movw  r0, r30
+    movw  r30, r26
+    movw  r26, r0
+paged_copy:
+    ld    r0, Z+
+    st    X+, r0
+    sbrc  r24, 6
+    rjmp  paged_high
+    sbrs  r24, 5
+    st    X, ZERO
+    rjmp  cluster_tail_18_delay_1
+paged_high:
+    ld    r0, Z
+    st    X, r0
+    rjmp  cluster_tail_18
+```
+
+| Shared-handler change | AVR words | Bytes |
+|---|---:|---:|
+| Replace existing F0 primary slot | 0 net | 0 |
+| F0 entry, legacy bound check and jump back to the shared dispatch | +9 | +18 |
+| Guard for the new secondary range | +2 | +4 |
+| Register pointer (5), SRAM page (3), PC advance (3), SPI handoff (2) | +13 | +26 |
+| Direction test and pointer swap | +5 | +10 |
+| First-byte copy, width test, byte-load zero extension and dispatch jump | +7 | +14 |
+| Word high-byte copy and dispatch jump | +3 | +6 |
+| Remove the old F0-only width-one stub | −2 | −4 |
+| Alignment padding before `ff_cmp` | −1 | −2 |
+| **Linked firmware growth** | **+36** | **+72** |
+
+The instruction changes add 74 bytes before alignment. The scratch firmware
+grows from 28,100 to 28,172 bytes. Adding this handler to the combined fusion
+prototype also costs 72 linked bytes and preserves the fusion timings. The
+adopted build is 28,176 bytes. Accepting both image versions adds one AVR
+instruction and changes the alignment padding. [Encoding and relocation](arch.md#232-absolute-data-space-forms)
+
+| Variant | `LDM8U` | `STM8` | `LDM16` | `STM16` | Linked growth | RPG cycles saved |
+|---|---:|---:|---:|---:|---:|---:|
+| Existing four-byte forms | 72 | 72 | 73 | 72 | — | — |
+| Three-byte, shared copy | 54 | 55 | 55 | 57 | +72 B | 1,219,078 |
+| Three-byte, separate handlers | 53 | 53 | 55 | 54 | +88 B | 1,284,553 |
+| Separate handlers with the page in bits 6:5 | 54 | 54 | 57 | 56 | +92 B | 1,201,286 |
+
+Separate handlers replace the shared 15-word copy body with 23 words of
+operation dispatch and memory transfers. Keeping the page in bits 6:5 adds
+another two words (`SWAP` and `LSR`) to extract the page and pushes the
+last two PC carry updates past the address fetch.
+
+The trace contains 46,343 byte loads, 7,172 byte stores, 13,280 word loads
+and 1,596 word stores eligible for the short form. Pages `0x01`, `0x02` and
+`0x03` account for 28,055, 28,409 and 11,927 of those executions. The shared
+copy saves about 16,932 cycles per added byte over the replay. The extra
+16 bytes for separate handlers save another 65,475 cycles.
+
+Each prototype passed 384 value and condition checks across all 128 encodings,
+including each page's final byte, and reproduced all 896 existing instruction
+timings. The original RPG binary produced identical guest PC/cycle traces
+and frame payloads with the shared-copy firmware.
+
+Rebuilding the RPG with the adopted toolchain produced 68,426 paged accesses
+at 260 executed PCs. The same replay took 75,752,428 cycles outside frame
+waits, down from 77,189,226 (1.86%), and all 398 transmitted frame payloads
+matched. The linked guest `.text` shrank by 2,829 bytes. This comparison
+includes the compiler's updated cycle calibration.
+
+The assembler emits the
+short form directly for resolved numeric addresses in the range. For symbolic
+addresses the linker relaxes the four-byte form when the final address,
+including the addend, falls in the range.

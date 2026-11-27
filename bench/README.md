@@ -22,6 +22,70 @@ This retains per-workload disassemblies and updates the cycle and instruction-mi
 
 Numerical semantics and precision policy are described in the [math runtime guide](../runtime/lib/math/README.md). Candidate-generation and research report scripts live under `tools/research/math/`; their working results belong under `build/research/`.
 
+## Shorter synthesis interrupt and stopped muted voices
+
+Two changes, measured against the build before them with the Ardens harness (the real
+sequencer and ISR) and the avm_rpg QA guest:
+
+* The interrupt reads one control byte per voice (amplitude, tonal waveform and a stopped
+  bit), adds a wholly high or low pulse sample as `+amplitude` or `-amplitude` without a
+  multiplication, mixes in a byte biased by 32 so that the default gain needs one compare
+  and two shifts, no longer rewrites `TC4H`, and forms the noise feedback with fewer
+  instructions. On its own this leaves the PCM of all seven game songs identical at both
+  synthesis rates.
+* A voice is stopped instead of mixed when its owner's (music or effects) volume is zero,
+  and the noise voice also whenever its attenuated amplitude is zero. Tonal voices silenced
+  by their own channel volume keep running, so every tonal phase matches the earlier
+  firmware while the owner volumes are nonzero (checked sample by sample on all seven songs
+  at both rates). Noise holds its state while muted, so songs with noise differ from the
+  earlier output afterwards. An earlier form of this change also stopped silent tonal voices;
+  it saved 0.04 CPU points more on average (0.12 at most) and moved their phases.
+
+| Measurement | Before | After |
+| --- | ---: | ---: |
+| FX/FX-C/Mini interpreter flash | 28,196 bytes | 28,176 bytes (-20) |
+| Space below 29,696-byte limit | 1,500 bytes | 1,520 bytes |
+| Persistent audio SRAM / Timer1 stack | 101 / 8..10 bytes | 101 / 8..10 bytes |
+| Early PWM write, including entry/vector | 21 cycles | 18 cycles |
+| Pulse voice, wholly high / wholly low / high-byte tie | 35 / 40 / 52 cycles | 28 / 31 / 43 cycles |
+| Pulse voice, rising edge / falling edge | 55 / 71 cycles | 54 / 68 cycles |
+| Saw / triangle voice | 32 / 34 cycles | 31 / 35 cycles |
+| Active / stopped noise | 24 / 5 cycles | 20 / 5 cycles |
+| All-stopped ISR at gain 128 / 32 / other | 74 / 74 / 74 cycles | 76 / 77 / 79 cycles |
+| No voice stopped, no edge, gain 128, ordinary range / pending maximum | 174..246 / 338 cycles | 163..209 / 297 cycles |
+| Three falling edges, pending packet, gain 128 / 255 | 397 / 411 cycles | 373 / 393 cycles |
+| Foreground: four-voice note service | 1,689 cycles | 1,685 cycles |
+| Foreground: volume-only service | 1,272 cycles | 1,268 cycles |
+| Foreground: one-voice commit, pitch unchanged / new pitch / silence | 446 / 552 / 417 cycles | 420 / 526 / 384 cycles |
+| `avm_audio_enable` from disabled | 236 cycles | 611 cycles (it now publishes the voices) |
+
+Mean synthesis interrupt over a whole looping song at 15625 Hz, in cycles (percent of the
+CPU), with each change added in turn, and with the music volume at zero:
+
+| Song | Before | Interrupt changes | Plus stopped muted voices | Volume 0, before | Volume 0, after |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Call of Venlor | 174.15 (17.0) | 148.62 (14.5) | 147.34 (14.4) | 160.72 (15.7) | 76.42 (7.5) |
+| Morning in the Meadow | 182.22 (17.8) | 153.56 (15.0) | 153.56 (15.0) | 168.39 (16.4) | 76.25 (7.4) |
+| Glade and Hearth | 173.48 (16.9) | 147.88 (14.4) | 147.88 (14.4) | 159.61 (15.6) | 76.24 (7.4) |
+| Peaceful Village | 181.72 (17.7) | 153.55 (15.0) | 153.55 (15.0) | 167.88 (16.4) | 76.21 (7.4) |
+| Steel at Dawn | 178.34 (17.4) | 151.70 (14.8) | 145.58 (14.2) | 164.72 (16.1) | 76.44 (7.5) |
+| Stone and Shadow | 195.65 (19.1) | 164.75 (16.1) | 161.00 (15.7) | 182.09 (17.8) | 76.35 (7.5) |
+| Where the Light Ends | 165.41 (16.2) | 141.29 (13.8) | 138.47 (13.5) | 152.07 (14.9) | 76.35 (7.5) |
+| All seven, by sample | 179.28 (17.5) | 152.00 (14.8) | 150.34 (14.7) | 165.65 (16.2) | 76.31 (7.5) |
+
+Busy CPU in the game over six-second windows (audio disabled is unchanged at 55.9%):
+
+| Scene | Before | After |
+| --- | ---: | ---: |
+| Audio menu, music playing | 73.97% | 71.28% (-2.70) |
+| Audio menu, music volume 0 | 72.16% | 63.24% (-8.93) |
+| Exploration, music playing | 74.08% | 71.38% (-2.71) |
+
+The extra cycles of an all-stopped interrupt come from the output stage, which no longer
+tests for a silent mix before reading the gain. The extra interrupt entry delay observed
+in the game is unchanged at 0..7 cycles. All 900 lines of the instruction benchmark report
+are identical.
+
 ## Area-sampled pulses, without the tonal low-pass
 
 (The 16-bit reciprocal figures below are superseded by the next subsection, which records the 8-bit reciprocal that is current.)

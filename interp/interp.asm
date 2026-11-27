@@ -82,10 +82,16 @@
 #define data_boot_hold               (data_audio_begin+1)
 ; Shared output master, default 128 (32=unity).
 #define data_audio_volume            (data_audio_begin+2)
+; Four live (uint16 increment, uint8 control) records in physical channel order.
+; Control bits 0..4 are the attenuated amplitude. Bit 7 (stored as 255) stops a voice: the
+; interrupt neither advances nor mixes it. Tonal voices keep waveform bits 5..6 of the
+; desired record: 00 pulse, 01 triangle, 11 saw. A pulse or noise control byte is
+; therefore its bare amplitude.
 #define data_audio_controls          (data_audio_begin+3)
 #define data_audio_duty              (data_audio_controls+12)
-#define data_audio_waveform          (data_audio_duty+3)
-#define data_audio_phases            (data_audio_waveform+1)
+; Unused; keeps every later address where it was.
+#define data_audio_duty_spare        (data_audio_duty+3)
+#define data_audio_phases            (data_audio_duty_spare+1)
 #define data_audio_noise             (data_audio_phases+6)
 #define data_audio_noise_spare       (data_audio_noise+2)
 #define data_audio_music_notes       (data_audio_noise_spare+1)
@@ -93,9 +99,10 @@
 #define data_audio_music             (data_audio_sfx_notes+8)
 #define data_audio_sfx               (data_audio_music+10)
 #define data_audio_update_controls   (data_audio_sfx+7)
-#define data_audio_update_waveform   (data_audio_update_controls+15)
-; Bit 7 publishes all 16 controls; bits 0..5 optionally reseed noise (1..63).
-#define data_audio_update            (data_audio_update_waveform+1)
+; Unused, as above.
+#define data_audio_update_spare      (data_audio_update_controls+15)
+; Bit 7 publishes the 15 control and duty bytes; bits 0..5 optionally reseed noise (1..63).
+#define data_audio_update            (data_audio_update_spare+1)
 #define data_audio_sample            (data_audio_update+1)
 #define data_audio_rate              (data_audio_sample+1)
 #define data_audio_music_loop        (data_audio_rate+1)
@@ -15547,7 +15554,6 @@ audio_commit_wait:
 
 audio_commit_prepare:
     rcall audio_commit_wait
-    sts  data_audio_update_waveform, ZERO
     lds  r23, data_audio_sfx+AUDIO_MASK
     ldi  r18, 0 ; physical voice index
     ldi  r26, lo8(data_audio_update_controls)
@@ -15575,16 +15581,7 @@ audio_commit_prepare:
     ldd  r0, Z+1
     ldd  r21, Z+2
     cpi  r18, 3
-    breq .Laudio_stage_duty_done
-    ; Fold each owner's non-pulse/saw selection into bits 0..2/3..5. Noise
-    ; never enters this path. Build only the unpublished staging byte.
-    lds  r25, data_audio_update_waveform
-    lsr  r25
-    bst  r21, 5
-    bld  r25, 2
-    bst  r21, 6
-    bld  r25, 5
-    sts  data_audio_update_waveform, r25
+    breq .Laudio_stage_duty_done ; noise has no duty
     ldd  r25, Z+3
     mov  r30, r18
     subi r30, lo8(-(data_audio_update_controls+12))
@@ -15609,6 +15606,7 @@ audio_commit_prepare:
 .Laudio_stage_pitch:
     st   X+, r24
     st   X+, r0
+    mov  r24, r21 ; keeps the waveform bits while the amplitude is scaled
     andi r21, 31
     ; Round volume * owner_gain / 255 to the existing five-bit amplitude.
     ; For this bounded product, (p+128+((p+128)>>8))>>8 is exact.
@@ -15617,15 +15615,26 @@ audio_commit_prepare:
     add  r0, r25
     adc  r1, ZERO
     add  r0, r1
-    adc  r1, ZERO
-    mov  r21, r1
-.Laudio_stage_amplitude:
-    st   X+, r21 ; attenuated 0..31; shared gain follows the complete mix
+    adc  r1, ZERO ; r1 = attenuated amplitude, 0..31
+    ; A tonal voice stops only when its owner's volume is zero. Otherwise it keeps
+    ; running through silence, so its phase keeps its relation to the other voices.
+    ; Noise has no such relation and stops whenever its amplitude is zero.
+    cpi  r18, 3
+    brne 1f
+    mov  r20, r1
+    clr  r24 ; noise has no waveform; a direct tone may have set its bit
+1:
+    tst  r20
+    breq .Laudio_stage_stopped
+    andi r24, 0x60
+    or   r1, r24
+    st   X+, r1 ; amplitude and waveform; shared gain follows the complete mix
     rjmp .Laudio_stage_next
 .Laudio_stage_silent:
     st   X+, ZERO
     st   X+, ZERO
-    ldi  r25, 255 ; reserved amplitude: stopped, not merely muted
+.Laudio_stage_stopped:
+    ldi  r25, 255 ; reserved control: stopped
     st   X+, r25
 .Laudio_stage_next:
     cpi  r18, 3
@@ -15716,7 +15725,7 @@ audio_stage_recip:
 ; native libm may have borrowed r2 when the ISR accepts a pending update.
 audio_apply_update:
     .set audio_control_offset, 0
-    .rept 16
+    .rept 15
         lds r21, data_audio_update_controls+audio_control_offset
         sts data_audio_controls+audio_control_offset, r21
         .set audio_control_offset, audio_control_offset+1
@@ -15843,7 +15852,8 @@ sys_audio_impl:
     rjmp .Laudio_command_commit
 .Laudio_enable_command:
     rcall audio_enable
-    rjmp .Laudio_command_done
+    ; Publish the desired state, so that idle voices are stopped even before any play.
+    rjmp .Laudio_command_commit
 .Laudio_disable_command:
     lds  r24, data_audio_fade_volume
     tst  r24
@@ -16120,23 +16130,25 @@ bootloader_reset_wait:
 ; Output and synthesis run at 7812.5 Hz or 15625 Hz, selected in foreground.
 ; Emit the held sample at fixed latency, then prepare its successor.
 ; Synthesis saves r0:r1, r20:r21, r26 and SREG (8 bytes including PC).
-; r2 may be borrowed by libm. Duty thresholds and amplitudes are separate.
+; r2 may be borrowed by libm. Duty thresholds are separate from the control bytes.
 ; Signed samples are -128..127; round(sample * prepared_amplitude / 128).
-; No SPI or sequencing. Amplitude 255 means stopped (increment zero).
+; No SPI or sequencing. Control bit 7 means stopped.
 ; A pulse is the average of the ideal waveform over the sample interval, so an edge is placed
 ; between samples instead of on one: a sample that contains no edge is +127 or -127, and a
 ; sample that contains one is 254*covered/255-127, where covered is the high fraction of the
-; interval, covered = x * floor(2^24/increment) >> 16 in 0..255. Rising edges (the phase wraps)
+; interval, covered = x * floor(65536/increment) >> 8 in 0..255. Rising edges (the phase wraps)
 ; have x = min(phase, threshold); falling edges (the phase passes the threshold) have
 ; x = phase - threshold and use 255 - covered. At most one edge per sample is modelled,
 ; which holds while the increment stays below both the threshold and its complement.
-; Tonal paths: pulse 35 (wholly high), 40 (wholly low), 71 (rising edge), 87 (falling edge);
-; 34 triangle; 32 saw; stopped: 5 cycles.
+; A sample without an edge needs no multiplication: for amplitudes 0..31, +127 and -127
+; round to exactly +amplitude and -amplitude.
+; Tonal paths: pulse 28 (wholly high), 31 (wholly low), 54 (rising edge), 68 (falling edge);
+; 35 triangle; 31 saw; stopped: 5 cycles.
 .macro audio_wave channel
 audio_wave_begin\channel:
     lds  r20, data_audio_controls+3*\channel+2
-    cpi  r20, 255
-    breq audio_wave_end\channel
+    sbrc r20, 7
+    rjmp audio_wave_end\channel
     lds  r0, data_audio_phases+2*\channel
     lds  r21, data_audio_phases+2*\channel+1
     lds  r1, data_audio_controls+3*\channel
@@ -16145,41 +16157,24 @@ audio_wave_begin\channel:
     adc  r21, r1
     sts  data_audio_phases+2*\channel, r0
     sts  data_audio_phases+2*\channel+1, r21
-    lds  r0, data_audio_waveform
-    sbrs r0, \channel
-    rjmp .Laudio_pulse\@
-    sbrc r0, (3+\channel)
-    rjmp .Laudio_saw\@
-    sbrc r21, 7
-    com  r21
-    lsl  r21
-    subi r21, 127
-    rjmp audio_wave_mix\channel
-.Laudio_saw\@:
-    subi r21, 128 ; signed ramp -128..127
-    rjmp audio_wave_mix\channel
-.Laudio_pulse\@:
+    sbrc r20, 5 ; set for triangle and saw
+    rjmp audio_wave_nonpulse\channel
     brcs .Laudio_pulse_rise\@ ; the phase wrapped: a rising edge is in this sample
     lds  r0, data_audio_duty+\channel
     cp   r21, r0
-    brsh .Laudio_pulse_low\@
-    ldi  r21, 127 ; wholly high
-    rjmp audio_wave_mix\channel
-.Laudio_pulse_low\@:
+    brsh .Laudio_pulse_past\@
+    add  r26, r20 ; wholly high
+    rjmp audio_wave_end\channel
+.Laudio_pulse_past\@:
     ; Time past the threshold is l = phase - duty*256. Wholly low when it spans the sample.
     sub  r21, r0 ; l high byte
-    lds  r1, data_audio_controls+3*\channel+1
-    cp   r1, r21
+    cp   r1, r21 ; r1 still holds the increment's high byte
     brlo audio_wave_floor\channel ; l > increment
     rjmp audio_pulse_fall\channel
 .Laudio_pulse_rise\@:
     rjmp audio_pulse_rise\channel
 audio_wave_floor\channel:
-    ldi  r21, 0x81 ; wholly low, -127
-audio_wave_mix\channel:
-    fmulsu r21, r20
-    lsl  r0 ; round toward nearest, ties toward positive
-    adc  r26, r1
+    sub  r26, r20 ; wholly low
 audio_wave_end\channel:
 .endm
 
@@ -16190,10 +16185,8 @@ timer1_compa_isr:
     push r20
 timer1_synthesis:
     lds  r20, data_audio_sample
-    clr  r0
-    sts  TC4H, r0
 timer1_endpoint_write:
-    sts  OCR4A, r20
+    sts  OCR4A, r20 ; TC4H stays zero: only startup and audio_enable write it
     push r1
     push r21
     push r26
@@ -16202,43 +16195,59 @@ timer1_endpoint_write:
     lds  r20, data_audio_update
     sbrc r20, 7
     rcall audio_apply_update
-    ldi  r26, 128 ; 5-bit voices fit one biased byte, including noise
+    ldi  r26, 32 ; biased mix: the default gain makes the PWM duty four times this sum
     audio_wave 0
     audio_wave 1
     audio_wave 2
 
 audio_noise_begin:
-    ; Active: 24 cycles; stopped: 5. Muted active voices still advance.
+    ; Active: 20 cycles; stopped: 5.
     lds  r20, data_audio_controls+11
-    cpi  r20, 255
-    breq audio_noise_end
+    sbrc r20, 7
+    rjmp audio_noise_end
     ; recurrence: feedback from shifted bits 15/14, once per active sample.
     lds  r0, data_audio_noise
     lds  r21, data_audio_noise+1
     lsl  r0
     rol  r21
-    ldi  r20, 1
-    sbrc r21, 7
-    eor  r0, r20
-    sbrc r21, 6
-    eor  r0, r20
-    sts  data_audio_noise, r0
-    sts  data_audio_noise+1, r21
-
-    lds  r20, data_audio_controls+11
-    sbrc r21, 7
+    sbrc r21, 7 ; bit 15 of the new state selects negative amplitude
     neg  r20
     add  r26, r20
+    sts  data_audio_noise+1, r21
+    ; The feedback is bit 15 ^ bit 14: adding 0x40 leaves it in bit 7. The shift
+    ; cleared bit 0, so setting it cannot carry.
+    subi r21, 0xc0
+    sbrc r21, 7
+    inc  r0
+    sts  data_audio_noise, r0
 audio_noise_end:
-    ; All accumulation stays in a biased byte. Scale only the completed mix;
+    ; All accumulation stays in a byte biased by 32. Scale only the completed mix;
     ; MULSU's hardware result is a temporary product, never an accumulator.
-    cpi  r26, 128
-    breq .Laudio_output
     lds  r20, data_audio_volume
+    cpi  r20, 128
+    brne .Laudio_output_gain
+    cpi  r26, 64 ; common default: 4 * biased sum, which fits for 0..63
+    brsh .Laudio_output_clip
+    lsl  r26
+    lsl  r26
+.Laudio_output:
+    sts  data_audio_sample, r26
+    pop  r26
+    pop  r21
+    pop  r1
+timer1_output_done:
+    pop  r20
+    pop  r0
+    out  SREG, r0
+    pop  r0
+    reti
+
+.Laudio_output_gain:
+    subi r26, 160 ; 128 + signed sum, which is the unity-gain result
     cpi  r20, 32
     breq .Laudio_output ; exact unity
-    cpi  r20, 128
-    breq .Laudio_output_four ; common default has a short shift-only path
+    cpi  r26, 128
+    breq .Laudio_output ; a silent mix needs no scaling
     mov  r21, r26
     subi r21, 128
     mulsu r21, r20
@@ -16260,34 +16269,42 @@ audio_noise_end:
     mov  r26, r1
     subi r26, 128
     rjmp .Laudio_output
-.Laudio_output_four:
-    subi r26, 96 ; biased 96..159 maps to PWM 0..252 after two shifts
-    brcs .Laudio_output_low
-    cpi  r26, 64
-    brsh .Laudio_output_high
-    lsl  r26
-    lsl  r26
-    rjmp .Laudio_output
+.Laudio_output_clip:
+    cpi  r26, 160 ; 64..159 overflowed upward; 160..255 wrapped from below zero
+    brlo .Laudio_output_high
 .Laudio_output_low:
     ldi  r26, 0
     rjmp .Laudio_output
 .Laudio_output_high:
     ldi  r26, 255
-.Laudio_output:
-    sts  data_audio_sample, r26
-    pop  r26
-    pop  r21
-    pop  r1
-timer1_output_done:
-    pop  r20
-    pop  r0
-    out  SREG, r0
-    pop  r0
-    reti
+    rjmp .Laudio_output
 
-; Pulse samples that contain an edge, out of line to keep the common samples short.
-; r21 = x high byte, x low byte = the voice's stored phase low byte; T = 1 for a falling edge.
-.macro audio_pulse_edges channel
+; Out of line, to keep the common samples short: triangle and saw voices, and pulse samples
+; that contain an edge. Each accumulates and returns to audio_wave_end, or leaves through
+; audio_wave_floor. On entry r20 is the voice's control byte and r21 the new phase high
+; byte, except at audio_pulse_fall, where r21 is the high byte of the time past the
+; threshold. At audio_pulse_covered, x = r21:phase low byte and T = 1 for a falling edge.
+.macro audio_wave_cold channel
+audio_wave_nonpulse\channel:
+    sbrs r20, 6
+    rjmp audio_wave_triangle\channel
+    andi r20, 31
+    subi r21, 128 ; saw: signed ramp -128..127
+audio_wave_mix\channel:
+    fmulsu r21, r20
+    lsl  r0 ; round toward nearest, ties toward positive
+    adc  r26, r1
+    rjmp audio_wave_end\channel
+audio_wave_triangle\channel:
+    andi r20, 31
+    sbrc r21, 7
+    com  r21
+    lsl  r21
+    subi r21, 127
+    fmulsu r21, r20
+    lsl  r0
+    adc  r26, r1
+    rjmp audio_wave_end\channel
 audio_pulse_fall\channel:
     lds  r0, data_audio_phases+2*\channel ; l low byte
     lds  r1, data_audio_controls+3*\channel
@@ -16314,7 +16331,7 @@ audio_pulse_covered\channel:
     lds  r0, data_audio_phases+2*\channel
     mul  r0, r20
     add  r21, r1 ; r1 is rewritten by the mix before anything reads it
-    lds  r20, data_audio_controls+3*\channel+2
+    lds  r20, data_audio_controls+3*\channel+2 ; a pulse's control is its amplitude
     brtc 2f
     com  r21
 2:
@@ -16322,9 +16339,9 @@ audio_pulse_covered\channel:
     subi r21, 127 ; 0xfe-127 = +127, 0-127 = -127
     rjmp audio_wave_mix\channel
 .endm
-audio_pulse_edges 0
-audio_pulse_edges 1
-audio_pulse_edges 2
+audio_wave_cold 0
+audio_wave_cold 1
+audio_wave_cold 2
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Fatal trap dispatch (cold path). Entered with r25 = reason. Native r25 is

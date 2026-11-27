@@ -166,9 +166,11 @@ def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False
     samples. This makes fitting late excerpts practical. Looping is a playback
     setting; pass loop=True and a duration to render more than one traversal.
     Sequenced SFX callers must leave loop disabled, as on the AVR.
-    Noise advances once per nonzero-increment sample, including volume zero;
-    stopped intervals freeze its cursor. Retriggers replace the next-state cursor
-    even while stopped. Pitch magnitude never changes its clock.
+    A tonal voice advances whenever its increment is nonzero, including volume
+    zero. Noise advances once per sample with a nonzero increment and volume, and
+    otherwise freezes its cursor, as on the AVR with nonzero stream volumes.
+    Retriggers replace the next-state cursor even while stopped. Pitch magnitude
+    never changes its clock.
     One shared output gain applies after the voices and noise are added.
     """
     if rate not in RATES or not isinstance(master, int) or not 0 <= master <= 255:
@@ -218,7 +220,7 @@ def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False
                     out += np.where(lfsr & 0x8000, -amp, amp).astype(np.int16)
             mix[lo-first:end-first] = out
         n = end - cursor
-        if increments[3]:
+        if increments[3] and volumes[3] & 31:
             noise_index = (noise_index + n) % 32767
         for ch in range(3):
             phases[ch] = (phases[ch] + n * increments[ch]) & 65535

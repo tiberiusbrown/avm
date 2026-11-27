@@ -146,7 +146,7 @@ class RenderTests(unittest.TestCase):
 
     def test_waveform_switches_duty_retention_loops_mixing_and_phase(self):
         data = avm_music.compile_source("""
-            channel 0 { volume 31 duty 32 c:12ms wave triangle c:12ms duty 192 c:12ms wave saw c:12ms wave pulse c:12ms }
+            channel 0 { volume 31 duty 32 c:12ms wave triangle c:12ms duty 192 c:12ms volume 0 c:12ms volume 31 wave saw c:12ms wave pulse c:12ms }
             channel 1 { volume 17 wave triangle e:24ms wave saw e:24ms wave square e:12ms }
             channel 2 { volume 24 wave saw g:60ms }
             channel 3 { wave noise volume 7 noise_retrigger { every 16ms seed 37 } c:60ms }
@@ -180,7 +180,7 @@ class RenderTests(unittest.TestCase):
                         phases[ch] = total & 65535
                         amp = (controls[ch] & 31) if incs[ch] else 0
                         if ch == 3:
-                            if incs[ch]:
+                            if amp:
                                 state = noise_next(state)
                             mix += -amp if state & 0x8000 else amp
                         else:
@@ -279,7 +279,7 @@ class RenderTests(unittest.TestCase):
                         index, base = 0, base+event.tick
                     else:
                         inc = 0
-            if inc:
+            if inc and amp:
                 state = noise_next(state)
             value = (-amp if state & 0x8000 else amp) if inc else 0
             expected.append((value*master+16)//32)
@@ -333,7 +333,7 @@ class RenderTests(unittest.TestCase):
             np.testing.assert_array_equal(a.pcm, b.pcm)
 
     def test_noise_stopped_muted_retrigger_loops_and_skipped_prefix(self):
-        # Seed-only commands are accepted while stopped; volume zero is active.
+        # Seed-only commands are accepted while stopped; volume zero also stops the noise voice.
         events = [(1, {3: {"increment": 0, "volume": 31, "seed": 37}}),
                   (10, {3: {"increment": 1234}}), (18, {3: {"volume": 0}}),
                   (24, {3: {"volume": 31}}), (32, {3: {"increment": 0}}),

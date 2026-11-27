@@ -1093,7 +1093,8 @@ to 128, and persists across stop/pause/disable: 32 is unity, 128 is 400%,
 255 is 796.875%. Master changes leave individual attenuation and prepared
 channel amplitudes intact, including at mute. The ISR applies gain once,
 after the voices and noise are added, rounds to the nearest output sample
-(ties toward positive), then saturates. Muting preserves phase and ownership.
+(ties toward positive), then saturates. Muting preserves phase and ownership,
+and the oscillators keep running.
 
 `avm_audio_music_volume` and `avm_audio_sfx_volume` independently attenuate
 their streams: 0 mutes, 255 is full volume (the default), and 128 is approximately
@@ -1101,7 +1102,11 @@ half volume. SFX attenuation includes direct tones. These settings persist
 across play, stop, pause and disable/enable without changing the master gain.
 Foreground preparation rounds `channel_volume * attenuation / 255` to the
 existing 0..31 amplitude range before mixing. Quiet
-channels therefore have coarse fade steps. Desired channel volumes, phase,
+channels therefore have coarse fade steps. A stream volume of zero stops the
+voices that stream owns, which saves their synthesis time and freezes their phase
+or noise state until they are audible again. The noise voice also stops whenever
+its amplitude is zero for any other reason, but a tonal voice keeps running, so
+its phase keeps its relation to the other voices. Desired channel volumes,
 playback timing and ownership are preserved; muted SFX still owns its slots,
 and release restores the current attenuated music. Changes affect already
 playing notes through the usual atomic control publication.
@@ -1152,14 +1157,20 @@ is added, and there is one queued pointer rather than an allocated playlist.
 ## Pulse, triangle, sawtooth, and noise synthesis
 
 Each tonal oscillator has a uint16 phase, uint16 increment, uint8 duty, and
-uint8 amplitude 0..31. Foreground publishes the selected owner's attenuated
-channel volume; master gain is applied after mixing. Reserved amplitude
-`0xFF` means stopped with increment zero:
-the ISR skips the oscillator and preserves phase. Inactive owners and zero
-increments use this sentinel. Channel volume zero prepares amplitude **zero**;
-shared master zero leaves amplitudes intact and mutes the completed output.
-Both cases continue advancing phase while muted. The stream format is unchanged.
-For a non-sentinel amplitude it advances phase and forms the pulse sample.
+an amplitude 0..31. Foreground publishes the selected owner's attenuated channel
+volume in the voice's [control byte](#timers-atomic-publication-and-memory);
+master gain is applied after mixing. Control `0xFF` stops a voice: the ISR
+skips the oscillator and preserves its phase. Inactive owners and zero increments
+use this value, and so does every voice of an owner whose attenuation volume is
+zero; such a voice costs no synthesis time and resumes from the phase it stopped
+at. A tonal voice that is silent for another reason (channel volume zero, an
+attenuated product that rounds to zero, or shared master zero) keeps running and
+advancing its phase. Phases are never aligned deliberately, but this keeps two
+voices that play the same pitches and rests at a constant offset, whatever their
+envelopes do. The noise voice has no such relation and also stops whenever its
+attenuated amplitude is zero; shared master zero only mutes the completed output.
+The stream format is unchanged. A running voice advances its phase and forms its
+sample.
 Duty is 0..255, default 128 (exact 50%). Percentages use a 256-step cycle:
 12.5%=32, 25%=64, 50%=128; 100% clamps to 255. The pulse is high while the phase
 is below `duty * 256`. Duty 0 is always negative; 255 has one negative phase bin,
@@ -1215,16 +1226,15 @@ bits, then compute `sample = 2*h - 127`. Equivalently,
 `SBRC/COM/LSL/SUBI` generates this in four cycles for either half of the phase.
 Sawtooth computes `sample = phase_high - 128`: phase bytes 0, 64, 128, 192,
 and 255 yield -128, -64, 0, 64, and 127. Its downward wrap is instantaneous.
-The existing `LDS/SBRS/RJMP` selects pulse or non-pulse; only the non-pulse
-path checks saw selection with `SBRC/RJMP`. Triangle's original calculation
-and the mixer are unchanged. Including phase advancement, amplitude load, selection, and
-multiplication/accumulation, an active triangle voice costs **34 cycles** and a saw voice
-**32**, independent of phase, non-sentinel amplitude, and duty. A pulse voice costs
-**35** when the sample is wholly high, **40** when it is wholly low (**52** when the
-high bytes of the time past the threshold and of the increment tie), **55** with a rising
-edge and **71** with a falling edge. Each stopped voice takes **5 cycles**. The edge paths
-are out of line, after the interrupt's `RETI`, and use only the registers the interrupt
-already saves. A single shared edge routine for the three voices would save only about 18
+The ISR reads each voice's control byte once: bit 7 skips a stopped voice, bit 5 selects
+triangle or saw, and bit 6 then selects saw. Including phase advancement, selection and
+accumulation, an active triangle voice costs **35 cycles** and a saw voice
+**31**, independent of phase, amplitude, and duty. A pulse voice costs
+**28** when the sample is wholly high, **31** when it is wholly low (**43** when the
+high bytes of the time past the threshold and of the increment tie), **54** with a rising
+edge and **68** with a falling edge. Each stopped voice takes **5 cycles**. The triangle,
+saw and edge paths are out of line, after the interrupt's `RETI`, and use only the registers
+the interrupt already saves. A single shared edge routine for the three voices would save only about 18
 bytes: the voice-dependent loads cannot be shared (the voice data are separate arrays), the
 four free registers cannot hold the two products and their operands without one more
 saved register, so the shared part is a handful of instructions behind an `RCALL`/`RET`
@@ -1235,8 +1245,11 @@ note, with no new per-sample lookup.
 
 The pulse fast paths are 16-bit compares of the phase against the threshold, so no sample
 that contains an edge is classified from the high byte alone. They use no table, LPM, or
-Z register. FMULSU, rounding `floor(sample * amplitude / 128 + 0.5)`, sign extension, signed
-biased byte mixing, PWM bias 128, and final 0..255 clipping are retained.
+Z register. Samples round as `floor(sample * amplitude / 128 + 0.5)`. For the +127 and -127
+of a sample without an edge, that is exactly `+amplitude` and `-amplitude`, which the ISR adds
+or subtracts directly; edge, triangle and saw samples use FMULSU. The voices accumulate in one
+byte biased by 32. At the default gain 128 the PWM duty is four times that byte, clipped to
+0..255; other gains remove the bias before scaling around the PWM center 128.
 
 Foreground publishes each tonal voice's reciprocal `R` with its increment, while staging a
 packet. The staged byte from the previous pass is kept whenever it is still the floor for
@@ -1244,14 +1257,14 @@ the new increment, which is the case exactly when `0 <= 65536 - increment*R < in
 (one 16x8 multiplication, about 20 cycles); otherwise it divides, with an 8-iteration
 restoring division of `2^16` (about 110 cycles). A pitch change therefore divides only
 when it has moved by about `1/R` of itself (1.7% at C4, 3.3% at C5, 6.7% at C6), so
-vibrato rarely does. Silent voices and increments of 256 or less stage zero. The
+vibrato rarely does. Increments of 256 or less, including the zero of a voice with no pitch
+or no playing owner, stage zero; a voice stopped by a volume keeps its increment and
+reciprocal. The
 reciprocal is staged in three bytes beside the update controls and the interrupt copies
 them with the controls, so a voice never sees an increment without its own `R`. Committing
-one tonal voice's packet takes 446 cycles with an unchanged or vibrato-sized pitch step,
-552 with a new pitch and 417 for silence (548, 771 and 529 with the previous 16-bit
-reciprocal, which divided on every step). Staging a four-voice note with three new pitches
-costs 450 cycles more than before area sampling (1689 cycles against 1239) and a
-volume-only update 141 more (1272 against 1131); neither adds sample-interrupt work.
+one tonal voice's packet takes 420 cycles with an unchanged or vibrato-sized pitch step,
+526 with a new pitch and 384 for silence. Servicing a four-voice note with three new pitches
+takes 1685 cycles and a volume-only update 1268.
 
 Noise uses a 16-bit LFSR recurrence. On each **active** synthesis
 sample it shifts the full word left, then XORs bit zero once for each of bits
@@ -1270,11 +1283,13 @@ Initialization sets `0x0001`, which enters that cycle after one update.
 At both 7,812.5 and 15,625 Hz there is one transition per active sample, so
 8 kHz mode evolves half as fast in wall time. Increment magnitude has no effect.
 
-The stopped sentinel `255` skips advancement and mixing in **5 cycles**.
-Active amplitude zero still advances the LFSR and mixes zero. This stopped
-freeze is an intentional AVM optimization. The active block
-costs **24 cycles**, independent of state, amplitude and pitch. It uses the
-existing ISR registers and preserves the biased byte accumulator.
+A stopped voice (control `0xFF`) skips advancement and mixing in **5 cycles**.
+An attenuated amplitude of zero stops the noise voice, so the LFSR holds its
+state until the voice is audible again. This stopped freeze is an intentional
+AVM optimization. The active block costs **20 cycles**, independent of state,
+amplitude and pitch. It forms the feedback bit by adding `0x40` to the shifted
+high byte, which leaves bit 15 xor bit 14 in bit 7. It uses the existing ISR
+registers and preserves the biased byte accumulator.
 
 Explicit AVMS seeds remain one byte in `1..63`. For seed `s`, the state is
 `s | ((uint16_t)swap8(s) << 8)`, where `swap8(s)` exchanges the two nibbles.
@@ -1288,8 +1303,8 @@ Examples: 1 maps to `1001`, 8 to `8008`, 16 to `0110`, 37 to `5225`, and
 
 PLAY, STOP, pause/resume, looping, volume/pitch updates, sample-rate changes
 and SFX ownership changes preserve the state unless an explicit retrigger is
-accepted. Stopping/pausing freezes evolution when no audible owner has a
-nonzero increment; muting an active owner does not freeze it. Full interpreter/
+accepted. Stopping, pausing and a zero attenuated amplitude freeze evolution;
+shared master zero does not. Full interpreter/
 audio initialization resets to `0001`. A pending retrigger replaces both bytes
 before the next synthesis sample, even while stopped. Hidden music retriggers
 are discarded while SFX owns noise; SFX release never replays discarded seeds.
@@ -1302,8 +1317,9 @@ post-update state, so the transient startup/seed states need no extra flag.
 Initialization indexes `noise_next(0001)`; retriggers index
 `noise_next(seed_state(s))`. Vectorized rendering and skipped excerpts
 advance that cursor by the number of **active** samples in each event span;
-stopped spans leave it unchanged. This preserves loops, retriggers and muted
-intervals without a Python sample loop to skip noise prefixes. No cycle table
+stopped spans, including muted ones, leave it unchanged. This preserves loops,
+retriggers and muted intervals without a Python sample loop to skip noise
+prefixes. No cycle table
 is exported in firmware or assets.
 
 AVM retains its existing Timer1 synthesis, Timer4 PWM, tonal oscillators,
@@ -1472,9 +1488,11 @@ clock, prescaler 64, TOP 249, and publishes a saturating pending tick every
 Startup clears inherited power gates/interrupts. Sample generation never uses
 SPI or floating point.
 
-Every Timer1 interrupt writes the held PWM sample first, at 21 CPU cycles from
+Every Timer1 interrupt writes the held PWM sample first, at 18 CPU cycles from
 the compare deadline plus acceptance delay. It then accepts pending controls
 and synthesizes the successor. Neither rate nor duty alters that store timing.
+It writes only the low byte of the duty: `TC4H` stays zero because only startup
+and enabling output write it.
 Timer1 COMPA wins simultaneous pending arbitration over Timer0; an already
 running Timer0 ISR is not preempted. The unchanged startup/rate-switch sequence
 seeds Timer1 from Timer0, placing deadlines 64..120 cycles apart modulo 128.
@@ -1483,24 +1501,24 @@ seeds Timer1 from Timer0, placing deadlines 64..120 cycles apart modulo 128.
 and resume the guest when Timer0 advances the millisecond clock. It processes
 pending sequencer ticks before resuming guest execution. [Idle service](arch.md#4924-idle)
 
-The live latch is 16 bytes: four `(increment, prepared_amplitude)` triples,
-three duty bytes, and one packed waveform byte. The interrupt also copies the three
-staged reciprocal bytes when it applies a packet:
+The live latch is 15 bytes: four `(increment, control)` triples and
+three duty bytes. The interrupt also copies the three
+staged reciprocal bytes when it applies a packet. Each control byte is:
 
-| Physical waveform bit | Meaning |
+| Control bits | Meaning |
 | --- | --- |
-| 0..2 | Channel 0..2 non-pulse |
-| 3..5 | Channel 0..2 saw selection |
-| 6..7 | Reserved |
+| 7 | Voice stopped. Foreground writes the whole byte as `0xFF` |
+| 5..6 | Tonal waveform: `00` pulse, `01` triangle, `11` saw; zero for noise |
+| 0..4 | Attenuated amplitude 0..31; a published running noise voice has 1..31 |
 
-For each channel, `(non_pulse, saw)` is `(0,0)` for pulse, `(1,0)` for
-triangle, `(1,1)` for saw, and `(0,1)` reserved. Foreground packs both groups
-from each physical channel's current music/SFX owner using shift-and-insert.
 Desired music/SFX voices remain four-byte records: increment low/high,
-volume/waveform, duty. Bits 5..6 of desired volume retain the waveform; only its lower
+volume/waveform, duty. Bits 5..6 of desired volume retain the waveform, which
+foreground copies into a running tonal voice's control; only the lower
 five bits contribute to prepared amplitude. Foreground chooses each current
 music/SFX owner and waits for acknowledgement before reusing the staging
-buffer (16 bytes and the three reciprocal bytes); one descriptor-byte store publishes the whole packet.
+buffer (15 bytes and the three reciprocal bytes); one descriptor-byte store publishes the whole packet.
+Enabling output publishes the desired state too, so idle voices are stopped
+before the first play.
 Bit 7 means ready, bits 0..5 contain optional seed 1..63 (zero means no reseed),
 bit 6 is unused. Timer1 copies all controls then reseeds before the next sample.
 Transient commands are not retained with desired state. Foreground never
@@ -1528,9 +1546,9 @@ defaults noted below.
 | `0A15` | `data_audio_ticks_pending` / `data_audio_begin` | 1 | Pending elapsed 4 ms ticks, saturating at 255; Timer0 increments and foreground atomically drains it. |
 | `0A16` | `data_boot_hold` | 1 | Timer0's bootloader-chord hold count, sampled every 32 ms; release clears it, count 48 triggers reset. |
 | `0A17` | `data_audio_volume` | 1 | Shared post-mix gain 0..255, 32=unity; default 128. |
-| `0A18..0A23` | `data_audio_controls` | 12 | Four live three-byte `(uint16 increment, uint8 amplitude)` records in physical channel order. Amplitudes 0..31, or 255 for stopped. |
+| `0A18..0A23` | `data_audio_controls` | 12 | Four live three-byte `(uint16 increment, uint8 control)` records in physical channel order. A control holds amplitude and tonal waveform, or 255 for stopped. All zero at startup. |
 | `0A24..0A26` | `data_audio_duty` | 3 | Live pulse thresholds for channels 0..2, each 0..255; default 128. |
-| `0A27` | `data_audio_waveform` | 1 | Live waveform flags: bits 0..2 non-pulse, bits 3..5 saw, bits 6..7 reserved. Defaults to pulse on all channels. |
+| `0A27` | `data_audio_duty_spare` | 1 | Reserved, unused; retains all subsequent addresses. |
 | `0A28..0A2D` | `data_audio_phases` | 6 | Three tonal uint16 phases for channels 0..2; advance modulo 65536, initially zero. |
 | `0A2E..0A2F` | `data_audio_noise` | 2 | Little-endian 16-bit LFSR state; startup `0001`. |
 | `0A30` | `data_audio_noise_spare` | 1 | Reserved, unused; retains all subsequent addresses. |
@@ -1539,7 +1557,7 @@ defaults noted below.
 | `0A49..0A52` | `data_audio_music` | 10 | Music stream record; all fields below. |
 | `0A53..0A59` | `data_audio_sfx` | 7 | SFX stream record; all fields below. |
 | `0A5A..0A68` | `data_audio_update_controls` | 15 | Unpublished staging records: four live-format triples followed by three pulse thresholds. |
-| `0A69` | `data_audio_update_waveform` | 1 | Staged waveform flags in the same format as `data_audio_waveform`; the sixteenth latch byte. |
+| `0A69` | `data_audio_update_spare` | 1 | Reserved, unused; retains all subsequent addresses. |
 | `0A6A` | `data_audio_update` | 1 | Publication descriptor: bit 7 ready, bits 0..5 optional noise seed 1..63 (zero means no reseed), bit 6 unused; zero acknowledges consumption. |
 | `0A6B` | `data_audio_sample` | 1 | Held biased PWM sample 0..255; 128 is silence. Primed to 128 when enabling output, then replaced by Timer1 synthesis. |
 | `0A6C` | `data_audio_rate` | 1 | Synthesis rate selector: 0=7812.5 Hz, 1=15625 Hz (default). |
@@ -1584,8 +1602,8 @@ ISR accesses these scratch bytes:
 
 Foreground owns desired banks, stream records, gains, rate/loop settings,
 fade volume/song and staging bytes. It waits for acknowledgement before reusing staging and
-publishes the descriptor in one byte store. `audio_apply_update` copies all 16
-staged bytes into the live latch before acknowledging, and maps any nonzero
+publishes the descriptor in one byte store. `audio_apply_update` copies the 15
+staged latch bytes and the three reciprocals before acknowledging, and maps any nonzero
 masked seed to both LFSR bytes. A zero seed preserves the state. Timer1
 normally applies packets after the fixed PWM store; foreground applies them directly only with synthesis unavailable or
 interrupts disabled. Timer1 updates phases, LFSR and the held sample. Initialization, output restart and explicit control operations also
@@ -1620,15 +1638,15 @@ Assembler assertions retain the single-SRAM-page and minimum-stack constraints.
 Timer1 uses 8 stack bytes including interrupt PC, 10 while calling the fixed
 copier. It preserves r0/r1/r20/r21/r26 and SREG; r27 and Z are untouched even on the
 pending path. The foreground
-preserves borrowed VM state and guest flags. All-stopped output takes 74 cycles. At
-default gain, with no voice stopped the interrupt takes 174..238 cycles ordinary (183..238
-for three pulse voices without an edge) and at most 330 with a pending packet, at either
-sample rate; the worst case of any waveform, every pulse edge falling in the sample
-and a pending packet, is 339 cycles, below the shortest 1024-cycle sample interval. Over
-the four shipped songs the interrupt averages 165 to 182 cycles. Other gains have
-different output paths.
-PWM writes remain at 21 cycles at both rates. FX, FX-C and Mini
-firmware is 29332 bytes, leaving 364 bytes below the 29696-byte boundary.
+preserves borrowed VM state and guest flags. All-stopped output takes 76 cycles at the
+default gain 128, 77 at unity gain and 79 at other gains. At the default gain,
+with no voice stopped and no pulse edge, the interrupt takes 163..209 cycles
+ordinary and at most 297 with a pending packet, at either sample rate. The worst
+case, every pulse voice on a falling edge with a pending packet, is 373 cycles at the
+default gain and 393 at gain 255, below the shortest 1024-cycle sample interval. Over
+the seven game songs the interrupt averages 138 to 161 cycles at 15625 Hz.
+PWM writes complete at 18 cycles at both rates. FX, FX-C and Mini
+firmware is 28176 bytes, leaving 1520 bytes below the 29696-byte boundary.
 Independent attenuation adds 44 flash bytes and two SRAM bytes. Preparing a
 four-active-voice packet adds at most 44 cycles (2.75 us at 16 MHz), with no
 additional sample-interrupt work. At 250 packets/s this adds 0.069 percentage

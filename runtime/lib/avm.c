@@ -24,6 +24,23 @@ void avm_set_frame_duration(uint8_t duration_ms)
     frame_start = (uint8_t)avm_millis();
 }
 
+static void begin_frame(uint8_t now)
+{
+    just_rendered = true;
+    frame_start = now;
+}
+
+void avm_wait_frame(void)
+{
+    uint8_t now = (uint8_t)avm_millis();
+    while((uint8_t)(now - frame_start) < frame_duration_ms)
+    {
+        avm_idle();
+        now = (uint8_t)avm_millis();
+    }
+    begin_frame(now);
+}
+
 bool avm_next_frame()
 {
     if(just_rendered)
@@ -42,8 +59,7 @@ bool avm_next_frame()
         return false;
     }
 
-    just_rendered = true;
-    frame_start = now;
+    begin_frame(now);
     return true;
 }
 

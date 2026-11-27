@@ -27,5 +27,21 @@ int avm_test_main(void)
         if (error)
             return (int)(rate * 3 + error);
     }
+
+    while ((uint8_t)avm_millis() < 248)
+        avm_idle();
+    avm_set_frame_duration(20);
+    uint16_t start = avm_millis();
+    avm_wait_frame();
+    uint16_t elapsed = avm_millis() - start;
+    if (elapsed < 19 || elapsed > 20)
+        return 13;
+    avm_wait_frame();
+    elapsed = avm_millis() - start;
+    if (elapsed < 39 || elapsed > 40)
+        return 14;
+    if (avm_next_frame())
+        return 15;
+
     return 0;
 }

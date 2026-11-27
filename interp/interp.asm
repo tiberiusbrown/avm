@@ -11214,14 +11214,16 @@ sys_buttons_impl:
     ori   VM_R4L, 0x04
     jmp   cluster_tail_18
 
-; Enter AVR idle sleep until an enabled interrupt, normally Timer0 compare A,
-; wakes the CPU. The completed speculative opcode remains pending in SPDR and
-; is consumed by the standard tail after wakeup.
+; Timer0 clears SMCR.SE on each millisecond tick. If the tick arrives before
+; SLEEP, that instruction falls through. Other interrupts leave SE armed so
+; the CPU goes back to sleep. The speculative opcode remains pending in SPDR.
 sys_idle_impl:
-    ldi   r24, _BV(SE)
-    out   SMCR, r24
+    out   SMCR, ONE
+sys_idle_sleep:
     sleep
-    out   SMCR, ZERO
+    in    r24, SMCR
+    sbrc  r24, SE
+    rjmp  sys_idle_sleep
     lds   r24, data_audio_ticks_pending
     tst   r24
     brne 1f
@@ -11229,7 +11231,7 @@ sys_idle_impl:
 1:
     ; The regular tail advances from the SYS service byte to the next opcode.
     ; Seeking for audio service bypasses that tail, so advance explicitly;
-    ; otherwise SYS_IDLE's 0x2A operand executes as SUB r6,r6 after wakeup.
+    ; otherwise the service operand executes as the next opcode after wakeup.
     add   VM_PCL, ONE
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
@@ -16055,6 +16057,9 @@ timer0_audio_done:
     andi r24, 0x1F
     breq timer0_boot_poll
 timer0_done:
+    ; The millisecond tick either woke the CPU or cancels the armed sleep.
+    clr  r24 ; ZERO may be borrowed by interrupted native libm.
+    out  SMCR, r24
     pop  r24
     out  SREG, r24
     pop  r24

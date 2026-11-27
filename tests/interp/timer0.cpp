@@ -116,11 +116,13 @@ void isolated(char** args)
                            0xffffffu, 0xffffffffu}) {
         for(unsigned flags = 0; flags < 128; ++flags) {
             h.clock(before); h.buttons(0); h.c().data[hold] = 17; h.c().data[pending] = 0;
+            h.c().data[reg::addr::SMCR] = 1;
             for(unsigned i = 0; i < 32; ++i) h.c().data[i] = uint8_t(7*i + flags);
             h.c().data[reg::addr::SREG] = uint8_t(flags);
             auto saved = h.c().data; auto sp = h.c().sp();
             h.interrupt();
             require(h.clock() == uint32_t(before+1), "millisecond carry failed");
+            require(h.c().data[reg::addr::SMCR] == 0, "Timer0 left sleep enabled");
             require(h.c().data[pending] == ((uint32_t(before+1)&3) == 0), "4 ms tick phase failed");
             require(h.c().data[hold] == ((uint32_t(before+1)&31) == 0 ? 0 : 17),
                     "button polling escaped 32 ms boundary");
@@ -144,7 +146,7 @@ void isolated(char** args)
     }
     // Measure each normal path and the longest returning path (full carry + match).
     unsigned index = 0;
-    std::array<unsigned, 4> expected{33, 42, 60, 76};
+    std::array<unsigned, 4> expected{35, 44, 62, 78};
     if(std::string(args[4]) == "split") { expected[2] += 4; expected[3] += 4; }
     for(unsigned next : {1u, 4u, 32u, 0u}) {
         h.clock(next-1); h.buttons(next == 32 || next == 0 ? 3 : 0);

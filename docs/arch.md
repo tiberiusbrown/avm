@@ -2103,7 +2103,7 @@ have no generic LLVM representation.
 | `0x27` | `draw_filled_rect_white` | `r4 = x`, `r5 = y`, `low8(r6) = w`, `low8(r7) = h` | None | Framebuffer reads and writes |
 | `0x28` | `draw_filled_rect_black` | `r4 = x`, `r5 = y`, `low8(r6) = w`, `low8(r7) = h` | None | Framebuffer reads and writes |
 | `0x29` | `buttons` | None | zero-extended button mask in `r4` | Button input |
-| `0x2A` | `idle` | None | None | Processor sleep until interrupt |
+| `0x2A` | `idle` | None | None | Processor sleep until the next millisecond tick |
 | `0x2B` | `generate_random_seed` | None | `r4` | ADC and Timer0 reads |
 | `0x2C` | `save` | None | None | Image-header read; persistent-storage read, erase, and write; saved-prefix read |
 | `0x2D` | `load` | None | canonical Boolean in `r4` | Image-header and persistent-storage reads; saved-prefix write on success |
@@ -3114,10 +3114,17 @@ Inputs and results:
 none
 ```
 
-The service places the processor in idle sleep mode until an enabled interrupt
-wakes it, then resumes execution at the following AVM instruction. Timer0 and
-other clocks available in idle mode continue to operate according to the
-platform configuration.
+The service resumes guest execution at the following AVM instruction after
+the next millisecond clock tick. The interpreter arms idle sleep with
+interrupts enabled. Timer0 advances the clock and clears the sleep-enable bit
+on each tick. If Timer0 fires before `SLEEP`, the instruction falls through.
+Other interrupts can run while the guest waits. If sleep is still armed when
+an interrupt returns, the interpreter goes back to sleep. It services pending
+audio ticks before it resumes guest execution.
+
+The runtime's `avm_wait_frame()` uses `idle` between deadline checks. It waits
+for the configured frame rate or duration and records the new frame start.
+If the frame is already due, it returns immediately.
 
 The service is an observable scheduling and power-management point. It MUST NOT
 be removed, duplicated, speculated, or reordered across another observable

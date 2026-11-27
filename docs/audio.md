@@ -1479,6 +1479,10 @@ Timer1 COMPA wins simultaneous pending arbitration over Timer0; an already
 running Timer0 ISR is not preempted. The unchanged startup/rate-switch sequence
 seeds Timer1 from Timer0, placing deadlines 64..120 cycles apart modulo 128.
 
+`SYS_IDLE` lets the interpreter go back to sleep after each sample interrupt
+and resume the guest when Timer0 advances the millisecond clock. It processes
+pending sequencer ticks before resuming guest execution. [Idle service](arch.md#4924-idle)
+
 The live latch is 16 bytes: four `(increment, prepared_amplitude)` triples,
 three duty bytes, and one packed waveform byte. The interrupt also copies the three
 staged reciprocal bytes when it applies a packet:

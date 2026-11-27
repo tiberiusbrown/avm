@@ -62,6 +62,8 @@ AVM_SYS_INLINE uint32_t avm_millis32(void)
 void avm_set_frame_rate(uint8_t rate_hz);
 void avm_set_frame_duration(uint8_t duration_ms);
 bool avm_next_frame();
+/* Block until the next frame is due. */
+void avm_wait_frame(void);
 
 /* Display */
 
@@ -229,6 +231,7 @@ void avm_poll_buttons(void);
 bool avm_just_pressed(uint8_t button);
 bool avm_just_released(uint8_t button);
 
+/* Sleep until the next millisecond clock tick. */
 AVM_SYS_INLINE void avm_idle(void)
 {
     __avm_idle();

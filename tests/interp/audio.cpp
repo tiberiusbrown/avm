@@ -961,7 +961,7 @@ void sequence(harness& h) {
         h.c().data[2]=0x5a;
         auto worst=h.routine("timer0_compa_isr",true)+7;
         std::cout<<"Timer0 with full millis carry and audio tick: "<<worst<<" cycles\n";
-        require(worst==69,"Timer0 full-carry released-button path changed");
+        require(worst==71,"Timer0 full-carry released-button path changed");
         h.c().data[2]=zero;
     });
     h.test("10/50/100 ms delayed servicing",[&]{
@@ -2268,14 +2268,65 @@ void idle_continuation(char** args) {
         h.c().st(reg::addr::TCCR0B,3); h.c().st(reg::addr::TIMSK0,2);
         h.tick(); h.until([&]{return h.boundary();});
         require((h.word(4)|(uint32_t(h.c().data[6])<<16))==pc+2,
-            "SYS IDLE dispatched its service operand instead of the following opcode");
+            "idle dispatched its service operand instead of the following opcode");
         for(unsigned i=8;i<24;++i)
-            require(h.c().data[i]==regs[i],"SYS IDLE corrupted guest registers");
-        require(h.c().data[reg::addr::GPIOR0]==5,"SYS IDLE corrupted guest flags");
-        require(h.c().sp()==sp,"SYS IDLE leaked native stack");
-        require(h.c().data[pending]==0,"SYS IDLE failed to service pending audio ticks");
+            require(h.c().data[i]==regs[i],"idle corrupted guest registers");
+        require(h.word(0xa05)==40001,"idle did not return on the first millisecond tick");
+        require(h.c().data[reg::addr::GPIOR0]==5,"idle corrupted guest flags");
+        require(h.c().sp()==sp,"idle leaked native stack");
+        require(h.c().data[pending]==0,"idle failed to service pending audio ticks");
     }
     std::cout<<"SYS IDLE continuation: eight audio/wakeup/PC-carry cases passed\n";
+}
+void idle_sleep_race(char** args) {
+    for(bool audio_wakeup : {false,true}) {
+        harness h(args);
+        auto& cpu=h.c();
+        constexpr unsigned pc=0x7000;
+        h.asset(pc,{0xd7,0x2a,0x00});
+        h.word(4,pc); cpu.data[6]=0;
+        cpu.pc=uint16_t(h.sym("seek_and_dispatch_func")); h.tick();
+        h.until([&]{return h.boundary();});
+        cpu.st(reg::addr::TCCR0B,0);
+        cpu.st(reg::addr::TIMSK0,0);
+        cpu.st(reg::addr::TIFR0,2);
+        cpu.st(reg::addr::TCCR1B,0);
+        cpu.st(reg::addr::TIMSK1,0);
+        cpu.st(reg::addr::TIFR1,2);
+        h.word(0xa05,0x00ff);
+        auto sleep_pc=h.sym("sys_idle_sleep");
+        h.tick();
+        h.until([&]{return cpu.active && cpu.pc==sleep_pc;},256);
+        require(cpu.data[reg::addr::SMCR]==1,"idle did not arm sleep");
+        require(cpu.data[reg::addr::SREG]&128,"idle masked interrupts");
+        if(audio_wakeup) {
+            h.tick();
+            require(!cpu.active,"idle did not sleep");
+            cpu.st(reg::addr::TIMSK1,2);
+            cpu.data[reg::addr::TIFR1]|=2;
+            cpu.peripheral_queue.schedule(cpu.cycle_count,PQ_INTERRUPT);
+            h.tick();
+            require(cpu.just_interrupted && cpu.pc==0x22,"expected an audio wakeup");
+            h.until([&]{return cpu.active && cpu.pc==sleep_pc;},256);
+            require(cpu.data[reg::addr::SMCR]==1,"audio disarmed idle sleep");
+            require(h.word(0xa05)==0x00ff,"audio advanced the millisecond clock");
+        }
+        // Deliver a Timer0 tick after arming sleep, just before SLEEP executes.
+        cpu.st(reg::addr::TIMSK0,2);
+        cpu.data[reg::addr::TIFR0]|=2;
+        cpu.peripheral_queue.schedule(cpu.cycle_count,PQ_INTERRUPT);
+        h.tick();
+        require(cpu.just_interrupted && cpu.pc==0x2a,"expected Timer0 before SLEEP");
+        h.until([&]{return cpu.active && cpu.pc==sleep_pc;},256);
+        require(cpu.data[reg::addr::SMCR]==0,"Timer0 did not disarm sleep");
+        h.tick();
+        require(cpu.active,"CPU went to sleep after the tick");
+        h.until([&]{return h.boundary();},256);
+        require(h.word(4)==pc+2,"idle resumed at the wrong guest PC");
+        require(h.word(0xa05)==0x0100,"idle lost the tick at clock-byte wrap");
+        require(cpu.data[reg::addr::SMCR]==0,"idle left sleep enabled");
+    }
+    std::cout<<"SYS IDLE: audio wakeup and Timer0 before SLEEP passed\n";
 }
 void demo(char** args, bool toggle_rates=false) {
     harness h(args,false);
@@ -2885,7 +2936,7 @@ void flash_strlen_exits(char** args) {
 void core_isa(char** args) {
     decimal_division(args); cset(args); retired_math(args); format_fields(args);
     sys_bounds(args); float_precision(args); hex_fraction(args);
-    phase_alignment(args); idle_continuation(args);
+    phase_alignment(args); idle_continuation(args); idle_sleep_race(args);
     flash_copy_exits(args); flash_strlen_exits(args);
 }
 void core_audio(char** args) {
